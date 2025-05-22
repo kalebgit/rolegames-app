@@ -52,6 +52,8 @@ services:
       # Configuración de JWT (opcional)
       APP_JWTSECRET: d82f17be37c62ac9397fd35dfa211e57079a0f459c5482d564309781b48adc91f8f9878750286db8c508fa932d5c0eb62a40f18419f7224f808c8517f32d6dc0
       APP_JWTEXPIRATIONINMS: 86400000
+      # CORS
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
     volumes:
       - ./backend:/app
     networks: 
