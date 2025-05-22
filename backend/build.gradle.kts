@@ -7,13 +7,15 @@ plugins {
 group = "kal.com"
 version = "0.0.1-SNAPSHOT"
 
+// Configuración del JAR
 tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
 	enabled = true
-	archiveClassifier = "" // Esto asegura que el JAR se llame solo con el nombre base
+	archiveClassifier = ""
+	archiveFileName = "rolegames-0.0.1-SNAPSHOT.jar"
 }
 
 tasks.getByName<Jar>("jar") {
-	enabled = false // Deshabilita el JAR normal para evitar confusión
+	enabled = false
 }
 
 

@@ -52,11 +52,13 @@ services:
       - backend
     volumes: 
       - ./frontend:/app
+      - /app/node_modules
     networks: 
       - rolegames-network
     environment:
       - VITE_API_URL=http://localhost:8080
       - NODE_ENV=development
+    restart: unless-stopped
       
 networks:
   rolegames-network:
