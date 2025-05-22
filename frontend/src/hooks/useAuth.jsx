@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import api from "../api/axiosConfig"
 
 export default function useAuth(){
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [isAuthenticated, setIsAuthenticated] = useState(true)
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
