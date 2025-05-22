@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react"
 import api from "../api/axiosConfig"
+import {useNavigate} from "react-router-dom"
 
 export default function useAuth(){
-    const [isAuthenticated, setIsAuthenticated] = useState(true)
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const navigate = useNavigate()
 
     useEffect(()=>{
         console.log("🔐 useAuth: Iniciando...");
@@ -21,7 +23,9 @@ export default function useAuth(){
             fetchUserData()
         } else {
             console.log("🔐 useAuth: No hay token, marcando como no autenticado");
+            navigate("/auth")
             setLoading(false)
+
         }
     }, [])
     

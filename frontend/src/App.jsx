@@ -39,6 +39,9 @@ import SessionForm from './components/sessions/SessionForm';
 import EncounterList from './components/encounters/EncounterList';
 import EncounterForm from './components/encounters/EncounterForm';
 
+//not found
+import NotFound from './components/NotFound';
+
 // Componente de protección de rutas
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -47,7 +50,7 @@ function ProtectedRoute({ children }) {
     return <LoadingSpinner message="Verificando autenticación..." />;
   }
   
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  return isAuthenticated ? children : <Navigate to="/auth" replace />;
 }
 
 // Layout principal de la aplicación
@@ -65,13 +68,6 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route 
-          path="/auth" 
-          element={
-            <AuthContainer />
-          } 
-        />
-        
         {/* Dashboard */}
         <Route path="/" element={
           <ProtectedRoute>
@@ -80,6 +76,15 @@ export default function App() {
             </AppLayout>
           </ProtectedRoute>
         } />
+        
+        <Route 
+          path="/auth" 
+          element={
+            <AuthContainer />
+          } 
+        />
+        
+        
         
         {/* Characters */}
         <Route path="/characters" element={
@@ -250,9 +255,11 @@ export default function App() {
             </AppLayout>
           </ProtectedRoute>
         } />
+
+        <Route path="/not-found" element={<NotFound/>}/>
         
         {/* Redirect any unknown route to home */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/not-found" replace />} />
       </Routes>
     </Router>
   );

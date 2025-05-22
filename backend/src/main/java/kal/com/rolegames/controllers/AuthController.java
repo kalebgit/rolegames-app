@@ -6,6 +6,8 @@ import kal.com.rolegames.services.auth.AuthService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +20,8 @@ import org.springframework.web.servlet.function.EntityResponse;
 @RequestMapping("/api/auth")
 @AllArgsConstructor(onConstructor_= @__({@Autowired}))
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     private AuthService authService;
 
@@ -32,6 +36,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user){
+        logger.info("Usuario recibido en controller: \n" + user);
 
         if(user.getUserType() == null){
             user.setUserType(UserType.PLAYER);
