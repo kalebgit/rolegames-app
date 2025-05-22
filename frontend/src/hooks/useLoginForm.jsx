@@ -21,7 +21,7 @@ export default function useLoginForm(initialValue, onLoginSuccess){
         setError('')
         setSuccess('')
         try{
-            const response = await api.post('http://localhost:8080/api/auth/login', credentials)
+            const response = await api.post('api/auth/login', credentials)
             
             if (response.data.token){
                 localStorage.setItem('token', response.data.token)
@@ -29,10 +29,17 @@ export default function useLoginForm(initialValue, onLoginSuccess){
                 
                 api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`
                 
-                const userResponse = await api.get('http://localhost:8080/api/users/me')
-                
-                if(onLoginSuccess){
-                    onLoginSuccess(userResponse.data)
+                try {
+                    const userResponse = await api.get('/api/users/me');
+                    
+                    if (onLoginSuccess) {
+                        onLoginSuccess(userResponse.data);
+                    }
+                } catch (userError) {
+                    console.error('Error al obtener datos del usuario:', userError);
+                    if (onLoginSuccess) {
+                        onLoginSuccess({ username: credentials.username });
+                    }
                 }
             }
         }catch(err){

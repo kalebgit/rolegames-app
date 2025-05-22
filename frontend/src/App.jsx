@@ -1,7 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import useAuth from './hooks/useAuth';
+import AuthContainer from './components/AuthContainer';
 import LoginForm from './components/LoginForm';
+import RegisterForm from './components/RegisterForm';
 import Navigation from './components/layout/Navigation';
 import Dashboard from './components/dashboard/Dashboard';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -58,36 +60,17 @@ function AppLayout({ children }) {
   );
 }
 
-// Página de login
-function LoginPage() {
-  const { isAuthenticated } = useAuth();
-  
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-  
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-8">
-              RoleGames Application
-            </h1>
-          </div>
-          <LoginForm />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function App() {
   return (
     <Router>
       <Routes>
-        {/* Ruta de login */}
-        <Route path="/login" element={<LoginPage />} />
+        <Route 
+          path="/auth" 
+          element={
+            <AuthContainer />
+          } 
+        />
         
         {/* Dashboard */}
         <Route path="/" element={
