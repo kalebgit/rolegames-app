@@ -41,7 +41,11 @@ dependencies {
 
     // Base de datos
     implementation("com.mysql:mysql-connector-j:9.1.0")
-    
+
+    // mapping para los endpoints
+    implementation(  "org.springframework.boot:spring-boot-starter-actuator" )
+
+
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
