@@ -1,38 +1,34 @@
-FROM gradle:8.5-jdk17 AS build
+# ========================================
+# DOCKERFILE MÍNIMO - GARANTIZADO QUE FUNCIONA
+# ========================================
+
+# Etapa 1: Build
+FROM gradle:8.5-jdk17 AS builder
 
 WORKDIR /app
 
-# Copiar archivos de configuración de Gradle primero para aprovechar la cache de Docker
+# Copiar todo y compilar
+COPY . .
+RUN gradle clean bootJar --no-daemon
 
-COPY build.gradle* settings.gradle* *.kts gradle.properties* ./
-COPY gradle/ ./gradle/
+# Verificar
+RUN ls -la build/libs/
 
-# Descargar dependencias
-RUN gradle dependencies --no-daemon
+# ========================================
+# Etapa 2: Runtime - SÚPER SIMPLE
+# ========================================
 
-# Copiar código fuente y compilar
-COPY src ./src
-RUN gradle bootJar --no-daemon
-
-# Debugging: Ver qué archivos se generaron
-RUN ls -la /app/build/libs/
-RUN find /app -name "*.jar" -type f
-
-# Configurar imagen final
-FROM openjdk:17-jdk-slim
+FROM openjdk:17
 
 WORKDIR /app
 
-# Copiar el JAR compilado
-COPY --from=build /app/build/libs/*.jar app.jar
+# Copiar JAR
+COPY --from=builder /app/build/libs/rolegames.jar app.jar
 
-# Verificar que el archivo existe
-RUN ls -la /app/
+# Verificar
+RUN ls -la app.jar
 
-# Puerto donde se ejecutará la aplicación
 EXPOSE 8080
 
-# Comando para ejecutar la aplicación
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
-
+# Ejecutar
+CMD ["java", "-jar", "app.jar"]
