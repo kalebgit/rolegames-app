@@ -2,8 +2,16 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# para poder instalar npm
+RUN mkdir -p ~/.npm-global
+RUN npm config set prefix '~/.npm-global'
+RUN export PATH="$HOME/.npm-global/bin:$PATH" >> ~/.bashrc
+RUN source ~/.bashrc
+
+
+
 # Actualizar npm a la última versión
-RUN npm install -g npm@latest
+RUN npm install -g npm
 
 # Copiar archivos de dependencias
 COPY package.json package-lock.json* ./

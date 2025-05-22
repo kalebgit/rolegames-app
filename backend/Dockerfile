@@ -1,34 +1,28 @@
 # ========================================
-# DOCKERFILE MÍNIMO - GARANTIZADO QUE FUNCIONA
+# DOCKERFILE SIMPLE CON BOOTRUN
 # ========================================
 
-# Etapa 1: Build
-FROM gradle:8.5-jdk17 AS builder
+FROM gradle:8.5-jdk17
 
 WORKDIR /app
 
-# Copiar todo y compilar
-COPY . .
-RUN gradle clean bootJar --no-daemon
+# Copiar archivos de configuración primero (para cache de Docker)
+COPY gradlew .
+COPY gradle/ gradle/
+COPY build.gradle.kts .
+COPY settings.gradle.kts .
 
-# Verificar
-RUN ls -la build/libs/
+# Hacer ejecutable el wrapper
+RUN chmod +x ./gradlew
 
-# ========================================
-# Etapa 2: Runtime - SÚPER SIMPLE
-# ========================================
+# Descargar dependencias (esto se cachea si no cambian)
+RUN ./gradlew dependencies --no-daemon || true
 
-FROM openjdk:17
+# Copiar código fuente
+COPY src/ src/
 
-WORKDIR /app
-
-# Copiar JAR
-COPY --from=builder /app/build/libs/rolegames.jar app.jar
-
-# Verificar
-RUN ls -la app.jar
-
+# Exponer puerto
 EXPOSE 8080
 
-# Ejecutar
-CMD ["java", "-jar", "app.jar"]
+# Ejecutar directamente con bootRun
+CMD ["./gradlew", "bootRun", "--no-daemon"]

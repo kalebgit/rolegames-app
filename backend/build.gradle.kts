@@ -52,20 +52,3 @@ dependencies {
     testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
-
-// Configuración simple del JAR ejecutable
-tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
-    enabled = true
-    archiveClassifier.set("")
-    archiveFileName.set("rolegames.jar") // Nombre fijo y simple
-}
-
-// Deshabilitar JAR normal
-tasks.named<Jar>("jar") {
-    enabled = false
-}
-
-// Configuración de tests
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
