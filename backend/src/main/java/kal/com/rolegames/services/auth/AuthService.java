@@ -4,6 +4,8 @@ import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.repositories.users.UserRepository;
 import kal.com.rolegames.security.util.JwtTokenProvider;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,6 +24,8 @@ public class AuthService {
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
 
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+
     public String authenticate(String username, String password){
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password)
@@ -29,11 +33,13 @@ public class AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(auth);
 
+        logger.info("[KAL] muy bien hasta ahora con los datos {}", auth);
+
         return tokenProvider.generateToken(auth);
     }
 
     public User register(User user){
-        if(userRepository.findById(user.getUserId()).isPresent() || userRepository.findByEmail(user.getEmail()).isPresent()){
+        if(user.getUserId() != null && userRepository.findById(user.getUserId()).isPresent() || userRepository.findByEmail(user.getEmail()).isPresent()){
             throw new RuntimeException("Email is already in use!");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));

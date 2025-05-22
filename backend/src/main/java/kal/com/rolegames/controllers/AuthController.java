@@ -27,6 +27,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest){
+        logger.info("Datos recibidos en controller de login: {}", loginRequest);
         String token = authService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
         return ResponseEntity
                 .ok()
@@ -36,7 +37,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user){
-        logger.info("Usuario recibido en controller: \n" + user);
+        logger.info("Usuario recibido en controller de register: \n" + user);
 
         if(user.getUserType() == null){
             user.setUserType(UserType.PLAYER);

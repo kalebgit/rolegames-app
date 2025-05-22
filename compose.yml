@@ -44,7 +44,7 @@ services:
       
       # Configuración de logging
       LOGGING_LEVEL_ROOT: INFO
-      LOGGING_LEVEL_KAL_COM_ROLEGAMES: DEBUG
+      LOGGING_LEVEL_KAL_COM_ROLEGAMES: INFO
       
       # Configuración de servidor
       SERVER_PORT: 8080
