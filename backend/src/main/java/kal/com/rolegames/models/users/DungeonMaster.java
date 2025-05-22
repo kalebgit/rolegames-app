@@ -1,0 +1,57 @@
+package kal.com.rolegames.models.users;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import kal.com.rolegames.models.characters.NonPlayerCharacter;
+import kal.com.rolegames.models.items.Item;
+import kal.com.rolegames.models.sessions.Campaign;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@PrimaryKeyJoinColumn(name = "dm_id")
+//lombok annotations
+@SuperBuilder
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@ToString(callSuper = true)
+public class DungeonMaster extends User {
+
+    @OneToMany(mappedBy = "dungeonMaster", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Campaign> campaigns = new HashSet<>();
+
+    @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<NonPlayerCharacter> createdNpcs = new HashSet<>();
+
+    @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Item> createdItems = new HashSet<>();
+
+    private String dmStyle;
+
+    private Float rating;
+
+    public void addCampaign(Campaign campaign) {
+        campaigns.add(campaign);
+        campaign.setDungeonMaster(this);
+    }
+
+    public void removeCampaign(Campaign campaign) {
+        campaigns.remove(campaign);
+        campaign.setDungeonMaster(null);
+    }
+
+    public void createNpc(NonPlayerCharacter npc) {
+        createdNpcs.add(npc);
+        npc.setCreator(this);
+    }
+
+    public void createItem(Item item) {
+        createdItems.add(item);
+        item.setCreator(this);
+    }
+}
