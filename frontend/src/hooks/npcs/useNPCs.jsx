@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useNPCs  () {
   const [npcs, setNpcs] = useState([]);
@@ -9,7 +9,15 @@ export default function useNPCs  () {
   const fetchNPCs = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/npcs');
+      const response = await api.get('/api/npcs');
+      if (response.data && Array.isArray(response.data)) {
+        setNpcs(response.data);
+        setError('');
+      } else {
+        console.error('NPCs data is not an array:', response.data);
+        setNpcs([]);  // Set to empty array if data is invalid
+        setError('Error: Formato de datos inválido');
+      }
       setNpcs(response.data);
       setError('');
     } catch (err) {
@@ -26,7 +34,7 @@ export default function useNPCs  () {
 
   const deleteNPC = async (npcId) => {
     try {
-      await axios.delete(`/api/npcs/${npcId}`);
+      await api.delete(`/api/npcs/${npcId}`);
       setNpcs(prev => prev.filter(npc => npc.characterId !== npcId));
       return true;
     } catch (err) {

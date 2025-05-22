@@ -9,9 +9,11 @@ export default function CharacterList() {
   const { characters, loading, error, deleteCharacter } = useCharacters();
   const [filter, setFilter] = useState('');
 
-  const filteredCharacters = characters.filter(character =>
-    character.name.toLowerCase().includes(filter.toLowerCase())
-  );
+  const filteredCharacters = Array.isArray(characters) 
+  ? characters.filter(character => 
+      character.name.toLowerCase().includes(filter.toLowerCase())
+    )
+  : [];
 
   const handleDelete = async (characterId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este personaje?')) {

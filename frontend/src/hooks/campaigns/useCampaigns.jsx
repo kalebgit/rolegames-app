@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useCampaigns(){
     const [campaigns, setCampaigns] = useState([]);
@@ -9,7 +9,7 @@ export default function useCampaigns(){
     const fetchCampaigns = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/campaigns');
+        const response = await api.get('/api/campaigns');
         setCampaigns(response.data);
         setError('');
       } catch (err) {
@@ -26,7 +26,7 @@ export default function useCampaigns(){
 
     const deleteCampaign = async (campaignId) => {
       try {
-        await axios.delete(`/api/campaigns/${campaignId}`);
+        await api.delete(`/api/campaigns/${campaignId}`);
         setCampaigns(prev => prev.filter(campaign => campaign.campaignId !== campaignId));
         return true;
       } catch (err) {

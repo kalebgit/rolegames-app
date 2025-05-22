@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useNPCForm  (npcId, onSuccess) {
   const [npc, setNpc] = useState({
@@ -38,7 +38,7 @@ export default function useNPCForm  (npcId, onSuccess) {
   const fetchNPC = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/npcs/${npcId}`);
+      const response = await api.get(`/api/npcs/${npcId}`);
       setNpc(response.data);
     } catch (err) {
       setError('Error al cargar el NPC');
@@ -55,10 +55,10 @@ export default function useNPCForm  (npcId, onSuccess) {
 
     try {
       if (npcId) {
-        await axios.put(`/api/npcs/${npcId}`, npc);
+        await api.put(`/api/npcs/${npcId}`, npc);
         setSuccess('NPC actualizado exitosamente');
       } else {
-        await axios.post('/api/npcs', npc);
+        await api.post('/api/npcs', npc);
         setSuccess('NPC creado exitosamente');
       }
       

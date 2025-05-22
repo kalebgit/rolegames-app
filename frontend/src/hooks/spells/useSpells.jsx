@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useSpells  ()  {
   const [spells, setSpells] = useState([]);
@@ -9,7 +9,7 @@ export default function useSpells  ()  {
   const fetchSpells = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/spells');
+      const response = await api.get('/api/spells');
       setSpells(response.data);
       setError('');
     } catch (err) {
@@ -26,7 +26,7 @@ export default function useSpells  ()  {
 
   const deleteSpell = async (spellId) => {
     try {
-      await axios.delete(`/api/spells/${spellId}`);
+      await api.delete(`/api/spells/${spellId}`);
       setSpells(prev => prev.filter(spell => spell.spellId !== spellId));
       return true;
     } catch (err) {

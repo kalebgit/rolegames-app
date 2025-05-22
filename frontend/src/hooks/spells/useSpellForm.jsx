@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useSpellForm  (spellId, onSuccess) {
   const [spell, setSpell] = useState({
@@ -32,7 +32,7 @@ export default function useSpellForm  (spellId, onSuccess) {
   const fetchSpell = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/spells/${spellId}`);
+      const response = await api.get(`/api/spells/${spellId}`);
       setSpell(response.data);
     } catch (err) {
       setError('Error al cargar el hechizo');
@@ -49,10 +49,10 @@ export default function useSpellForm  (spellId, onSuccess) {
 
     try {
       if (spellId) {
-        await axios.put(`/api/spells/${spellId}`, spell);
+        await api.put(`/api/spells/${spellId}`, spell);
         setSuccess('Hechizo actualizado exitosamente');
       } else {
-        await axios.post('/api/spells', spell);
+        await api.post('/api/spells', spell);
         setSuccess('Hechizo creado exitosamente');
       }
       

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useCharacters(){
     const [characters, setCharacters] = useState([]);
@@ -9,9 +9,15 @@ export default function useCharacters(){
     const fetchCharacters = async () => {
         try {
         setLoading(true);
-        const response = await axios.get('/api/characters');
-        setCharacters(response.data);
-        setError('');
+        const response = await api.get('/api/characters');
+        if (response.data && Array.isArray(response.data)) {
+            setCharacters(response.data);
+            setError('');
+        } else {
+            console.error('Characters data is not an array:', response.data);
+            setCharacters([]);  // Set to empty array if data is invalid
+            setError('Error: Formato de datos inválido');
+        }
         } catch (err) {
         setError('Error al cargar los personajes');
         console.error('Error fetching characters:', err);
@@ -26,7 +32,7 @@ export default function useCharacters(){
 
     const deleteCharacter = async (characterId) => {
         try {
-        await axios.delete(`/api/characters/${characterId}`);
+        await api.delete(`/api/characters/${characterId}`);
         setCharacters(prev => prev.filter(char => char.characterId !== characterId));
         return true;
         } catch (err) {

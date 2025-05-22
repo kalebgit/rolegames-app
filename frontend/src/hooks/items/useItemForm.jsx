@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useItemForm (itemId, onSuccess){
     const [item, setItem] = useState({
@@ -25,7 +25,7 @@ export default function useItemForm (itemId, onSuccess){
     const fetchItem = async () => {
         try {
         setLoading(true);
-        const response = await axios.get(`/api/items/${itemId}`);
+        const response = await api.get(`/api/items/${itemId}`);
         setItem(response.data);
         } catch (err) {
         setError('Error al cargar el objeto');
@@ -42,10 +42,10 @@ export default function useItemForm (itemId, onSuccess){
 
         try {
         if (itemId) {
-            await axios.put(`/api/items/${itemId}`, item);
+            await api.put(`/api/items/${itemId}`, item);
             setSuccess('Objeto actualizado exitosamente');
         } else {
-            await axios.post('/api/items', item);
+            await api.post('/api/items', item);
             setSuccess('Objeto creado exitosamente');
         }
         

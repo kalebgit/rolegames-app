@@ -1,6 +1,6 @@
 // src/hooks/useEncounterForm.js
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useEncounterForm  (encounterId, onSuccess)  {
   const [encounter, setEncounter] = useState({
@@ -24,7 +24,7 @@ export default function useEncounterForm  (encounterId, onSuccess)  {
   const fetchEncounter = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/encounters/${encounterId}`);
+      const response = await api.get(`/api/encounters/${encounterId}`);
       setEncounter(response.data);
     } catch (err) {
       setError('Error al cargar el encuentro');
@@ -41,10 +41,10 @@ export default function useEncounterForm  (encounterId, onSuccess)  {
 
     try {
       if (encounterId) {
-        await axios.put(`/api/encounters/${encounterId}`, encounter);
+        await api.put(`/api/encounters/${encounterId}`, encounter);
         setSuccess('Encuentro actualizado exitosamente');
       } else {
-        await axios.post('/api/encounters', encounter);
+        await api.post('/api/encounters', encounter);
         setSuccess('Encuentro creado exitosamente');
       }
       

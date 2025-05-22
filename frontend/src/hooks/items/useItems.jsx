@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useItems () {
   const [items, setItems] = useState([]);
@@ -9,7 +9,7 @@ export default function useItems () {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/items');
+      const response = await api.get('/api/items');
       setItems(response.data);
       setError('');
     } catch (err) {
@@ -26,7 +26,7 @@ export default function useItems () {
 
   const deleteItem = async (itemId) => {
     try {
-      await axios.delete(`/api/items/${itemId}`);
+      await api.delete(`/api/items/${itemId}`);
       setItems(prev => prev.filter(item => item.itemId !== itemId));
       return true;
     } catch (err) {

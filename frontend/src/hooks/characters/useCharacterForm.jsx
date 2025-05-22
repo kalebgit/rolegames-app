@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useCharacterForm(characterId, onSuccess){
     const [character, setCharacter] = useState({
@@ -38,7 +38,7 @@ export default function useCharacterForm(characterId, onSuccess){
     const fetchCharacter = async () => {
         try {
         setLoading(true);
-        const response = await axios.get(`/api/characters/${characterId}`);
+        const response = await api.get(`/api/characters/${characterId}`);
         setCharacter(response.data);
         } catch (err) {
         setError('Error al cargar el personaje');
@@ -55,10 +55,10 @@ export default function useCharacterForm(characterId, onSuccess){
 
         try {
         if (characterId) {
-            await axios.put(`/api/characters/${characterId}`, character);
+            await api.put(`/api/characters/${characterId}`, character);
             setSuccess('Personaje actualizado exitosamente');
         } else {
-            await axios.post('/api/characters', character);
+            await api.post('/api/characters', character);
             setSuccess('Personaje creado exitosamente');
         }
         

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useCombat  ()  {
   const [combatState, setCombatState] = useState(null);
@@ -9,7 +9,7 @@ export default function useCombat  ()  {
   const fetchCombatState = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/combat/current');
+      const response = await api.get('/api/combat/current');
       setCombatState(response.data);
       setError('');
     } catch (err) {
@@ -30,7 +30,7 @@ export default function useCombat  ()  {
 
   const startCombat = async (encounterData) => {
     try {
-      const response = await axios.post('/api/combat/start', encounterData);
+      const response = await api.post('/api/combat/start', encounterData);
       setCombatState(response.data);
       return true;
     } catch (err) {
@@ -41,7 +41,7 @@ export default function useCombat  ()  {
 
   const nextTurn = async () => {
     try {
-      await axios.post('/api/combat/next-turn');
+      await api.post('/api/combat/next-turn');
       await fetchCombatState();
       return true;
     } catch (err) {
@@ -52,7 +52,7 @@ export default function useCombat  ()  {
 
   const endCombat = async () => {
     try {
-      await axios.post('/api/combat/end');
+      await api.post('/api/combat/end');
       setCombatState(null);
       return true;
     } catch (err) {
@@ -63,7 +63,7 @@ export default function useCombat  ()  {
 
   const addParticipant = async (characterId, initiative) => {
     try {
-      await axios.post('/api/combat/add-participant', {
+      await api.post('/api/combat/add-participant', {
         characterId,
         initiative
       });

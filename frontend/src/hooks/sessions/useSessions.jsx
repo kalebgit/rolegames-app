@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useSessions  ()  {
   const [sessions, setSessions] = useState([]);
@@ -9,7 +9,7 @@ export default function useSessions  ()  {
   const fetchSessions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/sessions');
+      const response = await api.get('/api/sessions');
       setSessions(response.data);
       setError('');
     } catch (err) {
@@ -26,7 +26,7 @@ export default function useSessions  ()  {
 
   const deleteSession = async (sessionId) => {
     try {
-      await axios.delete(`/api/sessions/${sessionId}`);
+      await api.delete(`/api/sessions/${sessionId}`);
       setSessions(prev => prev.filter(session => session.sessionId !== sessionId));
       return true;
     } catch (err) {

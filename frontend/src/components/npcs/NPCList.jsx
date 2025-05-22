@@ -16,11 +16,14 @@ export default function NPCList({ onNPCSelect, onCreateNPC }) {
     BOSS: 'bg-orange-100 text-orange-800'
   };
 
-  const filteredNPCs = npcs.filter(npc => {
+  console.log("NPCS: ", npcs)
+
+  const filteredNPCs = Array.isArray(npcs) ? npcs.filter(npc => {
     const matchesName = npc.name.toLowerCase().includes(filter.toLowerCase());
     const matchesType = !typeFilter || npc.npcType === typeFilter;
     return matchesName && matchesType;
-  });
+  }) : [];
+
 
   const handleDelete = async (npcId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este NPC?')) {

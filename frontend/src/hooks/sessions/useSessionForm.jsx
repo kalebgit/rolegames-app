@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useSessionForm  (sessionId, onSuccess)  {
   const [session, setSession] = useState({
@@ -23,7 +23,7 @@ export default function useSessionForm  (sessionId, onSuccess)  {
   const fetchSession = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`/api/sessions/${sessionId}`);
+      const response = await api.get(`/api/sessions/${sessionId}`);
       setSession(response.data);
     } catch (err) {
       setError('Error al cargar la sesión');
@@ -40,10 +40,10 @@ export default function useSessionForm  (sessionId, onSuccess)  {
 
     try {
       if (sessionId) {
-        await axios.put(`/api/sessions/${sessionId}`, session);
+        await api.put(`/api/sessions/${sessionId}`, session);
         setSuccess('Sesión actualizada exitosamente');
       } else {
-        await axios.post('/api/sessions', session);
+        await api.post('/api/sessions', session);
         setSuccess('Sesión creada exitosamente');
       }
       

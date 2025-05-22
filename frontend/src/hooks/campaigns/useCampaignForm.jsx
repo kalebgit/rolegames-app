@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from "../../api/axiosConfig"
 
 export default function useCampaignForm(campaignId, onSuccess){
     const [campaign, setCampaign] = useState({
@@ -23,7 +23,7 @@ export default function useCampaignForm(campaignId, onSuccess){
     const fetchCampaign = async () => {
         try {
         setLoading(true);
-        const response = await axios.get(`/api/campaigns/${campaignId}`);
+        const response = await api.get(`/api/campaigns/${campaignId}`);
         setCampaign(response.data);
         } catch (err) {
         setError('Error al cargar la campaña');
@@ -40,10 +40,10 @@ export default function useCampaignForm(campaignId, onSuccess){
 
         try {
         if (campaignId) {
-            await axios.put(`/api/campaigns/${campaignId}`, campaign);
+            await api.put(`/api/campaigns/${campaignId}`, campaign);
             setSuccess('Campaña actualizada exitosamente');
         } else {
-            await axios.post('/api/campaigns', campaign);
+            await api.post('/api/campaigns', campaign);
             setSuccess('Campaña creada exitosamente');
         }
         
