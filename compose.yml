@@ -1,0 +1,62 @@
+services: 
+
+  # mysql gestion de base de datos
+  mysql: 
+    image: mysql:8.0 
+    environment:  
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: rolegames
+    ports: 
+      - "3006:3006"
+    volumes: 
+      - ./mysql-data/:/var/lib/mysql
+    networks: 
+      - rolegames-network
+    healthcheck:
+      test: ["executable", "arg"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    #el back
+  backend: 
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rolegames-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports: 
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/rolegames?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+    volumes:
+      - ./backend:/app
+    netowrks: 
+      - rolegames-network
+
+#el front
+  frontend:
+    build:
+      - context: ./frontend
+      - dockerfile: Dockerfile
+    container_name: rolegames-frontend
+    ports: "3000:3000"
+    depends_on: 
+      - backend
+    volumes: 
+      - ./frontend:/app
+    networks: 
+      - rolegames-network
+    environment:
+      - VITE_API_URL=http://localhost:8080
+      - NODE_ENV=development
+      
+networks:
+  rolegames-network:
+    driver: bridge
