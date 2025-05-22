@@ -7,13 +7,13 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: rolegames
     ports: 
-      - "3006:3006"
+      - "3307:3306"
     volumes: 
       - ./mysql-data/:/var/lib/mysql
     networks: 
       - rolegames-network
     healthcheck:
-      test: ["executable", "arg"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]  
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,16 +37,17 @@ services:
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
     volumes:
       - ./backend:/app
-    netowrks: 
+    networks: 
       - rolegames-network
 
 #el front
   frontend:
     build:
-      - context: ./frontend
-      - dockerfile: Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: rolegames-frontend
-    ports: "3000:3000"
+    ports: 
+      - "3000:3000"
     depends_on: 
       - backend
     volumes: 

@@ -7,9 +7,19 @@ plugins {
 group = "kal.com"
 version = "0.0.1-SNAPSHOT"
 
+tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+	enabled = true
+	archiveClassifier = "" // Esto asegura que el JAR se llame solo con el nombre base
+}
+
+tasks.getByName<Jar>("jar") {
+	enabled = false // Deshabilita el JAR normal para evitar confusión
+}
+
+
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(24)
+		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
 
