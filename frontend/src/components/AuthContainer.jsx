@@ -2,17 +2,22 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
+import { useUserStore } from '../stores/useUserStore';
 
 export default function AuthContainer() {
   const [showLogin, setShowLogin] = useState(true);
+  const isAuthenticated = useUserStore(state=>state.isAuthenticated)
+  const setIsAuthenticated = useUserStore(state=>state.setIsAuthenticated)
   const navigate = useNavigate();
   
   const handleLoginSuccess = (userData) => {
-    console.log("se loggeo perfectamente")
+    console.log("se loggeo perfectaomente (dentro de login handler en AuthContianer.jsx")
+    setIsAuthenticated(true)
     navigate('/');
   };
   
   const handleRegisterSuccess = (userData) => {
+    setIsAuthenticated(true)
     setShowLogin(true);
   };
   
@@ -20,6 +25,11 @@ export default function AuthContainer() {
   const toggleForm = () => {
     setShowLogin(!showLogin);
   };
+
+  if(isAuthenticated){
+    console.log("el usuario esta autenticado")
+    navigate('/')
+  }
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

@@ -1,9 +1,8 @@
-import {createStore, useStore} from 'zustand'
+import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
 import api from '../api/axiosConfig'
 
-const userStore = createStore(
+export const useUserStore = create(
     persist(
         (set, get) => ({
             user: null,
@@ -32,6 +31,7 @@ const userStore = createStore(
                 api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 
                 try {
+                    set({ loading: true }); // Asegurarse de que está en loading
                     console.log("🔐 useAuth: Enviando petición a /api/users/me");
                     const res = await api.get("/api/users/me");
                     
@@ -51,14 +51,14 @@ const userStore = createStore(
                     if (err.response?.status === 401 || err.response?.status === 403) {
                         console.log("🔐 useAuth: Token inválido, limpiando...");
                         get().logout();
+                    } else {
+                        set({
+                            error: err.message,
+                            isAuthenticated: false,
+                            user: null,
+                            loading: false
+                        });
                     }
-                    
-                    set({
-                        error: err.message,
-                        isAuthenticated: false,
-                        user: null,
-                        loading: false
-                    });
                     return false;
                 }
             },
@@ -67,7 +67,7 @@ const userStore = createStore(
             checkTokenValidity: () => {
                 const token = localStorage.getItem('token');
                 if (!token) {
-                    set({ isAuthenticated: false, user: null });
+                    set({ isAuthenticated: false, user: null, loading: false });
                     return false;
                 }
                 
@@ -120,9 +120,13 @@ const userStore = createStore(
             partialize: (state) => ({
                 user: state.user,
                 isAuthenticated: state.isAuthenticated
-            })
+            }),
+            // Configurar la hidratación para evitar problemas
+            // onRehydrateStorage: () => (state) => {
+            //     if (state) {
+            //         state.loading = false;
+            //     }
+            // }
         }
     )
 )
-
-export const useUserStore = ()=>useStore(userStore)

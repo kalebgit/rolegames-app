@@ -48,6 +48,7 @@ export default function useLoginForm(initialValue, onLoginSuccess){
                 try {
                     const userResponse = await api.get('/api/users/me');
                     
+                    console.log("✅ login exitoso, ejecutando onLoginSucess...")
                     if (onLoginSuccess) {
                         onLoginSuccess(userResponse.data);
                     }

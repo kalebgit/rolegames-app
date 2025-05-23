@@ -3,11 +3,11 @@ import { useLocation } from 'react-router-dom';
 import { useUserStore } from '../stores/useUserStore';
 import LoadingSpinner from './common/LoadingSpinner';
 
-export function AuthGuard({ children }) {
+export default function AuthGuard({ children }) {
     const location = useLocation();
-    const loading = useUserStore(state=state.loading)
-    const fetchUserData = useUserStore(state=state.fetchUserData)
-    const checkTokenValidity = useUserStore(state=state.checkTokenValidity)
+    const loading = useUserStore(state=>state.loading)
+    const fetchUserData = useUserStore(state=>state.fetchUserData)
+    const checkTokenValidity = useUserStore(state=>state.checkTokenValidity)
     
     useEffect(() => {
         console.log(`🔐 AuthGuard: Verificando autenticación para ${location.pathname}`);

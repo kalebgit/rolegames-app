@@ -42,6 +42,7 @@ import NotFound from './components/NotFound';
 
 
 import { useUserStore } from './stores/useUserStore';
+import  AuthGuard  from './components/AuthGuard';
 
 // Layout principal de la aplicación
 function AppLayout({ children }) {
@@ -57,11 +58,11 @@ function ProtectedRoute({children}){
   const isAuthenticated = useUserStore(state=>state.isAuthenticated)
   const loading = useUserStore(state=>state.loading)
 
-  if (loading) {
-    return <LoadingSpinner message="Verificando autenticación..." />;
-  }
+  console.log("🔐 ProtectedRoute: Estado actual", { isAuthenticated, loading });
 
   if (!isAuthenticated) {
+    console.log("🔐 ProtectedRoute: No autenticado, redirigiendo");
+
       return <Navigate to="/auth" replace />;
   }
 
@@ -76,7 +77,6 @@ function ProtectedRoute({children}){
 
 // Componente principal que maneja la autenticación
 function AppContent() {
-
   return (
     <Routes>
       {/* Ruta de autenticación */}

@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
+  console.log("se imprimio el Dashboard.jsx")
+
   const navigate = useNavigate();
 
   const quickActions = [
