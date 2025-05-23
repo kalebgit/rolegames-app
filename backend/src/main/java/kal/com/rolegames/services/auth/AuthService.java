@@ -24,16 +24,19 @@ public class AuthService {
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
 
+
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     public String authenticate(String username, String password){
+        logger.info("[SERVICE][USER: {{}, {}}] datos recibidos", username, password);
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password)
         );
 
+        logger.info("[SERVICE] [AUTH: {}] autenticacion exitosa", auth);
+
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        logger.info("[KAL] muy bien hasta ahora con los datos {}", auth);
 
         return tokenProvider.generateToken(auth);
     }

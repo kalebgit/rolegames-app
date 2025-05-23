@@ -28,14 +28,21 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(Authentication authentication) {
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username;
+        Object principal = authentication.getPrincipal();
 
-        Date now = new Date();
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails) principal).getUsername();
+        } else if (principal instanceof String) {
+            username = (String) principal;
+        } else {
+            throw new IllegalArgumentException("Principal type not supported: " + principal.getClass());
+        }        Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
 
         return Jwts.builder()
-                .setSubject(userDetails.getUsername())
+                .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(expiryDate)
                 .signWith(getKey(), SignatureAlgorithm.HS512)
@@ -56,8 +63,6 @@ public class JwtTokenProvider {
         try{
             Jwts.parserBuilder().setSigningKey(getKey()).build().parseClaimsJws(token);
             return true;
-        }catch (SignatureException ex) {
-            // Invalid JWT signature
         } catch (MalformedJwtException ex) {
             // Invalid JWT token
         } catch (ExpiredJwtException ex) {

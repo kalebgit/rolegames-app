@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.function.EntityResponse;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @AllArgsConstructor(onConstructor_= @__({@Autowired}))
@@ -27,23 +30,43 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest){
-        logger.info("Datos recibidos en controller de login: {}", loginRequest);
-        String token = authService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
-        return ResponseEntity
-                .ok()
-                .header("Authorization", "Bearer " + token)
-                .build();
+        try{
+            logger.info("[CONTROLLER][REQUEST: {}] [LOGIN] Datos recibidos", loginRequest);
+            String token = authService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Login successful");
+            response.put("username", loginRequest.getUsername());
+
+            return ResponseEntity
+                    .ok()
+                    .header("Authorization", "Bearer " + token)
+                    .body(response);
+        } catch (Exception e) {
+            logger.warn("[CONTROLLER] hubo un error en el login");
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Credenciales erroneas");
+            errorResponse.put("error", e.getMessage());
+
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user){
-        logger.info("Usuario recibido en controller de register: \n" + user);
+        logger.info("[CONTROLLER][USER: {}] [Register] Datos recibidos", user);
+        try {
+            if(user.getUserType() == null){
+                user.setUserType(UserType.PLAYER);
+            }
+            return ResponseEntity.ok(authService.register(user));
+        } catch (Exception e) {
+            logger.warn("[CONTROLLER] hubo un error en el register");
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Registration failed");
+            errorResponse.put("error", e.getMessage());
 
-        if(user.getUserType() == null){
-            user.setUserType(UserType.PLAYER);
+            return ResponseEntity.badRequest().body(errorResponse);
         }
-
-        return ResponseEntity.ok().body(authService.register(user));
     }
 
     @Data
