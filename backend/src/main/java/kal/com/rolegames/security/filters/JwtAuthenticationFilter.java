@@ -6,12 +6,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kal.com.rolegames.security.util.JwtTokenProvider;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -20,11 +21,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
-//lombok
 @AllArgsConstructor(onConstructor_ = @__({@Autowired}))
-//simplemente esta validando tokens ya generados, no haciendo un login o algo parecido
-// por eso se implementa OncePerRequestFilter y no AuthenticationProvider
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private JwtTokenProvider tokenProvider;
     private UserDetailsService userDetailsService;
@@ -33,18 +33,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        try{
+
+        String requestURI = request.getRequestURI();
+        logger.info("🔐 JWT Filter - Procesando: {} {}", request.getMethod(), requestURI);
+
+        try {
             String jwt = tokenProvider.getTokenFromRequest(request);
-            if(StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)){
+            logger.info("🔍 Token extraído: {}", jwt != null ? "PRESENTE (***)" : "AUSENTE");
+
+            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
+                logger.info("✅ Token válido");
+
                 String username = tokenProvider.getUserNameFromToken(jwt);
-                UserDetails details = userDetailsService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken token =
-                        new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
-                token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(token);
+                logger.info("👤 Usuario del token: {}", username);
+
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                logger.info("📋 UserDetails cargado: {}", userDetails.getUsername());
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                logger.info("🔒 Contexto de seguridad establecido para: {}", username);
+            } else {
+                logger.warn("❌ Token inválido o ausente para: {}", requestURI);
             }
-        }catch (Exception ex) {
-            logger.error("Could not set user authentication in security context when trying to process jwt token", ex);
+        } catch (Exception ex) {
+            logger.error("❌ Error en JWT Filter para {}: {}", requestURI, ex.getMessage(), ex);
         }
 
         filterChain.doFilter(request, response);

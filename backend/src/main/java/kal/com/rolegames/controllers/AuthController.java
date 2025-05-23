@@ -34,6 +34,7 @@ public class AuthController {
             logger.info("[CONTROLLER][REQUEST: {}] [LOGIN] Datos recibidos", loginRequest);
             String token = authService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
             Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
             response.put("message", "Login successful");
             response.put("username", loginRequest.getUsername());
 
@@ -58,9 +59,16 @@ public class AuthController {
             if(user.getUserType() == null){
                 user.setUserType(UserType.PLAYER);
             }
-            return ResponseEntity.ok(authService.register(user));
+
+            User registeredUser = authService.register(user);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "User registered successfully");
+            response.put("userId", registeredUser.getUserId());
+            response.put("username", registeredUser.getUsername());
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.warn("[CONTROLLER] hubo un error en el register");
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("message", "Registration failed");
             errorResponse.put("error", e.getMessage());

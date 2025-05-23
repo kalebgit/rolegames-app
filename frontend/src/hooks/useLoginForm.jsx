@@ -23,6 +23,22 @@ export default function useLoginForm(initialValue, onLoginSuccess){
         try{
             const response = await api.post('api/auth/login', credentials)
             
+            // LOGGING SIMPLE PERO COMPLETO
+            console.log("=== RESPUESTA COMPLETA ===");
+            console.table({
+                "Status": response.status,
+                "Status Text": response.statusText,
+                "Data Type": typeof response.data,
+                "Data Keys": Object.keys(response.data).join(", ")
+            });
+            
+            console.log("📄 response.data:", response.data);
+            console.log("📋 response.headers:", response.headers);
+            
+            // Pretty print del JSON
+            console.log("🎨 response.data formateado:");
+            console.log(JSON.stringify(response.data, null, 2));
+            
             if (response.data.token){
                 localStorage.setItem('token', response.data.token)
                 setSuccess('Login exitoso!')
@@ -43,7 +59,10 @@ export default function useLoginForm(initialValue, onLoginSuccess){
                 }
             }
         }catch(err){
-            console.error('Login error: ', err)
+            console.error('❌ ERROR:', err);
+            console.error('📄 Error response data:', err.response?.data);
+            console.error('📊 Error status:', err.response?.status);
+            
             setError(err.response?.data?.message || 'Login fallido. Verifique que sus credenciales sean correctas')
         }finally{
             setLoading(false)

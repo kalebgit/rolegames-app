@@ -8,12 +8,11 @@ export default function AuthContainer() {
   const navigate = useNavigate();
   
   const handleLoginSuccess = (userData) => {
-    
+    console.log("se loggeo perfectamente")
     navigate('/');
   };
   
   const handleRegisterSuccess = (userData) => {
-    
     setShowLogin(true);
   };
   
