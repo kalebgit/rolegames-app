@@ -1,5 +1,5 @@
 // frontend/src/App.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthContainer from './components/AuthContainer';
 import Navigation from './components/layout/Navigation';
@@ -56,7 +56,11 @@ function AppContent() {
   //observando
   const isAuthenticated = useUserStore(state=>state.isAuthenticated)
   const loading = useUserStore(state=>state.loading)
+  const fetchUserData = useUserStore(state=>state.fetchUserData)
 
+  useEffect(()=>{
+    fetchUserData()
+  })
   console.log("🔐 AppContent: isAuthenticated =", isAuthenticated, "loading =", loading);
   
   if (loading) {
