@@ -1,9 +1,7 @@
+// frontend/src/App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import useAuth from './hooks/useAuth';
 import AuthContainer from './components/AuthContainer';
-import LoginForm from './components/LoginForm';
-import RegisterForm from './components/RegisterForm';
 import Navigation from './components/layout/Navigation';
 import Dashboard from './components/dashboard/Dashboard';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -41,17 +39,7 @@ import EncounterForm from './components/encounters/EncounterForm';
 
 //not found
 import NotFound from './components/NotFound';
-
-// Componente de protección de rutas
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
-  
-  if (loading) {
-    return <LoadingSpinner message="Verificando autenticación..." />;
-  }
-  
-  return isAuthenticated ? children : <Navigate to="/auth" replace />;
-}
+import { useUserStore } from './stores/useUserStore';
 
 // Layout principal de la aplicación
 function AppLayout({ children }) {
@@ -63,252 +51,179 @@ function AppLayout({ children }) {
   );
 }
 
+// Componente principal que maneja la autenticación
+function AppContent() {
+  //observando
+  const isAuthenticated = useUserStore(state=>state.isAuthenticated)
+  const loading = useUserStore(state=>state.loading)
+
+  console.log("🔐 AppContent: isAuthenticated =", isAuthenticated, "loading =", loading);
+  
+  if (loading) {
+    return <LoadingSpinner message="Verificando autenticación..." />;
+  }
+  
+  // Si no está autenticado, mostrar solo las rutas de autenticación
+  if (!isAuthenticated) {
+    return (
+      <Routes>
+        <Route path="/auth" element={<AuthContainer />} />
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      </Routes>
+    );
+  }
+  
+  // Si está autenticado, mostrar las rutas protegidas
+  return (
+    <Routes>
+      {/* Dashboard */}
+      <Route path="/" element={
+        <AppLayout>
+          <Dashboard />
+        </AppLayout>
+      } />
+      
+      {/* Si está autenticado y va a /auth, redirigir al dashboard */}
+      <Route path="/auth" element={<Navigate to="/" replace />} />
+      
+      {/* Characters */}
+      <Route path="/characters" element={
+        <AppLayout>
+          <CharacterList />
+        </AppLayout>
+      } />
+      <Route path="/characters/new" element={
+        <AppLayout>
+          <CharacterForm />
+        </AppLayout>
+      } />
+      <Route path="/characters/:id/edit" element={
+        <AppLayout>
+          <CharacterForm />
+        </AppLayout>
+      } />
+      
+      {/* Campaigns */}
+      <Route path="/campaigns" element={
+        <AppLayout>
+          <CampaignList />
+        </AppLayout>
+      } />
+      <Route path="/campaigns/new" element={
+        <AppLayout>
+          <CampaignForm />
+        </AppLayout>
+      } />
+      <Route path="/campaigns/:id/edit" element={
+        <AppLayout>
+          <CampaignForm />
+        </AppLayout>
+      } />
+      
+      {/* Items */}
+      <Route path="/items" element={
+        <AppLayout>
+          <ItemList />
+        </AppLayout>
+      } />
+      <Route path="/items/new" element={
+        <AppLayout>
+          <ItemForm />
+        </AppLayout>
+      } />
+      <Route path="/items/:id/edit" element={
+        <AppLayout>
+          <ItemForm />
+        </AppLayout>
+      } />
+      
+      {/* Spells */}
+      <Route path="/spells" element={
+        <AppLayout>
+          <SpellList />
+        </AppLayout>
+      } />
+      <Route path="/spells/new" element={
+        <AppLayout>
+          <SpellForm />
+        </AppLayout>
+      } />
+      <Route path="/spells/:id/edit" element={
+        <AppLayout>
+          <SpellForm />
+        </AppLayout>
+      } />
+      
+      {/* NPCs */}
+      <Route path="/npcs" element={
+        <AppLayout>
+          <NPCList />
+        </AppLayout>
+      } />
+      <Route path="/npcs/new" element={
+        <AppLayout>
+          <NPCForm />
+        </AppLayout>
+      } />
+      <Route path="/npcs/:id/edit" element={
+        <AppLayout>
+          <NPCForm />
+        </AppLayout>
+      } />
+      
+      {/* Sessions */}
+      <Route path="/sessions" element={
+        <AppLayout>
+          <SessionList />
+        </AppLayout>
+      } />
+      <Route path="/sessions/new" element={
+        <AppLayout>
+          <SessionForm />
+        </AppLayout>
+      } />
+      <Route path="/sessions/:id/edit" element={
+        <AppLayout>
+          <SessionForm />
+        </AppLayout>
+      } />
+      
+      {/* Encounters */}
+      <Route path="/encounters" element={
+        <AppLayout>
+          <EncounterList />
+        </AppLayout>
+      } />
+      <Route path="/encounters/new" element={
+        <AppLayout>
+          <EncounterForm />
+        </AppLayout>
+      } />
+      <Route path="/encounters/:id/edit" element={
+        <AppLayout>
+          <EncounterForm />
+        </AppLayout>
+      } />
+      
+      {/* Combat */}
+      <Route path="/combat" element={
+        <AppLayout>
+          <CombatTracker />
+        </AppLayout>
+      } />
+
+      <Route path="/not-found" element={<NotFound/>}/>
+      
+      {/* Redirect any unknown route to not-found */}
+      <Route path="*" element={<Navigate to="/not-found" replace />} />
+    </Routes>
+  );
+}
 
 export default function App() {
   return (
     <Router>
-      <Routes>
-        {/* Dashboard */}
-        <Route path="/" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <Dashboard />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        
-        <Route 
-          path="/auth" 
-          element={
-            <AuthContainer />
-          } 
-        />
-        
-        
-        
-        {/* Characters */}
-        <Route path="/characters" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <CharacterList />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/characters/new" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <CharacterForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/characters/:id/edit" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <CharacterForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        
-        {/* Campaigns */}
-        <Route path="/campaigns" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <CampaignList />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/campaigns/new" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <CampaignForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/campaigns/:id/edit" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <CampaignForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        
-        {/* Items */}
-        <Route path="/items" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ItemList />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/items/new" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ItemForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/items/:id/edit" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <ItemForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        
-        {/* Spells */}
-        <Route path="/spells" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <SpellList />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/spells/new" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <SpellForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/spells/:id/edit" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <SpellForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        
-        {/* NPCs */}
-        <Route path="/npcs" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <NPCList />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/npcs/new" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <NPCForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/npcs/:id/edit" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <NPCForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        
-        {/* Sessions */}
-        <Route path="/sessions" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <SessionList />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/sessions/new" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <SessionForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/sessions/:id/edit" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <SessionForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        
-        {/* Encounters */}
-        <Route path="/encounters" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <EncounterList />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/encounters/new" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <EncounterForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/encounters/:id/edit" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <EncounterForm />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-        
-        {/* Combat */}
-        <Route path="/combat" element={
-          <ProtectedRoute>
-            <AppLayout>
-              <CombatTracker />
-            </AppLayout>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/not-found" element={<NotFound/>}/>
-        
-        {/* Redirect any unknown route to home */}
-        <Route path="*" element={<Navigate to="/not-found" replace />} />
-      </Routes>
+      <AppContent />
     </Router>
   );
 }
-
-// import React from 'react';
-// import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-
-// // Componente de prueba simple
-// function TestComponent() {
-//   return (
-//     <div style={{ 
-//       padding: '20px', 
-//       backgroundColor: '#f0f0f0', 
-//       margin: '20px',
-//       borderRadius: '8px'
-//     }}>
-//       <h1>🎮 RoleGames Debug Test</h1>
-//       <p>Si ves esto, React está funcionando correctamente.</p>
-//       <p>Timestamp: {new Date().toLocaleString()}</p>
-//     </div>
-//   );
-// }
-
-// // Versión simplificada para debugging
-// function App() {
-//   console.log("🚀 App component is rendering...");
-  
-//   try {
-//     return (
-//       <Router>
-//         <div className="min-h-screen bg-gray-100">
-//           <TestComponent />
-//           <Routes>
-//             <Route path="/" element={<TestComponent />} />
-//             <Route path="*" element={<Navigate to="/" replace />} />
-//           </Routes>
-//         </div>
-//       </Router>
-//     );
-//   } catch (error) {
-//     console.error("❌ Error in App component:", error);
-//     return (
-//       <div style={{ padding: '20px', color: 'red' }}>
-//         <h1>Error en la aplicación</h1>
-//         <pre>{error.toString()}</pre>
-//       </div>
-//     );
-//   }
-// }
-
-// export default App;

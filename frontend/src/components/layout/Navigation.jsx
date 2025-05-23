@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import useAuth from '../../hooks/useAuth';
+import { useUserStore } from '../../stores/useUserStore';
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, handleLogout } = useAuth();
+  const user = useUserStore(state=>state.user)
+  const logout = useUserStore(state=>state.logout)
+
+  const handleLogout = () =>{
+    logout(navigate)
+  }
 
   const getCurrentView = () => {
     const path = location.pathname;
