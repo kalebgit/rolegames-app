@@ -23,4 +23,33 @@ api.interceptors.request.use(
   }
 );
 
+api.interceptors.response.use(
+  (response) => {
+      return response;
+  },
+  (error) => {
+      // Manejar errores de autenticación globalmente
+      if (error.response?.status === 401 || error.response?.status === 403) {
+          console.log("🔐 Axios Interceptor: Error de autenticación detectado");
+          
+          // Limpiar datos de autenticación
+          localStorage.removeItem('token');
+          delete api.defaults.headers.common['Authorization'];
+          
+          // Obtener el store de Zustand
+          import('../stores/useUserStore').then(({ useUserStore }) => {
+              const store = useUserStore.getState();
+              store.logout();
+              
+              // Redirigir al login solo si no estamos ya en la página de auth
+              if (!window.location.pathname.includes('/auth')) {
+                  window.location.href = '/auth';
+              }
+          });
+      }
+      
+      return Promise.reject(error);
+  }
+);
+
 export default api;
