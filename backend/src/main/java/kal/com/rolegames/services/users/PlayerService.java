@@ -59,6 +59,8 @@ public class PlayerService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .password(user.getPassword())
+                .createdAt(user.getCreatedAt())
+//                .version(user.getVersion())
                 .userType(user.getUserType())
                 .experience(0)
                 .build();

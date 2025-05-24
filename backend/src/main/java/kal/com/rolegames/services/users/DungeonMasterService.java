@@ -9,6 +9,8 @@ import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.models.util.UserType;
 import kal.com.rolegames.repositories.users.DungeonMasterRepository;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,12 +77,19 @@ public class DungeonMasterService {
                 .email(user.getEmail())
                 .password(user.getPassword())
                 .userType(user.getUserType())
+                .createdAt(user.getCreatedAt())
+//                .version(user.getVersion())
                 .dmStyle("Standard")
                 .rating(0.0f)
                 .build();
         logger.info("[SERVICE] [DM] Dm craedo: {}", dm);
-
-        return dungeonMasterRepository.save(dm);
+        DungeonMaster dmCreated = null;
+        try{
+            dmCreated = dungeonMasterRepository.save(dm);
+        }catch(Exception exc){
+            logger.info("Error {}: {}", exc.getCause(), exc.getMessage());
+        }
+        return dmCreated;
     }
 
     /**
@@ -285,8 +294,8 @@ public class DungeonMasterService {
     /**
      * Clase auxiliar para estadísticas del DM
      */
-    @lombok.Data
-    @lombok.Builder
+    @Data
+    @Builder
     public static class DMStats {
         private int totalCampaigns;
         private int activeCampaigns;

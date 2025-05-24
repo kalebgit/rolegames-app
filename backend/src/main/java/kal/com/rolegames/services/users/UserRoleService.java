@@ -84,7 +84,7 @@ public class UserRoleService {
         user.addRole(UserType.PLAYER);
         userRepository.save(user);
 
-        return playerRepository.save(player);
+        return player;
     }
 
     /**
@@ -112,10 +112,12 @@ public class UserRoleService {
         logger.info("[SERVICE] [ROL] se ha creado el dm: {}", dm);
 
         user.addRole(UserType.DUNGEON_MASTER);
-        userRepository.save(user);
+        User updatedUser = userRepository.save(user);
 
-        logger.info("[SERVICE] [ROL] todo bien para actualizar al usuario con su nuevo rol");
-        return dungeonMasterRepository.save(dm);
+        logger.info("[SERVICE] [ROL] el usuario fue actualizado: {}", updatedUser);
+        logger.info("[SERVICE] [ROL] todo bien para actualizar al usuario con su nuevo rol: {}", dm);
+
+        return dm;
     }
 
     /**
