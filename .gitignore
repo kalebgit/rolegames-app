@@ -50,6 +50,7 @@ out/
 /nbdist/
 /.nb-gradle/
 build/
+.gradle/
 nbactions.xml
 nb-configuration.xml
 

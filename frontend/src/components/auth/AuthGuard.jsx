@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useUserStore } from '../stores/useUserStore';
-import LoadingSpinner from './common/LoadingSpinner';
+import { useUserStore } from '../../stores/useUserStore';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 export default function AuthGuard({ children }) {
     const location = useLocation();

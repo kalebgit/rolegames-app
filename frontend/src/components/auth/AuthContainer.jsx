@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
-import { useUserStore } from '../stores/useUserStore';
+import { useUserStore } from '../../stores/useUserStore';
 
 export default function AuthContainer() {
   const [showLogin, setShowLogin] = useState(true);

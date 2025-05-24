@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import AuthContainer from './components/AuthContainer';
+import AuthContainer from './components/auth/AuthContainer';
 import Navigation from './components/layout/Navigation';
 import Dashboard from './components/dashboard/Dashboard';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -17,7 +17,7 @@ import SpellList from './components/spells/SpellList';
 import CombatTracker from './components/combat/CombatTracker';
 
 // Gestión de roles
-import RoleManager from './components/roles/RoleManager';
+import RoleManager from './components/auth/RoleManager';
 
 import { useUserStore } from './stores/useUserStore';
 import LoadingSpinner from './components/common/LoadingSpinner';
