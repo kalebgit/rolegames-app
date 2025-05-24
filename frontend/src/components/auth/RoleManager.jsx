@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../../stores/useUserStore';
 import { useRoleStore } from '../../stores/useRoleStore';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from 'react-toastify';
 
 export default function RoleManager() {
   const navigate = useNavigate();
@@ -52,13 +53,42 @@ export default function RoleManager() {
     }
   }, [availableRoles, hasRole, getPlayerInstance, getDMInstance, fetchPlayerInstance, fetchDungeonMasterInstance]);
 
+  // Mostrar errores como toast
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+
   const handleEnablePlayer = async () => {
     setActionLoading(true);
     setMessage('');
     clearError();
     
-    const result = await enablePlayerRole();
-    setMessage(result.message);
+    try {
+      const result = await enablePlayerRole();
+      if (result.success) {
+        toast.success('¡Rol de Jugador activado exitosamente!', {
+          position: "top-right",
+          autoClose: 4000,
+        });
+        setMessage(result.message);
+      } else {
+        toast.error(result.message || 'Error al activar rol de Jugador', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+        setMessage(result.message);
+      }
+    } catch (err) {
+      toast.error('Error inesperado al activar rol de Jugador', {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
     
     setActionLoading(false);
   };
@@ -68,18 +98,53 @@ export default function RoleManager() {
     setMessage('');
     clearError();
     
-    const result = await enableDungeonMasterRole();
-    setMessage(result.message);
+    try {
+      const result = await enableDungeonMasterRole();
+      if (result.success) {
+        toast.success('¡Rol de Dungeon Master activado exitosamente!', {
+          position: "top-right",
+          autoClose: 4000,
+        });
+        setMessage(result.message);
+      } else {
+        toast.error(result.message || 'Error al activar rol de Dungeon Master', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+        setMessage(result.message);
+      }
+    } catch (err) {
+      toast.error('Error inesperado al activar rol de Dungeon Master', {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
     
     setActionLoading(false);
   };
 
   const handleSwitchContext = async (targetRole) => {
-    const result = await switchRoleContext(targetRole);
-    if (result.success) {
-      setMessage(`Cambiado a contexto: ${targetRole === 'PLAYER' ? 'Jugador' : 'Dungeon Master'}`);
-    } else {
-      setMessage(result.message);
+    try {
+      const result = await switchRoleContext(targetRole);
+      if (result.success) {
+        const roleName = targetRole === 'PLAYER' ? 'Jugador' : 'Dungeon Master';
+        toast.success(`Cambiado a contexto: ${roleName}`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        setMessage(`Cambiado a contexto: ${roleName}`);
+      } else {
+        toast.error(result.message || 'Error al cambiar contexto', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+        setMessage(result.message);
+      }
+    } catch (err) {
+      toast.error('Error inesperado al cambiar contexto', {
+        position: "top-right",
+        autoClose: 5000,
+      });
     }
   };
 

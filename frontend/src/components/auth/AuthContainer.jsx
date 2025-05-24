@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import { useUserStore } from '../../stores/useUserStore';
+import { toast } from 'react-toastify';
 
 export default function AuthContainer() {
   const [showLogin, setShowLogin] = useState(true);
@@ -16,6 +17,10 @@ export default function AuthContainer() {
   useEffect(() => {
     if (isAuthenticated) {
       console.log("Usuario autenticado, redirigiendo...");
+      toast.success('¡Sesión iniciada correctamente!', {
+        position: "top-right",
+        autoClose: 3000,
+      });
       // Usar setTimeout para evitar setState durante render
       const timer = setTimeout(() => {
         navigate('/', { replace: true });
@@ -27,12 +32,20 @@ export default function AuthContainer() {
   
   const handleLoginSuccess = (userData) => {
     console.log("Login exitoso en AuthContainer.jsx");
+    toast.success(`¡Bienvenido de vuelta, ${userData.username || 'Usuario'}!`, {
+      position: "top-right",
+      autoClose: 3000,
+    });
     setIsAuthenticated(true);
     // No llamar navigate aquí, dejar que el useEffect lo maneje
   };
   
   const handleRegisterSuccess = (userData) => {
     console.log("Registro exitoso en AuthContainer.jsx");
+    toast.success('¡Cuenta creada exitosamente! Por favor inicia sesión.', {
+      position: "top-right",
+      autoClose: 4000,
+    });
     // Después del registro, mostrar login para que inicie sesión
     setShowLogin(true);
     // Nota: No establecer isAuthenticated aquí, el usuario debe hacer login

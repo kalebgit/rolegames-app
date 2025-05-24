@@ -1,20 +1,43 @@
 import React, { useState } from 'react';
 import  useSessions  from '../../hooks/sessions/useSessions';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from 'react-toastify';
+
 
 export default function SessionList({ onSessionSelect, onCreateSession }) {
   const { sessions, loading, error, deleteSession } = useSessions();
   const [filter, setFilter] = useState('');
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+  
+  // En handleDelete, envolver con try-catch:
+  const handleDelete = async (sessionId) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta sesión?')) {
+      try {
+        await deleteSession(sessionId);
+        toast.success('Sesión eliminada exitosamente', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } catch (err) {
+        toast.error('Error al eliminar la sesión', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
+    }
+  };
 
   const filteredSessions = sessions.filter(session =>
     session.campaign?.name.toLowerCase().includes(filter.toLowerCase())
   );
 
-  const handleDelete = async (sessionId) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar esta sesión?')) {
-      await deleteSession(sessionId);
-    }
-  };
 
   if (loading) {
     return <LoadingSpinner message="Cargando sesiones..." />;

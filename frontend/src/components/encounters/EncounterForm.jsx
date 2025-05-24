@@ -1,5 +1,7 @@
 import React from 'react';
 import  useEncounterForm  from '../../hooks/encounters/useEncounterForm';
+import { toast } from 'react-toastify';
+
 
 export default function EncounterForm({ encounterId, onSave, onCancel }) {
   const {
@@ -10,6 +12,25 @@ export default function EncounterForm({ encounterId, onSave, onCancel }) {
     handleSubmit,
     handleChange
   } = useEncounterForm(encounterId, onSave);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (success) {
+      const message = encounterId ? 'Encuentro actualizado exitosamente' : 'Encuentro creado exitosamente';
+      toast.success(message, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  }, [success, encounterId]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">

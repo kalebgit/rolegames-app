@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
 import  useItems  from '../../hooks/items/useItems';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from 'react-toastify';
+
 
 export default function ItemList({ onItemSelect, onCreateItem }) {
   const { items, loading, error, deleteItem } = useItems();
   const [filter, setFilter] = useState('');
   const [rarityFilter, setRarityFilter] = useState('');
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+
 
   const rarityColors = {
     COMMON: 'bg-gray-100 text-gray-800',
@@ -24,9 +36,21 @@ export default function ItemList({ onItemSelect, onCreateItem }) {
 
   const handleDelete = async (itemId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este objeto?')) {
-      await deleteItem(itemId);
+      try {
+        await deleteItem(itemId);
+        toast.success('Objeto eliminado exitosamente', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } catch (err) {
+        toast.error('Error al eliminar el objeto', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
     }
   };
+  
 
   if (loading) {
     return <LoadingSpinner message="Cargando inventario..." />;

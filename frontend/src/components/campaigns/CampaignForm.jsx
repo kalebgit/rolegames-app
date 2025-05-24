@@ -1,7 +1,7 @@
-// Archivo: src/components/campaigns/CampaignForm.jsx (Router version actualizada)
-import React from 'react';
+import React, { useEffect } from 'react';
 import  useCampaignForm  from '../../hooks/campaigns/useCampaignForm';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 export default function CampaignForm() {
   const { id } = useParams();
@@ -15,6 +15,27 @@ export default function CampaignForm() {
     handleSubmit,
     handleChange
   } = useCampaignForm(id, () => navigate('/campaigns'));
+
+  // Mostrar errores como toast
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+
+  // Mostrar éxito como toast
+  useEffect(() => {
+    if (success) {
+      const message = id ? 'Campaña actualizada exitosamente' : 'Campaña creada exitosamente';
+      toast.success(message, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  }, [success, id]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">

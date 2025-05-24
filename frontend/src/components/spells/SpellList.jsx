@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import  useSpells  from '../../hooks/spells/useSpells';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from 'react-toastify';
 
 export default function SpellList() {
   const navigate = useNavigate();
@@ -9,6 +10,16 @@ export default function SpellList() {
   const [filter, setFilter] = useState('');
   const [levelFilter, setLevelFilter] = useState('');
   const [schoolFilter, setSchoolFilter] = useState('');
+
+  // Mostrar errores como toast
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
 
   const schoolColors = {
     ABJURATION: 'bg-blue-100 text-blue-800',
@@ -30,7 +41,18 @@ export default function SpellList() {
 
   const handleDelete = async (spellId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este hechizo?')) {
-      await deleteSpell(spellId);
+      try {
+        await deleteSpell(spellId);
+        toast.success('Hechizo eliminado exitosamente', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } catch (err) {
+        toast.error('Error al eliminar el hechizo', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
     }
   };
 

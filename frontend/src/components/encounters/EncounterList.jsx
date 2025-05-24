@@ -1,8 +1,20 @@
 import React, { useState } from 'react';
 import  useEncounters  from '../../hooks/encounters/useEncounters';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from 'react-toastify';
+
 
 export default function EncounterList({ onEncounterSelect, onCreateEncounter, onStartCombat }) {
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+
   const { encounters, loading, error, deleteEncounter, completeEncounter } = useEncounters();
   const [typeFilter, setTypeFilter] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('');
@@ -29,15 +41,39 @@ export default function EncounterList({ onEncounterSelect, onCreateEncounter, on
     return matchesType && matchesDifficulty;
   });
 
+
   const handleDelete = async (encounterId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este encuentro?')) {
-      await deleteEncounter(encounterId);
+      try {
+        await deleteEncounter(encounterId);
+        toast.success('Encuentro eliminado exitosamente', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } catch (err) {
+        toast.error('Error al eliminar el encuentro', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
     }
   };
+  
 
   const handleComplete = async (encounterId) => {
     if (window.confirm('¿Marcar este encuentro como completado?')) {
-      await completeEncounter(encounterId);
+      try {
+        await completeEncounter(encounterId);
+        toast.success('Encuentro marcado como completado', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } catch (err) {
+        toast.error('Error al completar el encuentro', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
     }
   };
 

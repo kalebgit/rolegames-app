@@ -22,6 +22,10 @@ import RoleManager from './components/auth/RoleManager';
 import { useUserStore } from './stores/useUserStore';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
+// React Toastify
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 function AppLayout({ children }) {
   return (
     <div className="min-h-screen bg-gray-100">
@@ -149,6 +153,20 @@ export default function App() {
           {/* Redirect any unknown route */}
           <Route path="*" element={<Navigate to="/auth" replace />} />
         </Routes>
+        
+        {/* Toast Container - Configuración global */}
+        <ToastContainer
+          position="top-right"
+          autoClose={4000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
       </AppInitializer>
     </Router>
   );

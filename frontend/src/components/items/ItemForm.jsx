@@ -1,5 +1,7 @@
 import React from 'react';
 import  useItemForm  from '../../hooks/items/useItemForm';
+import { toast } from 'react-toastify';
+
 
 export default function ItemForm({ itemId, onSave, onCancel }) {
   const {
@@ -10,6 +12,26 @@ export default function ItemForm({ itemId, onSave, onCancel }) {
     handleSubmit,
     handleChange
   } = useItemForm(itemId, onSave);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (success) {
+      const message = itemId ? 'Objeto actualizado exitosamente' : 'Objeto creado exitosamente';
+      toast.success(message, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  }, [success, itemId]);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">

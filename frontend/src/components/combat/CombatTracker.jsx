@@ -1,19 +1,52 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import  useCombat  from '../../hooks/combat/useCombat';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from 'react-toastify';
 
 export default function CombatTracker() {
   const { combatState, loading, error, nextTurn, endCombat } = useCombat();
   const navigate = useNavigate();
 
+  // Mostrar errores como toast
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+
   const handleNextTurn = async () => {
-    await nextTurn();
+    try {
+      await nextTurn();
+      toast.success('Turno avanzado exitosamente', {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } catch (err) {
+      toast.error('Error al avanzar turno', {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
   };
 
   const handleEndCombat = async () => {
     if (window.confirm('¿Estás seguro de que quieres finalizar el combate?')) {
-      await endCombat();
+      try {
+        await endCombat();
+        toast.success('Combate finalizado exitosamente', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } catch (err) {
+        toast.error('Error al finalizar combate', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
     }
   };
 

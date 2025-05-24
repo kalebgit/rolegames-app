@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from 'react-toastify';
+
 
 export default function CharacterDetail() {
   const { id } = useParams();
@@ -15,15 +17,36 @@ export default function CharacterDetail() {
     fetchCharacter();
   }, [id]);
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+
   const fetchCharacter = async () => {
     try {
       setLoading(true);
       const response = await api.get(`/api/characters/${id}`);
       setCharacter(response.data);
       setError('');
+
+      //toast
+      toast.success('Personaje cargado exitosamente', {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
     } catch (err) {
       setError('Error al cargar el personaje');
       console.error('Error fetching character:', err);
+      toast.error(errorMessage, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+
     } finally {
       setLoading(false);
     }

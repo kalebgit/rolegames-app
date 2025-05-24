@@ -20,6 +20,27 @@ export default function SpellForm() {
   const abilityTypes = ['STRENGTH', 'DEXTERITY', 'CONSTITUTION', 'INTELLIGENCE', 'WISDOM', 'CHARISMA'];
   const damageTypes = ['SLASHING', 'PIERCING', 'BLUDGEONING', 'ACID', 'COLD', 'FIRE', 'FORCE', 'LIGHTNING', 'NECROTIC', 'POISON', 'PSYCHIC', 'RADIANT', 'THUNDER'];
 
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+
+  // Mostrar éxito como toast
+  useEffect(() => {
+    if (success) {
+      const message = id ? 'Hechizo actualizado exitosamente' : 'Hechizo creado exitosamente';
+      toast.success(message, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+  }, [success, id]);
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-4xl mx-auto">

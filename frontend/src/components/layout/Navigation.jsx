@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserStore } from '../../stores/useUserStore';
 import { useRoleStore } from '../../stores/useRoleStore';
+import { toast } from 'react-toastify';
+
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,15 +26,37 @@ export default function Navigation() {
   }, [user, availableRoles.length, fetchUserRoles]);
 
   const handleLogout = () => {
+    toast.info('Sesión cerrada exitosamente', {
+      position: "top-right",
+      autoClose: 2000,
+    });
     logout(navigate);
   };
+  
 
   const handleRoleSwitch = async (targetRole) => {
-    const result = await switchRoleContext(targetRole);
-    if (!result.success) {
-      alert(`Error al cambiar rol: ${result.message}`);
+    try {
+      const result = await switchRoleContext(targetRole);
+      if (result.success) {
+        const roleName = targetRole === 'PLAYER' ? 'Jugador' : 'Dungeon Master';
+        toast.success(`Cambiado a modo ${roleName}`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } else {
+        toast.error(result.message || 'Error al cambiar rol', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
+    } catch (err) {
+      toast.error('Error inesperado al cambiar rol', {
+        position: "top-right",
+        autoClose: 5000,
+      });
     }
   };
+  
 
   const getCurrentView = () => {
     const path = location.pathname;

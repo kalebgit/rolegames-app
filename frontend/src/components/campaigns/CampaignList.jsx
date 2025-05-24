@@ -1,15 +1,37 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import  useCampaigns  from '../../hooks/campaigns/useCampaigns';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from 'react-toastify';
 
 export default function CampaignList() {
   const navigate = useNavigate();
   const { campaigns, loading, error, deleteCampaign } = useCampaigns();
 
+  // Mostrar errores como toast
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
+
   const handleDelete = async (campaignId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar esta campaña?')) {
-      await deleteCampaign(campaignId);
+      try {
+        await deleteCampaign(campaignId);
+        toast.success('Campaña eliminada exitosamente', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } catch (err) {
+        toast.error('Error al eliminar la campaña', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
     }
   };
 

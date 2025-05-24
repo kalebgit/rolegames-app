@@ -1,13 +1,24 @@
 // src/components/characters/CharacterList.jsx (con React Router)
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useCharacters from '../../hooks/characters/useCharacters';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from 'react-toastify';
 
 export default function CharacterList() {
   const navigate = useNavigate();
   const { characters, loading, error, deleteCharacter } = useCharacters();
   const [filter, setFilter] = useState('');
+
+  // Mostrar errores como toast
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
 
   const filteredCharacters = Array.isArray(characters) 
   ? characters.filter(character => 
@@ -17,7 +28,18 @@ export default function CharacterList() {
 
   const handleDelete = async (characterId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este personaje?')) {
-      await deleteCharacter(characterId);
+      try {
+        await deleteCharacter(characterId);
+        toast.success('Personaje eliminado exitosamente', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } catch (err) {
+        toast.error('Error al eliminar el personaje', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
     }
   };
 

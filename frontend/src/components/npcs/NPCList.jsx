@@ -1,11 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import  useNPCs  from '../../hooks/npcs/useNPCs';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { toast } from 'react-toastify';
 
 export default function NPCList({ onNPCSelect, onCreateNPC }) {
   const { npcs, loading, error, deleteNPC } = useNPCs();
   const [filter, setFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+
+  // Mostrar errores como toast
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+    }
+  }, [error]);
 
   const typeColors = {
     MERCHANT: 'bg-green-100 text-green-800',
@@ -24,10 +35,20 @@ export default function NPCList({ onNPCSelect, onCreateNPC }) {
     return matchesName && matchesType;
   }) : [];
 
-
   const handleDelete = async (npcId) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este NPC?')) {
-      await deleteNPC(npcId);
+      try {
+        await deleteNPC(npcId);
+        toast.success('NPC eliminado exitosamente', {
+          position: "top-right",
+          autoClose: 3000,
+        });
+      } catch (err) {
+        toast.error('Error al eliminar el NPC', {
+          position: "top-right",
+          autoClose: 5000,
+        });
+      }
     }
   };
 
