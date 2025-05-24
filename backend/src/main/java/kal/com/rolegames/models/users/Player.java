@@ -28,6 +28,15 @@ public class Player extends User {
     private int experience = 0;
 
     /**
+     * Verifica que el usuario puede actuar como Player antes de hacer operaciones
+     */
+    private void validatePlayerRole() {
+        if (!canActAsPlayer()) {
+            throw new IllegalStateException("User does not have PLAYER role");
+        }
+    }
+
+    /**
      * Adds a character to this player's list of characters.
      * Sets the character's player to this player and adds it to the characters set.
      *

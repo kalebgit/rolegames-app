@@ -1,51 +1,27 @@
-// frontend/src/App.jsx
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthContainer from './components/AuthContainer';
 import Navigation from './components/layout/Navigation';
 import Dashboard from './components/dashboard/Dashboard';
-import LoadingSpinner from './components/common/LoadingSpinner';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
-// Characters
-import CharacterList from './components/characters/CharacterList';
+// Componentes que requieren roles específicos
 import CharacterForm from './components/characters/CharacterForm';
-import CharacterDetail from './components/characters/CharacterDetail';
-
-// Campaigns
-import CampaignList from './components/campaigns/CampaignList';
+import NPCForm from './components/npcs/NPCForm';
 import CampaignForm from './components/campaigns/CampaignForm';
 
-// Items
-import ItemList from './components/items/ItemList';
-import ItemForm from './components/items/ItemForm';
-
-// Spells
+// Componentes generales
+import CharacterList from './components/characters/CharacterList';
+import CampaignList from './components/campaigns/CampaignList';
 import SpellList from './components/spells/SpellList';
-import SpellForm from './components/spells/SpellForm';
-
-// NPCs
-import NPCList from './components/npcs/NPCList';
-import NPCForm from './components/npcs/NPCForm';
-
-// Combat
 import CombatTracker from './components/combat/CombatTracker';
 
-// Sessions
-import SessionList from './components/sessions/SessionList';
-import SessionForm from './components/sessions/SessionForm';
-
-// Encounters
-import EncounterList from './components/encounters/EncounterList';
-import EncounterForm from './components/encounters/EncounterForm';
-
-//not found
-import NotFound from './components/NotFound';
-
+// Gestión de roles
+import RoleManager from './components/roles/RoleManager';
 
 import { useUserStore } from './stores/useUserStore';
-import  AuthGuard  from './components/AuthGuard';
+import LoadingSpinner from './components/common/LoadingSpinner';
 
-// Layout principal de la aplicación
 function AppLayout({ children }) {
   return (
     <div className="min-h-screen bg-gray-100">
@@ -55,189 +31,107 @@ function AppLayout({ children }) {
   );
 }
 
-function ProtectedRoute({children}){
-  const isAuthenticated = useUserStore(state=>state.isAuthenticated)
-  const loading = useUserStore(state=>state.loading)
+function ProtectedRouteWithAuth({ children, requiredRole = null }) {
+  const isAuthenticated = useUserStore(state => state.isAuthenticated);
+  const loading = useUserStore(state => state.loading);
 
-  console.log("🔐 ProtectedRoute: Estado actual", { isAuthenticated, loading });
+  if (loading) {
+    return <LoadingSpinner message="Verificando autenticación..." />;
+  }
 
   if (!isAuthenticated) {
-    console.log("🔐 ProtectedRoute: No autenticado, redirigiendo");
-
-      return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
   return (
-      <AuthGuard>
-          <AppLayout>
-              {children}
-          </AppLayout>
-      </AuthGuard>
-  );
-}
-
-// Componente principal que maneja la autenticación
-function AppContent() {
-  return (
-    <Routes>
-      {/* Ruta de autenticación */}
-      <Route path="/auth" element={<AuthContainer />} />
-      
-      {/* Dashboard */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      
-      {/* Characters */}
-      <Route path="/characters" element={
-        <ProtectedRoute>
-          <CharacterList />
-        </ProtectedRoute>
-      } />
-      <Route path="/characters/:id" element={
-        <ProtectedRoute>
-          <CharacterDetail />
-        </ProtectedRoute>
-      } />
-      <Route path="/characters/new" element={
-        <ProtectedRoute>
-          <CharacterForm />
-        </ProtectedRoute>
-      } />
-      <Route path="/characters/:id/edit" element={
-        <ProtectedRoute>
-          <CharacterForm />
-        </ProtectedRoute>
-      } />
-      
-      {/* Campaigns */}
-      <Route path="/campaigns" element={
-        <ProtectedRoute>
-          <CampaignList />
-        </ProtectedRoute>
-      } />
-      <Route path="/campaigns/new" element={
-        <ProtectedRoute>
-          <CampaignForm />
-        </ProtectedRoute>
-      } />
-      <Route path="/campaigns/:id/edit" element={
-        <ProtectedRoute>
-          <CampaignForm />
-        </ProtectedRoute>
-      } />
-      
-      {/* Items */}
-      <Route path="/items" element={
-        <ProtectedRoute>
-          <ItemList />
-        </ProtectedRoute>
-      } />
-      <Route path="/items/new" element={
-        <ProtectedRoute>
-          <ItemForm />
-        </ProtectedRoute>
-      } />
-      <Route path="/items/:id/edit" element={
-        <ProtectedRoute>
-          <ItemForm />
-        </ProtectedRoute>
-      } />
-      
-      {/* Spells */}
-      <Route path="/spells" element={
-        <ProtectedRoute>
-          <SpellList />
-        </ProtectedRoute>
-      } />
-      <Route path="/spells/new" element={
-        <ProtectedRoute>
-          <SpellForm />
-        </ProtectedRoute>
-      } />
-      <Route path="/spells/:id/edit" element={
-        <ProtectedRoute>
-          <SpellForm />
-        </ProtectedRoute>
-      } />
-      
-      {/* NPCs */}
-      <Route path="/npcs" element={
-        <ProtectedRoute>
-          <NPCList />
-        </ProtectedRoute>
-      } />
-      <Route path="/npcs/new" element={
-        <ProtectedRoute>
-          <NPCForm />
-        </ProtectedRoute>
-      } />
-      <Route path="/npcs/:id/edit" element={
-        <ProtectedRoute>
-          <NPCForm />
-        </ProtectedRoute>
-      } />
-      
-      {/* Sessions */}
-      <Route path="/sessions" element={
-        <ProtectedRoute>
-          <SessionList />
-        </ProtectedRoute>
-      } />
-      <Route path="/sessions/new" element={
-        <ProtectedRoute>
-          <SessionForm />
-        </ProtectedRoute>
-      } />
-      <Route path="/sessions/:id/edit" element={
-        <ProtectedRoute>
-          <SessionForm />
-        </ProtectedRoute>
-      } />
-      
-      {/* Encounters */}
-      <Route path="/encounters" element={
-        <ProtectedRoute>
-          <EncounterList />
-        </ProtectedRoute>
-      } />
-      <Route path="/encounters/new" element={
-        <ProtectedRoute>
-          <EncounterForm />
-        </ProtectedRoute>
-      } />
-      <Route path="/encounters/:id/edit" element={
-        <ProtectedRoute>
-          <EncounterForm />
-        </ProtectedRoute>
-      } />
-      
-      {/* Combat */}
-      <Route path="/combat" element={
-        <ProtectedRoute>
-          <CombatTracker />
-        </ProtectedRoute>
-      } />
-
-      {/* Not Found */}
-      <Route path="/not-found" element={
-        <ProtectedRoute>
-          <NotFound />
-        </ProtectedRoute>
-      } />
-      
-      {/* Redirect any unknown route to auth */}
-      <Route path="*" element={<Navigate to="/auth" replace />} />
-    </Routes>
+    <AppLayout>
+      <ProtectedRoute requiredRole={requiredRole}>
+        {children}
+      </ProtectedRoute>
+    </AppLayout>
   );
 }
 
 export default function App() {
   return (
     <Router>
-      <AppContent />
+      <Routes>
+        {/* Autenticación */}
+        <Route path="/auth" element={<AuthContainer />} />
+        
+        {/* Dashboard - sin rol específico */}
+        <Route path="/" element={
+          <ProtectedRouteWithAuth>
+            <Dashboard />
+          </ProtectedRouteWithAuth>
+        } />
+        
+        {/* Gestión de roles */}
+        <Route path="/roles" element={
+          <ProtectedRouteWithAuth>
+            <RoleManager />
+          </ProtectedRouteWithAuth>
+        } />
+        
+        {/* RUTAS QUE REQUIEREN ROL DE PLAYER */}
+        <Route path="/characters/new" element={
+          <ProtectedRouteWithAuth requiredRole="PLAYER">
+            <CharacterForm />
+          </ProtectedRouteWithAuth>
+        } />
+        <Route path="/characters/:id/edit" element={
+          <ProtectedRouteWithAuth requiredRole="PLAYER">
+            <CharacterForm />
+          </ProtectedRouteWithAuth>
+        } />
+        
+        {/* RUTAS QUE REQUIEREN ROL DE DUNGEON_MASTER */}
+        <Route path="/npcs/new" element={
+          <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+            <NPCForm />
+          </ProtectedRouteWithAuth>
+        } />
+        <Route path="/npcs/:id/edit" element={
+          <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+            <NPCForm />
+          </ProtectedRouteWithAuth>
+        } />
+        <Route path="/campaigns/new" element={
+          <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+            <CampaignForm />
+          </ProtectedRouteWithAuth>
+        } />
+        <Route path="/campaigns/:id/edit" element={
+          <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+            <CampaignForm />
+          </ProtectedRouteWithAuth>
+        } />
+        
+        {/* RUTAS GENERALES (sin rol específico) */}
+        <Route path="/characters" element={
+          <ProtectedRouteWithAuth>
+            <CharacterList />
+          </ProtectedRouteWithAuth>
+        } />
+        <Route path="/campaigns" element={
+          <ProtectedRouteWithAuth>
+            <CampaignList />
+          </ProtectedRouteWithAuth>
+        } />
+        <Route path="/spells" element={
+          <ProtectedRouteWithAuth>
+            <SpellList />
+          </ProtectedRouteWithAuth>
+        } />
+        <Route path="/combat" element={
+          <ProtectedRouteWithAuth>
+            <CombatTracker />
+          </ProtectedRouteWithAuth>
+        } />
+        
+        {/* Redirect any unknown route */}
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      </Routes>
     </Router>
   );
 }

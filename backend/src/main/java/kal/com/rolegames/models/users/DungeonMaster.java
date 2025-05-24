@@ -39,6 +39,16 @@ public class DungeonMaster extends User {
 
     private Float rating;
 
+
+    /**
+     * Verifica que el usuario puede actuar como DM antes de hacer operaciones
+     */
+    private void validateDMRole() {
+        if (!canActAsDungeonMaster()) {
+            throw new IllegalStateException("User does not have DUNGEON_MASTER role");
+        }
+    }
+
     public void addCampaign(Campaign campaign) {
         campaigns.add(campaign);
         campaign.setDungeonMaster(this);

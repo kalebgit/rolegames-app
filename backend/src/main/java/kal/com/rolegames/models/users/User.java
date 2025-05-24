@@ -10,7 +10,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -47,6 +49,11 @@ public class User implements UserDetails {
     @Column(name="user_type")
     private UserType userType;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<UserRole> roles = new HashSet<>();
+
+
     @Temporal(TemporalType.TIMESTAMP)
     @Column(updatable = false, name="created_at")
     @Basic(optional=false)
@@ -67,6 +74,53 @@ public class User implements UserDetails {
 //        roles.add(role);
 //    }
 
+
+    //roles
+    public void addRole(UserType roleType){
+        UserRole role = UserRole.builder()
+                .user(this)
+                .roleType(roleType)
+                .isActive(true)
+                .build();
+    }
+
+    public void removeRole(UserType roleType) {
+        roles.removeIf(role -> role.getRoleType() == roleType);
+    }
+
+    public boolean hasRole(UserType roleType) {
+        return roles.stream()
+                .anyMatch(role -> role.getRoleType() == roleType && role.getIsActive());
+    }
+
+    /**
+     * Verifica si el usuario puede actuar como Player
+     */
+    public boolean canActAsPlayer() {
+        return hasRole(UserType.PLAYER) || userType == UserType.PLAYER;
+    }
+
+    /**
+     * Verifica si el usuario puede actuar como DM
+     */
+    public boolean canActAsDungeonMaster() {
+        return hasRole(UserType.DUNGEON_MASTER) || userType == UserType.DUNGEON_MASTER;
+    }
+
+    /**
+     * Obtiene todos los tipos de rol activos
+     */
+    public Set<UserType> getActiveRoles() {
+        Set<UserType> activeRoles = new HashSet<>();
+
+        activeRoles.add(userType);
+
+        roles.stream()
+                .filter(UserRole::getIsActive)
+                .forEach(role -> activeRoles.add(role.getRoleType()));
+
+        return activeRoles;
+    }
     @PrePersist
     protected void prePersist(){
         this.createdAt = LocalDateTime.now();
