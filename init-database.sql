@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS spells (
     level INT NOT NULL,
     school VARCHAR(50) NOT NULL,
     casting_time VARCHAR(255) NOT NULL,
-    range_value VARCHAR(255) NOT NULL,
+    spell_range VARCHAR(255) NOT NULL,  
     duration VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     higher_level_effects TEXT,

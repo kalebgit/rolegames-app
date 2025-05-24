@@ -9,6 +9,7 @@ import kal.com.rolegames.models.users.DungeonMaster;
 import kal.com.rolegames.models.util.NPCType;
 import kal.com.rolegames.repositories.characters.NonPlayerCharacterRepository;
 import kal.com.rolegames.repositories.users.DungeonMasterRepository;
+import kal.com.rolegames.services.users.DungeonMasterService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,8 @@ public class NonPlayerCharacterService {
     private final NonPlayerCharacterRepository npcRepository;
     private final DungeonMasterRepository dmRepository;
     private final NonPlayerCharacterMapper mapper;
+
+    private final DungeonMasterService dmService;
 
     public List<NonPlayerCharacterDTO> getAllNPCs() {
         return mapper.toNonPlayerCharacterListDto(new ArrayList<>(npcRepository.findAll()));
@@ -63,6 +66,10 @@ public class NonPlayerCharacterService {
             npc.setBehavior(behavior);
             behavior.setNpc(npc);
         }
+
+
+        dmService.addCreatedNpcToDM(creator.getUserId(), npc);
+        dmRepository.save(creator);
 
         NonPlayerCharacter savedNPC = npcRepository.save(npc);
         return mapper.toDTO(savedNPC);

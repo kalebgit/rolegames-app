@@ -1,11 +1,8 @@
 package kal.com.rolegames.dto;
 
-import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.models.util.UserType;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 

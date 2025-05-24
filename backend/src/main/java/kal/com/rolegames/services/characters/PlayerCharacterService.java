@@ -11,7 +11,10 @@ import kal.com.rolegames.repositories.characters.DeathSaveTrackerRepository;
 import kal.com.rolegames.repositories.characters.PlayerCharacterRepository;
 import kal.com.rolegames.repositories.sessions.CampaignRepository;
 import kal.com.rolegames.repositories.users.PlayerRepository;
+import kal.com.rolegames.services.users.PlayerService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,8 +28,13 @@ public class PlayerCharacterService {
     private final PlayerRepository playerRepository;
     private final CampaignRepository campaignRepository;
     private final DeathSaveTrackerRepository deathSaveTrackerRepository;
+
+    private final PlayerService playerService;
+
     //mapper
     private final PlayerCharacterMapper mapper;
+
+    private final static Logger logger = LoggerFactory.getLogger(PlayerCharacterService.class);
 
     public List<PlayerCharacterDTO> getAllCharacters() {
         return mapper.toPlayerCharacterDtoList( playerCharacterRepository.findAll());
@@ -43,8 +51,10 @@ public class PlayerCharacterService {
 
     @Transactional
     public PlayerCharacterDTO createCharacter(PlayerCharacterDTO dto, Long userId){
+        logger.info("[CHARACTER] [SERVICE] Datos recibidos...");
         Player player = playerRepository.findByUserId(userId).orElseThrow(()->
                 new NoSuchElementException("No se encontro el jugador"));
+
         PlayerCharacter character = mapper.toEntity(dto);
         character.setPlayer(player);
         if(character.getDeathSaves() == null){
@@ -56,6 +66,7 @@ public class PlayerCharacterService {
             character.setDeathSaves(deathSaves);
             deathSaves.setCharacter(character);
         }
+        playerService.addCharacterToPlayer(userId, character);
         return mapper.toDto( playerCharacterRepository.save(character));
     }
 

@@ -11,6 +11,7 @@ import kal.com.rolegames.repositories.characters.NonPlayerCharacterRepository;
 import kal.com.rolegames.repositories.sessions.CampaignRepository;
 import kal.com.rolegames.repositories.users.DungeonMasterRepository;
 import kal.com.rolegames.repositories.users.PlayerRepository;
+import kal.com.rolegames.services.users.DungeonMasterService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,8 @@ public class CampaignService {
     private final PlayerRepository playerRepository;
     private final NonPlayerCharacterRepository npcRepository;
     private final CampaignMapper campaignMapper;
+
+    private final DungeonMasterService dmService;
 
     public List<CampaignDTO> getAllCampaigns() {
         return campaignRepository.findAll().stream()
@@ -47,6 +50,9 @@ public class CampaignService {
 
         Campaign campaign = campaignMapper.toEntity(dto);
         campaign.setDungeonMaster(dm);
+
+        dmService.addCampaignToDM(dm.getUserId(), campaign);
+        dmRepository.save(dm);
 
         Campaign savedCampaign = campaignRepository.save(campaign);
         return campaignMapper.toDTO(savedCampaign);

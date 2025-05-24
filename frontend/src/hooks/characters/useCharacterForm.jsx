@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import api from "../../api/axiosConfig"
+import { useUserStore } from '../../stores/useUserStore';
 
 export default function useCharacterForm(characterId, onSuccess){
+    const user = useUserStore(state=>state.user)
     const [character, setCharacter] = useState({
         name: '',
         race: 'HUMAN',

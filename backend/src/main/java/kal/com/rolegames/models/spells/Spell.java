@@ -40,6 +40,7 @@ public class Spell {
     private String castingTime;
 
     @Basic(optional = false)
+    @Column(name="spell_range")
     private String range;
 
     @ElementCollection

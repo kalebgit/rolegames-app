@@ -21,7 +21,7 @@ import java.util.List;
 @NoArgsConstructor @AllArgsConstructor
 @SuperBuilder
 @ToString(includeFieldNames = true)
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, exclude = {"password"})
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
