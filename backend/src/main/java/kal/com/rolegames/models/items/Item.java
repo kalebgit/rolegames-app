@@ -18,7 +18,7 @@ import java.util.Set;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @SuperBuilder
-@ToString(includeFieldNames = true)
+@ToString(exclude = {"effects", "tags"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public abstract class Item {
     @Id

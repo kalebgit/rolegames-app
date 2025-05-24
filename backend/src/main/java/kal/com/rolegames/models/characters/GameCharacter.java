@@ -22,7 +22,7 @@ import java.util.Set;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @SuperBuilder
-@ToString(includeFieldNames = true)
+@ToString(exclude = {"traits", "skills", "savingThrows", "encounters", "abilities"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public abstract class GameCharacter {
     @Id

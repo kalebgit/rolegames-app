@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from "../../api/axiosConfig"
-import { useUserStore } from '../../stores/useUserStore';
 
 export default function useCharacterForm(characterId, onSuccess){
-    const user = useUserStore(state=>state.user)
     const [character, setCharacter] = useState({
         name: '',
         race: 'HUMAN',
@@ -19,33 +17,33 @@ export default function useCharacterForm(characterId, onSuccess){
         background: '',
         backstory: '',
         abilities: {
-        STRENGTH: 10,
-        DEXTERITY: 10,
-        CONSTITUTION: 10,
-        INTELLIGENCE: 10,
-        WISDOM: 10,
-        CHARISMA: 10
+            STRENGTH: 10,
+            DEXTERITY: 10,
+            CONSTITUTION: 10,
+            INTELLIGENCE: 10,
+            WISDOM: 10,
+            CHARISMA: 10
         }
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+    const [success, setSuccess] = useState(false);
 
     useEffect(() => {
         if (characterId) {
-        fetchCharacter();
+            fetchCharacter();
         }
     }, [characterId]);
 
     const fetchCharacter = async () => {
         try {
-        setLoading(true);
-        const response = await api.get(`/api/characters/${characterId}`);
-        setCharacter(response.data);
+            setLoading(true);
+            const response = await api.get(`/api/characters/${characterId}`);
+            setCharacter(response.data);
         } catch (err) {
-        setError('Error al cargar el personaje');
+            setError('Error al cargar el personaje');
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     };
 
@@ -53,42 +51,43 @@ export default function useCharacterForm(characterId, onSuccess){
         e.preventDefault();
         setLoading(true);
         setError('');
-        setSuccess('');
+        setSuccess(false);
 
         try {
-        if (characterId) {
-            await api.put(`/api/characters/${characterId}`, character);
-            setSuccess('Personaje actualizado exitosamente');
-        } else {
-            await api.post('/api/characters', character);
-            setSuccess('Personaje creado exitosamente');
-        }
-        
-        if (onSuccess) {
-            setTimeout(() => onSuccess(), 1500);
-        }
+            if (characterId) {
+                await api.put(`/api/characters/${characterId}`, character);
+            } else {
+                await api.post('/api/characters', character);
+            }
+            
+            setSuccess(true);
+            
+            // Llamar al callback después de un pequeño delay para mostrar el estado de éxito
+            if (onSuccess) {
+                setTimeout(() => onSuccess(), 100);
+            }
         } catch (err) {
-        setError(err.response?.data?.message || 'Error al guardar el personaje');
+            setError(err.response?.data?.message || 'Error al guardar el personaje');
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCharacter(prev => ({
-        ...prev,
-        [name]: value
+            ...prev,
+            [name]: value
         }));
     };
 
     const handleAbilityChange = (ability, value) => {
         setCharacter(prev => ({
-        ...prev,
-        abilities: {
-            ...prev.abilities,
-            [ability]: parseInt(value)
-        }
+            ...prev,
+            abilities: {
+                ...prev.abilities,
+                [ability]: parseInt(value) || 10
+            }
         }));
     };
 

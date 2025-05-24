@@ -15,7 +15,7 @@ import java.util.Set;
 @SuperBuilder
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = {"characters"})
 public class Player extends User {
 
     @OneToMany(mappedBy = "player", cascade = {CascadeType.ALL}, fetch=FetchType.LAZY, orphanRemoval=true)

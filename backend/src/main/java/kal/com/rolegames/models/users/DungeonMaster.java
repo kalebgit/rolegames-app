@@ -19,7 +19,7 @@ import java.util.Set;
 @SuperBuilder
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = {"campaigns", "createdNpcs", "createdItems"})
 public class DungeonMaster extends User {
 
     @OneToMany(mappedBy = "dungeonMaster", cascade = CascadeType.ALL, orphanRemoval = true)

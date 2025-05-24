@@ -16,7 +16,7 @@ import java.util.*;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-@ToString(includeFieldNames = true)
+@ToString(exclude = {"initiativeOrder", "activeEffects", "actionHistory"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CombatState {
     @Id

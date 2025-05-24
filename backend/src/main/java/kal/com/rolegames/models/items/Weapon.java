@@ -18,7 +18,7 @@ import java.util.Set;
 @SuperBuilder
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = {"properties"})
 public class Weapon extends Item {
 
     @Enumerated(EnumType.STRING)

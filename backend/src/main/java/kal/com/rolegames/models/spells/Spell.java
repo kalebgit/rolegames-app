@@ -17,7 +17,7 @@ import java.util.Set;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-@ToString(includeFieldNames = true)
+@ToString(exclude = {"components", "characters"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Spell {
     @Id

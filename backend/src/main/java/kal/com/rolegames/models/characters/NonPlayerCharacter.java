@@ -17,7 +17,7 @@ import java.util.Set;
 @SuperBuilder
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = {"associations", "inventory", "campaigns"})
 public class NonPlayerCharacter extends GameCharacter {
 
     @ManyToOne

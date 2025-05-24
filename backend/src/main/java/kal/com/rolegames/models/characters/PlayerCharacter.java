@@ -23,7 +23,7 @@ import java.util.Set;
 @SuperBuilder
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-@ToString(callSuper = true)
+@ToString(callSuper = true, exclude = {"inventory", "equippedItems", "spells", "features", "sessions", "spellSlots"})
 public class PlayerCharacter extends GameCharacter {
 
     @ManyToOne

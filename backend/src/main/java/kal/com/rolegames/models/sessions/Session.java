@@ -16,7 +16,7 @@ import java.util.Set;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-@ToString(includeFieldNames = true)
+@ToString(exclude = {"attendingPlayers", "attendingCharacters", "encountersCompleted"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Session {
     @Id

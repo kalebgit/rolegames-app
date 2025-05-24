@@ -17,7 +17,7 @@ import java.util.Set;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-@ToString(includeFieldNames = true)
+@ToString(exclude = {"participants", "rewards"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Encounter {
     @Id

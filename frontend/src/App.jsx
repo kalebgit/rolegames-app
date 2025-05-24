@@ -9,6 +9,7 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 // Characters
 import CharacterList from './components/characters/CharacterList';
 import CharacterForm from './components/characters/CharacterForm';
+import CharacterDetail from './components/characters/CharacterDetail';
 
 // Campaigns
 import CampaignList from './components/campaigns/CampaignList';
@@ -93,6 +94,11 @@ function AppContent() {
       <Route path="/characters" element={
         <ProtectedRoute>
           <CharacterList />
+        </ProtectedRoute>
+      } />
+      <Route path="/characters/:id" element={
+        <ProtectedRoute>
+          <CharacterDetail />
         </ProtectedRoute>
       } />
       <Route path="/characters/new" element={
