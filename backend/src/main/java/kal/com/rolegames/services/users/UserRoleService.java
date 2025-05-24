@@ -98,7 +98,7 @@ public class UserRoleService {
 
         logger.info("[SERVICE] [ROL] si existio usuario para asignar el rol: {}", user);
         Optional<DungeonMaster> existingDM = dungeonMasterRepository.findByUserId(userId);
-        if (existingDM.isPresent()) {
+        if (existingDM.isPresent() && user.canActAsDungeonMaster()) {
             logger.info("[SERVICE] [ROL] el dm ya existia: ");
             user.addRole(UserType.DUNGEON_MASTER);
             userRepository.save(user);

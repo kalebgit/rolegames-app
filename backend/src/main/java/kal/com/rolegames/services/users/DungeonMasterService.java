@@ -1,5 +1,7 @@
 package kal.com.rolegames.services.users;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import kal.com.rolegames.models.characters.NonPlayerCharacter;
 import kal.com.rolegames.models.items.Item;
@@ -27,12 +29,9 @@ public class DungeonMasterService {
     private final DungeonMasterRepository dungeonMasterRepository;
     private final static Logger logger = LoggerFactory.getLogger(DungeonMasterService.class);
 
-    /**
-     * Encuentra un DM por su ID de usuario
-     */
-    public Optional<DungeonMaster> findByUserId(Long userId) {
-        return dungeonMasterRepository.findByUserId(userId);
-    }
+    @PersistenceContext
+    private EntityManager entityManager;
+
 
     /**
      * Obtiene un DM por su ID de usuario, lanza excepción si no existe
@@ -40,13 +39,6 @@ public class DungeonMasterService {
     public DungeonMaster getByUserId(Long userId) {
         return dungeonMasterRepository.findByUserId(userId)
                 .orElseThrow(() -> new NoSuchElementException("DungeonMaster no encontrado con user ID: " + userId));
-    }
-
-    /**
-     * Encuentra un DM por su ID
-     */
-    public Optional<DungeonMaster> findById(Long dmId) {
-        return dungeonMasterRepository.findById(dmId);
     }
 
     /**
@@ -62,34 +54,35 @@ public class DungeonMasterService {
      */
     @Transactional
     public DungeonMaster createDungeonMasterFromUser(User user) {
-//        if (user.getUserType() != UserType.DUNGEON_MASTER) {
-//            throw new IllegalArgumentException("User must be of type DUNGEON_MASTER");
-//        }
+        logger.info("[SERVICE] [DM] Creando dm a partir del usuario: {}", user.getUsername());
 
-        logger.info("[SERVICE] [DM] Creando dm a partir del usuario: {}", user);
         if (dungeonMasterRepository.findByUserId(user.getUserId()).isPresent()) {
+            logger.warn("[SERVICE] [DM] DungeonMaster ya existe para este usuario");
             throw new IllegalStateException("DungeonMaster already exists for this user");
         }
 
-        DungeonMaster dm = DungeonMaster.builder()
-                .userId(user.getUserId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .password(user.getPassword())
-                .userType(user.getUserType())
-                .createdAt(user.getCreatedAt())
-//                .version(user.getVersion())
-                .dmStyle("Standard")
-                .rating(0.0f)
-                .build();
-        logger.info("[SERVICE] [DM] Dm craedo: {}", dm);
-        DungeonMaster dmCreated = null;
-        try{
-            dmCreated = dungeonMasterRepository.save(dm);
-        }catch(Exception exc){
-            logger.info("Error {}: {}", exc.getCause(), exc.getMessage());
+        try {
+            entityManager.createNativeQuery(
+                            "INSERT INTO dungeon_masters (dm_id, dm_style, rating) VALUES (?, ?, ?)")
+                    .setParameter(1, user.getUserId())
+                    .setParameter(2, "Standard")
+                    .setParameter(3, 0.0f)
+                    .executeUpdate();
+
+            entityManager.flush();
+
+            DungeonMaster savedDm = dungeonMasterRepository.findByUserId(user.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Error al recuperar DungeonMaster creado"));
+
+            logger.info("[SERVICE] [DM] DM guardado exitosamente con ID: {}", savedDm.getUserId());
+
+            return savedDm;
+
+        } catch (Exception exc) {
+            logger.error("[SERVICE] [DM] Error al crear DungeonMaster: {} - {}",
+                    exc.getClass().getSimpleName(), exc.getMessage(), exc);
+            throw new RuntimeException("Error al crear DungeonMaster: " + exc.getMessage(), exc);
         }
-        return dmCreated;
     }
 
     /**

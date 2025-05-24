@@ -155,7 +155,7 @@ export default function App() {
         </Routes>
         
         {/* Toast Container - Configuración global */}
-        <ToastContainer
+        {/* <ToastContainer
           position="top-right"
           autoClose={4000}
           hideProgressBar={false}
@@ -166,7 +166,7 @@ export default function App() {
           draggable
           pauseOnHover
           theme="light"
-        />
+        /> */}
       </AppInitializer>
     </Router>
   );

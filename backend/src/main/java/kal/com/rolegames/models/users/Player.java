@@ -13,28 +13,35 @@ import java.util.Set;
 @PrimaryKeyJoinColumn(name="player_id")
 @Table(name ="players")
 //lombok annotations
-@SuperBuilder
+@Builder
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
 @ToString(callSuper = true, exclude = {"characters"})
-public class Player extends User {
+public class Player{
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long playerId;
 
     @OneToMany(mappedBy = "player", cascade = {CascadeType.ALL}, fetch=FetchType.LAZY, orphanRemoval=true)
     @Setter(AccessLevel.NONE)
     @Builder.Default
     private Set<PlayerCharacter> characters = new HashSet<>();
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name= "user_id", unique = true)
+    private User user;
+
     @Basic(optional = false)
     @Setter(AccessLevel.NONE)
     private int experience = 0;
 
-    /**
-     * Verifica que el usuario puede actuar como Player antes de hacer operaciones
-     */
-    private void validatePlayerRole() {
-        if (!canActAsPlayer()) {
-            throw new IllegalStateException("User does not have PLAYER role");
-        }
+    //metodos producto de composicion
+    public String getUsername() {
+        return user != null ? user.getUsername() : null;
+    }
+
+    public String getEmail() {
+        return user != null ? user.getEmail() : null;
     }
 
     /**

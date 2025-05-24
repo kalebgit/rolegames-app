@@ -1,5 +1,7 @@
 package kal.com.rolegames.services.users;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import kal.com.rolegames.models.characters.PlayerCharacter;
 import kal.com.rolegames.models.sessions.Campaign;
@@ -9,6 +11,8 @@ import kal.com.rolegames.models.util.UserType;
 import kal.com.rolegames.repositories.users.PlayerRepository;
 import kal.com.rolegames.repositories.users.UserRepository;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +26,10 @@ public class PlayerService {
 
     private final PlayerRepository playerRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(PlayerService.class);
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * Obtiene un jugador por su ID de usuario, lanza excepción si no existe
@@ -42,32 +50,40 @@ public class PlayerService {
 
     /**
      * Crea un nuevo jugador a partir de un usuario existente
+     * Usa SQL nativo para evitar conflictos de herencia
      */
     @Transactional
     public Player createPlayerFromUser(User user) {
-//        if (user.getUserType() != UserType.PLAYER) {
-//            throw new IllegalArgumentException("User must be of type PLAYER");
-//        }
+        logger.info("[SERVICE] [PLAYER] Creando player a partir del usuario: {}", user.getUsername());
 
-        // Verificar si ya existe un Player para este usuario
         if (playerRepository.findByUserId(user.getUserId()).isPresent()) {
+            logger.warn("[SERVICE] [PLAYER] Player ya existe para este usuario");
             throw new IllegalStateException("Player already exists for this user");
         }
 
-        Player player = Player.builder()
-                .userId(user.getUserId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .password(user.getPassword())
-                .createdAt(user.getCreatedAt())
-//                .version(user.getVersion())
-                .userType(user.getUserType())
-                .experience(0)
-                .build();
+        try {
+            entityManager.createNativeQuery(
+                            "INSERT INTO players (player_id, experience) VALUES (?, ?)")
+                    .setParameter(1, user.getUserId())
+                    .setParameter(2, 0)
+                    .executeUpdate();
 
-        return playerRepository.save(player);
+            entityManager.flush();
+
+            //Vemos el jugador que se acaba de crear en su tabl3
+            Player savedPlayer = playerRepository.findByUserId(user.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Error al recuperar Player creado"));
+
+            logger.info("[SERVICE] [PLAYER] Player guardado exitosamente con ID: {}", savedPlayer.getUserId());
+
+            return savedPlayer;
+
+        } catch (Exception exc) {
+            logger.error("[SERVICE] [PLAYER] Error al crear Player: {} - {}",
+                    exc.getClass().getSimpleName(), exc.getMessage(), exc);
+            throw new RuntimeException("Error al crear Player: " + exc.getMessage(), exc);
+        }
     }
-
     /**
      * Agrega un personaje a la lista del jugador
      */

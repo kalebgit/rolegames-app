@@ -16,7 +16,6 @@ import java.util.Set;
 
 
 @Entity
-@Inheritance(strategy = InheritanceType.JOINED)
 @Table(name="users")
 //lombok annotations
 @Getter @Setter
@@ -83,6 +82,8 @@ public class User implements UserDetails {
                 .roleType(roleType)
                 .isActive(true)
                 .build();
+        roles.add(role);
+
     }
 
     public void removeRole(UserType roleType) {

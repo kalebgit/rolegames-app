@@ -14,11 +14,19 @@ import java.util.Set;
 @PrimaryKeyJoinColumn(name = "dm_id")
 @Table(name="dungeon_masters")
 //lombok annotations
-@SuperBuilder
+@Builder
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @ToString(callSuper = true, exclude = {"campaigns", "createdNpcs", "createdItems"})
-public class DungeonMaster extends User {
+public class DungeonMaster {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long dungeonMasterId;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
 
     @OneToMany(mappedBy = "dungeonMaster", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
@@ -37,15 +45,14 @@ public class DungeonMaster extends User {
 
     private Float rating;
 
-
-    /**
-     * Verifica que el usuario puede actuar como DM antes de hacer operaciones
-     */
-    private void validateDMRole() {
-        if (!canActAsDungeonMaster()) {
-            throw new IllegalStateException("User does not have DUNGEON_MASTER role");
-        }
+    public String getUsername() {
+        return user != null ? user.getUsername() : null;
     }
+
+    public String getEmail() {
+        return user != null ? user.getEmail() : null;
+    }
+
 
     public void addCampaign(Campaign campaign) {
         campaigns.add(campaign);

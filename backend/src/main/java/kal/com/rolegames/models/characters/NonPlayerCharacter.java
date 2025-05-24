@@ -3,6 +3,7 @@ package kal.com.rolegames.models.characters;
 import jakarta.persistence.*;
 import kal.com.rolegames.models.items.Item;
 import kal.com.rolegames.models.sessions.Campaign;
+import kal.com.rolegames.models.users.DungeonMaster;
 import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.models.util.NPCType;
 import lombok.*;
@@ -22,7 +23,7 @@ public class NonPlayerCharacter extends GameCharacter {
 
     @ManyToOne
     @JoinColumn(name = "creator_id")
-    private User creator;
+    private DungeonMaster creator;
 
     @Enumerated(EnumType.STRING)
     @Basic(optional = false)

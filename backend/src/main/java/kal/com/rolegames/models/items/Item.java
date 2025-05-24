@@ -3,6 +3,7 @@ package kal.com.rolegames.models.items;
 import jakarta.persistence.*;
 import kal.com.rolegames.models.characters.GameCharacter;
 import kal.com.rolegames.models.effects.ItemEffect;
+import kal.com.rolegames.models.users.DungeonMaster;
 import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.models.util.ItemRarity;
 import lombok.*;
@@ -50,7 +51,7 @@ public abstract class Item {
 
     @ManyToOne
     @JoinColumn(name = "creator_id")
-    private User creator;
+    private DungeonMaster creator;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "item_id")
