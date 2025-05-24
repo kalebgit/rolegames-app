@@ -13,6 +13,7 @@ import java.util.Map;
 public interface NonPlayerCharacterMapper {
 
     @Mapping(target = "abilities", ignore = true) // Ignoramos el mapeo automático de abilities
+    @Mapping(target = "creatorId", source = "creator.dungeonMasterId")
     NonPlayerCharacterDTO toDTO(NonPlayerCharacter character);
 
     @Mapping(target = "abilities", ignore = true) // Ignoramos el mapeo automático de abilities

@@ -49,42 +49,6 @@ public class PlayerService {
     }
 
     /**
-     * Crea un nuevo jugador a partir de un usuario existente
-     * Usa SQL nativo para evitar conflictos de herencia
-     */
-    @Transactional
-    public Player createPlayerFromUser(User user) {
-        logger.info("[SERVICE] [PLAYER] Creando player a partir del usuario: {}", user.getUsername());
-
-        if (playerRepository.findByUserId(user.getUserId()).isPresent()) {
-            logger.warn("[SERVICE] [PLAYER] Player ya existe para este usuario");
-            throw new IllegalStateException("Player already exists for this user");
-        }
-
-        try {
-            entityManager.createNativeQuery(
-                            "INSERT INTO players (player_id, experience) VALUES (?, ?)")
-                    .setParameter(1, user.getUserId())
-                    .setParameter(2, 0)
-                    .executeUpdate();
-
-            entityManager.flush();
-
-            //Vemos el jugador que se acaba de crear en su tabl3
-            Player savedPlayer = playerRepository.findByUserId(user.getUserId())
-                    .orElseThrow(() -> new RuntimeException("Error al recuperar Player creado"));
-
-            logger.info("[SERVICE] [PLAYER] Player guardado exitosamente con ID: {}", savedPlayer.getUserId());
-
-            return savedPlayer;
-
-        } catch (Exception exc) {
-            logger.error("[SERVICE] [PLAYER] Error al crear Player: {} - {}",
-                    exc.getClass().getSimpleName(), exc.getMessage(), exc);
-            throw new RuntimeException("Error al crear Player: " + exc.getMessage(), exc);
-        }
-    }
-    /**
      * Agrega un personaje a la lista del jugador
      */
     @Transactional
@@ -145,8 +109,8 @@ public class PlayerService {
      */
     @Transactional
     public Player updatePlayer(Player player) {
-        if (!existsById(player.getUserId())) {
-            throw new NoSuchElementException("Player not found with ID: " + player.getUserId());
+        if (!existsById(player.getUser().getUserId())) {
+            throw new NoSuchElementException("Player not found with ID: " + player.getUser().getUserId());
         }
         return playerRepository.save(player);
     }
