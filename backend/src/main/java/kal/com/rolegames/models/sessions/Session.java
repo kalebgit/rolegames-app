@@ -44,6 +44,7 @@ public class Session {
             joinColumns = @JoinColumn(name = "session_id"),
             inverseJoinColumns = @JoinColumn(name = "player_id")
     )
+    @Builder.Default
     private Set<Player> attendingPlayers = new HashSet<>();
 
     @ManyToMany
@@ -52,6 +53,7 @@ public class Session {
             joinColumns = @JoinColumn(name = "session_id"),
             inverseJoinColumns = @JoinColumn(name = "character_id")
     )
+    @Builder.Default
     private Set<PlayerCharacter> attendingCharacters = new HashSet<>();
 
     @Lob
@@ -62,6 +64,7 @@ public class Session {
     private String dmNotes;
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<Encounter> encountersCompleted = new HashSet<>();
 
     @Lob

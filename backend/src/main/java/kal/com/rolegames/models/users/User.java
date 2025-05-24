@@ -21,11 +21,12 @@ import java.util.List;
 @NoArgsConstructor @AllArgsConstructor
 @SuperBuilder
 @ToString(includeFieldNames = true)
-@EqualsAndHashCode(onlyExplicitlyIncluded = true, exclude = {"password"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name="user_id")
+    @EqualsAndHashCode.Include
     private Long userId;
 
     @NaturalId

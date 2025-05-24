@@ -31,6 +31,7 @@ public class Trait {
     // todas las entradas que tuviesen su llave primaria son eliminadas por el parametro
     // cascade
     @ManyToMany(mappedBy = "traits")
+    @Builder.Default
     private Set<GameCharacter> characters = new HashSet<>();
 
     @Version

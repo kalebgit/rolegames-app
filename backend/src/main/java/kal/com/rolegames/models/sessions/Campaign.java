@@ -42,9 +42,11 @@ public class Campaign {
             joinColumns = @JoinColumn(name = "campaign_id"),
             inverseJoinColumns = @JoinColumn(name = "player_id")
     )
+    @Builder.Default
     private Set<Player> players = new HashSet<>();
 
     @OneToMany(mappedBy = "campaign", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<Session> sessions = new HashSet<>();
 
     @Temporal(TemporalType.DATE)
@@ -64,9 +66,11 @@ public class Campaign {
             joinColumns = @JoinColumn(name = "campaign_id"),
             inverseJoinColumns = @JoinColumn(name = "npc_id")
     )
+    @Builder.Default
     private Set<NonPlayerCharacter> importantNPCs = new HashSet<>();
 
     @OneToMany(mappedBy = "currentCampaign")
+    @Builder.Default
     private Set<PlayerCharacter> activeCharacters = new HashSet<>();
 
     @Version

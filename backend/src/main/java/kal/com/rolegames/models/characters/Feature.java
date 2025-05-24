@@ -40,6 +40,7 @@ public class Feature {
     private Integer currentUses;
 
     @ManyToMany(mappedBy = "features")
+    @Builder.Default
     private Set<PlayerCharacter> characters = new HashSet<>();
 
     @Version

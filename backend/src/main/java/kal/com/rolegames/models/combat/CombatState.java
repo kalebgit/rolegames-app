@@ -37,6 +37,7 @@ public class CombatState {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "combat_state_id")
+    @Builder.Default
     private Set<Effect> activeEffects = new HashSet<>();
 
     @Basic(optional = false)

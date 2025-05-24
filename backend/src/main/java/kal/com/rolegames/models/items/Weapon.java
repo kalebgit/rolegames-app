@@ -39,6 +39,7 @@ public class Weapon extends Item {
             joinColumns = @JoinColumn(name = "weapon_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "property")
+    @Builder.Default
     private Set<WeaponProperty> properties = new HashSet<>();
 
     @Embedded

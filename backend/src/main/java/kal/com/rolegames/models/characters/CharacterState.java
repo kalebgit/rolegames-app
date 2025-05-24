@@ -34,10 +34,12 @@ public class CharacterState {
     private String description;
 
     @OneToMany(mappedBy = "currentState")
+    @Builder.Default
     private Set<GameCharacter> characters = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "state_id")
+    @Builder.Default
     private Set<Effect> effects = new HashSet<>();
 
     @Version

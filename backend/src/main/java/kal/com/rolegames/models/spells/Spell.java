@@ -48,6 +48,7 @@ public class Spell {
             joinColumns = @JoinColumn(name = "spell_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "component")
+    @Builder.Default
     private Set<SpellComponent> components = new HashSet<>();
 
     @Basic(optional = false)
@@ -77,6 +78,7 @@ public class Spell {
     private String materialComponents;
 
     @ManyToMany(mappedBy = "spells")
+    @Builder.Default
     private Set<PlayerCharacter> characters = new HashSet<>();
 
     @Version

@@ -50,6 +50,7 @@ public abstract class GameCharacter {
     @MapKeyEnumerated(EnumType.STRING)
     @MapKeyColumn(name = "ability_type")
     @Column(name = "score")
+    @Builder.Default
     private Map<AbilityType, Integer> abilities = new HashMap<>();
 
     @Basic(optional = false)
@@ -79,6 +80,7 @@ public abstract class GameCharacter {
             joinColumns = @JoinColumn(name = "character_id"),
             inverseJoinColumns = @JoinColumn(name = "trait_id")
     )
+    @Builder.Default
     private Set<Trait> traits = new HashSet<>();
 
     @ManyToOne
@@ -86,12 +88,15 @@ public abstract class GameCharacter {
     private CharacterState currentState;
 
     @OneToMany(mappedBy = "character", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<Skill> skills = new HashSet<>();
 
     @OneToMany(mappedBy = "character", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<SavingThrow> savingThrows = new HashSet<>();
 
     @ManyToMany(mappedBy = "participants")
+    @Builder.Default
     private Set<Encounter> encounters = new HashSet<>();
 
     @Version

@@ -37,6 +37,7 @@ public class PlayerCharacter extends GameCharacter {
     private String subclass;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<Item> inventory = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -47,6 +48,7 @@ public class PlayerCharacter extends GameCharacter {
     )
     @MapKeyEnumerated(EnumType.STRING)
     @MapKeyColumn(name = "equip_slot")
+    @Builder.Default
     private Map<EquipSlot, Item> equippedItems = new HashMap<>();
 
     @ManyToMany
@@ -55,6 +57,7 @@ public class PlayerCharacter extends GameCharacter {
             joinColumns = @JoinColumn(name = "character_id"),
             inverseJoinColumns = @JoinColumn(name = "spell_id")
     )
+    @Builder.Default
     private Set<Spell> spells = new HashSet<>();
 
     @ManyToMany
@@ -63,6 +66,7 @@ public class PlayerCharacter extends GameCharacter {
             joinColumns = @JoinColumn(name = "character_id"),
             inverseJoinColumns = @JoinColumn(name = "feature_id")
     )
+    @Builder.Default
     private Set<Feature> features = new HashSet<>();
 
     private String backstory;
@@ -76,9 +80,11 @@ public class PlayerCharacter extends GameCharacter {
     private DeathSaveTracker deathSaves;
 
     @ManyToMany(mappedBy = "attendingCharacters")
+    @Builder.Default
     private Set<Session> sessions = new HashSet<>();
 
     @OneToMany(mappedBy = "character", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<SpellSlot> spellSlots = new HashSet<>();
 
     public void addItemToInventory(Item item) {

@@ -54,11 +54,13 @@ public abstract class Item {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "item_id")
+    @Builder.Default
     private Set<ItemEffect> effects = new HashSet<>();
 
     @ElementCollection
     @CollectionTable(name = "item_tags", joinColumns = @JoinColumn(name = "item_id"))
     @Column(name = "tag")
+    @Builder.Default
     private Set<String> tags = new HashSet<>();
 
     @Version

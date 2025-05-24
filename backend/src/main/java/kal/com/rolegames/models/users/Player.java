@@ -20,6 +20,7 @@ public class Player extends User {
 
     @OneToMany(mappedBy = "player", cascade = {CascadeType.ALL}, fetch=FetchType.LAZY, orphanRemoval=true)
     @Setter(AccessLevel.NONE)
+    @Builder.Default
     private Set<PlayerCharacter> characters = new HashSet<>();
 
     @Basic(optional = false)

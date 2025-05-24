@@ -42,6 +42,7 @@ public class NonPlayerCharacter extends GameCharacter {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "npc_id")
+    @Builder.Default
     private Set<NPCAssociation> associations = new HashSet<>();
 
     private Boolean isHostile;
@@ -50,6 +51,7 @@ public class NonPlayerCharacter extends GameCharacter {
     private Set<Item> inventory = new HashSet<>();
 
     @ManyToMany(mappedBy = "importantNPCs")
+    @Builder.Default
     private Set<Campaign> campaigns = new HashSet<>();
 
 //    // Method to add a dialogue option to this NPC

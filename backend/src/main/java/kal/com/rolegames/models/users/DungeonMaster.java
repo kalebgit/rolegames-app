@@ -23,12 +23,16 @@ import java.util.Set;
 public class DungeonMaster extends User {
 
     @OneToMany(mappedBy = "dungeonMaster", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<Campaign> campaigns = new HashSet<>();
 
+
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<NonPlayerCharacter> createdNpcs = new HashSet<>();
 
     @OneToMany(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private Set<Item> createdItems = new HashSet<>();
 
     private String dmStyle;

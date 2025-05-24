@@ -50,10 +50,12 @@ public class Encounter {
             joinColumns = @JoinColumn(name = "encounter_id"),
             inverseJoinColumns = @JoinColumn(name = "character_id")
     )
+    @Builder.Default
     private Set<GameCharacter> participants = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "encounter_id")
+    @Builder.Default
     private Set<Reward> rewards = new HashSet<>();
 
     @Basic(optional = false)

@@ -30,6 +30,7 @@ public class NPCBehavior {
             joinColumns = @JoinColumn(name = "behavior_id"))
     @Enumerated(EnumType.STRING)
     @Column(name = "trait")
+    @Builder.Default
     private Set<BehaviorTrait> traits = new HashSet<>();
 
     private Integer aggressiveness; // 0-10 scale
