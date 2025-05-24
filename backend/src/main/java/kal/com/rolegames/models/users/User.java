@@ -49,7 +49,8 @@ public class User implements UserDetails {
     @Column(name="user_type")
     private UserType userType;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true,
+    fetch = FetchType.EAGER)
     @Builder.Default
     private Set<UserRole> roles = new HashSet<>();
 

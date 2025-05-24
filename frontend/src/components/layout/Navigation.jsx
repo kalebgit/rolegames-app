@@ -61,16 +61,17 @@ export default function Navigation() {
   // Items específicos para DMs
   const dmItems = canActAsDM() ? [
     { key: 'npcs', label: 'NPCs', icon: '👥', path: '/npcs' },
-    { key: 'campaigns', label: 'Campañas', icon: '📖', path: '/campaigns' },
+    { key: 'campaigns', label: 'Campañas', icon: '📖', path: '/ncampaigp' },
     { key: 'sessions', label: 'Sesiones', icon: '📅', path: '/sessions' },
-    { key: 'encounters', label: 'Encuentros', icon: '🗡️', path: '/encounters' }
+    { key: 'encounters', label: 'Encuentros', icon: '🗡️', path: '/encounters' },
   ] : [];
 
   // Items compartidos (ambos roles pueden acceder)
   const sharedItems = [
     { key: 'spells', label: 'Hechizos', icon: '✨', path: '/spells' },
     { key: 'items', label: 'Objetos', icon: '🎒', path: '/items' },
-    { key: 'combat', label: 'Combate', icon: '⚔️', path: '/combat' }
+    { key: 'combat', label: 'Combate', icon: '⚔️', path: '/combat' },
+    { key: 'roles', label: 'Roles', icon: '⚙️', path: '/roles' }  
   ];
 
   // Combinar items según el rol actual y disponible
@@ -99,7 +100,8 @@ export default function Navigation() {
     const groups = [
       {
         title: "Panel Principal",
-        items: [{ key: 'dashboard', label: 'Dashboard', icon: '🏠', path: '/' }]
+        items: [{ key: 'dashboard', label: 'Dashboard', icon: '🏠', path: '/' }, 
+      ]
       }
     ];
 
@@ -136,7 +138,8 @@ export default function Navigation() {
       groups.push({
         title: "Herramientas",
         items: [
-          { key: 'combat', label: 'Combate', icon: '⚔️', path: '/combat' }
+          { key: 'combat', label: 'Combate', icon: '⚔️', path: '/combat' },
+        { key: 'roles', label: 'Gestión de Roles', icon: '⚙️', path: '/roles' }  
         ]
       });
     }

@@ -7,6 +7,8 @@ import kal.com.rolegames.services.users.UserRoleService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +26,8 @@ public class UserRoleController {
 
     private final UserRoleService userRoleService;
 
+    private final static Logger logger = LoggerFactory.getLogger(UserRoleController.class);
+
     /**
      * Obtiene los roles disponibles del usuario autenticado
      */
@@ -35,13 +39,13 @@ public class UserRoleController {
         response.put("username", user.getUsername());
         response.put("primaryRole", user.getUserType());
 
-        response.put("availableRoles", user.getActiveRoles());
-        response.put("canActAsPlayer", user.canActAsPlayer());
-        response.put("canActAsDungeonMaster", user.canActAsDungeonMaster());
+        // Usar el servicio para obtener roles de forma segura
+        response.put("availableRoles", userRoleService.getUserActiveRoles(user.getUserId()));
+        response.put("canActAsPlayer", userRoleService.canActAsPlayer(user.getUserId()));
+        response.put("canActAsDungeonMaster", userRoleService.canActAsDungeonMaster(user.getUserId()));
 
         return ResponseEntity.ok(response);
     }
-
     /**
      * Permite al usuario activar el rol de Player
      */
@@ -72,9 +76,13 @@ public class UserRoleController {
      */
     @PostMapping("/enable-dm")
     public ResponseEntity<Map<String, Object>> enableDungeonMasterRole(@AuthenticationPrincipal User user) {
+
+        logger.info("[ROLES] [DM] activando role de dungeon master");
+
         try {
             DungeonMaster dm = userRoleService.enableDungeonMasterRole(user.getUserId());
 
+            logger.info("[ROLES] [DM] ✅Se ha creado el dungeon_master");
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

@@ -1,6 +1,6 @@
 -- NOTAS DEL DESARROLLADOR
 -- Hibernate se encargará de agregar constraints cuando sea necesario
-
+-- Script actualizado con sistema de roles y tablas faltantes
 
 CREATE DATABASE IF NOT EXISTS rolegames;
 USE rolegames;
@@ -15,6 +15,18 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     version BIGINT DEFAULT 0,
     PRIMARY KEY (user_id)
+);
+
+-- Tabla de roles de usuario (sistema flexible de roles múltiples)
+CREATE TABLE IF NOT EXISTS user_roles (
+    role_id BIGINT NOT NULL AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    role_type VARCHAR(50) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    version BIGINT DEFAULT 0,
+    PRIMARY KEY (role_id),
+    INDEX idx_user_roles_user_id (user_id),
+    INDEX idx_user_roles_type_active (role_type, is_active)
 );
 
 -- Tabla de jugadores (herencia)
@@ -49,6 +61,14 @@ CREATE TABLE IF NOT EXISTS characters (
     current_state_id BIGINT,
     version BIGINT DEFAULT 0,
     PRIMARY KEY (character_id)
+);
+
+-- Tabla de habilidades de personajes (ElementCollection)
+CREATE TABLE IF NOT EXISTS character_abilities (
+    character_id BIGINT NOT NULL,
+    ability_type VARCHAR(50) NOT NULL,
+    score INT NOT NULL,
+    PRIMARY KEY (character_id, ability_type)
 );
 
 -- Tabla de personajes jugadores (herencia)
@@ -94,6 +114,13 @@ CREATE TABLE IF NOT EXISTS spells (
     material_components TEXT,
     version BIGINT DEFAULT 0,
     PRIMARY KEY (spell_id)
+);
+
+-- Tabla de componentes de hechizos (ElementCollection)
+CREATE TABLE IF NOT EXISTS spell_components (
+    spell_id BIGINT NOT NULL,
+    component VARCHAR(50) NOT NULL,
+    PRIMARY KEY (spell_id, component)
 );
 
 -- Tabla de campañas
@@ -181,6 +208,13 @@ CREATE TABLE IF NOT EXISTS items (
     PRIMARY KEY (item_id)
 );
 
+-- Tabla de tags de items (ElementCollection)
+CREATE TABLE IF NOT EXISTS item_tags (
+    item_id BIGINT NOT NULL,
+    tag VARCHAR(255) NOT NULL,
+    PRIMARY KEY (item_id, tag)
+);
+
 -- Tabla de armas (herencia)
 CREATE TABLE IF NOT EXISTS weapons (
     weapon_id BIGINT NOT NULL,
@@ -188,11 +222,18 @@ CREATE TABLE IF NOT EXISTS weapons (
     damage_type VARCHAR(50) NOT NULL,
     damage_dice VARCHAR(50) NOT NULL,
     damage_bonus INT,
-    normal_range INT,
-    maximum_range INT,
+    normal INT,  -- Para Range embeddable
+    maximum INT, -- Para Range embeddable
     is_magical BOOLEAN DEFAULT FALSE,
     attack_bonus INT,
     PRIMARY KEY (weapon_id)
+);
+
+-- Tabla de propiedades de armas (ElementCollection)
+CREATE TABLE IF NOT EXISTS weapon_properties (
+    weapon_id BIGINT NOT NULL,
+    property VARCHAR(50) NOT NULL,
+    PRIMARY KEY (weapon_id, property)
 );
 
 -- Tabla de armaduras (herencia)
@@ -234,6 +275,13 @@ CREATE TABLE IF NOT EXISTS npc_behaviors (
     honesty INT,
     version BIGINT DEFAULT 0,
     PRIMARY KEY (behavior_id)
+);
+
+-- Tabla de traits de comportamiento de NPCs (ElementCollection)
+CREATE TABLE IF NOT EXISTS npc_behavior_traits (
+    behavior_id BIGINT NOT NULL,
+    trait VARCHAR(50) NOT NULL,
+    PRIMARY KEY (behavior_id, trait)
 );
 
 -- Tabla de traits/rasgos
@@ -282,6 +330,8 @@ CREATE TABLE IF NOT EXISTS effects (
     is_active BOOLEAN NOT NULL,
     start_time TIMESTAMP,
     end_time TIMESTAMP,
+    combat_state_id BIGINT, -- Para efectos activos en combate
+    state_id BIGINT,        -- Para efectos de estado
     version BIGINT DEFAULT 0,
     PRIMARY KEY (effect_id)
 );
@@ -310,6 +360,7 @@ CREATE TABLE IF NOT EXISTS rewards (
     gold_amount INT,
     item_id BIGINT,
     claimed BOOLEAN NOT NULL DEFAULT FALSE,
+    encounter_id BIGINT, -- Para recompensas de encuentros
     version BIGINT DEFAULT 0,
     PRIMARY KEY (reward_id)
 );
@@ -372,15 +423,99 @@ CREATE TABLE IF NOT EXISTS npc_associations (
     PRIMARY KEY (association_id)
 );
 
--- Tablas de relaciones/mapeo (muchos a muchos y colecciones)
--- Estas se crearán automáticamente por Hibernate con los constraints apropiados
+-- TABLAS DE RELACIONES MANY-TO-MANY
+
+-- Relación campaigns - players
+CREATE TABLE IF NOT EXISTS campaign_players (
+    campaign_id BIGINT NOT NULL,
+    player_id BIGINT NOT NULL,
+    PRIMARY KEY (campaign_id, player_id)
+);
+
+-- Relación campaigns - important NPCs
+CREATE TABLE IF NOT EXISTS campaign_important_npcs (
+    campaign_id BIGINT NOT NULL,
+    npc_id BIGINT NOT NULL,
+    PRIMARY KEY (campaign_id, npc_id)
+);
+
+-- Relación sessions - attending players
+CREATE TABLE IF NOT EXISTS session_players (
+    session_id BIGINT NOT NULL,
+    player_id BIGINT NOT NULL,
+    PRIMARY KEY (session_id, player_id)
+);
+
+-- Relación sessions - attending characters
+CREATE TABLE IF NOT EXISTS session_characters (
+    session_id BIGINT NOT NULL,
+    character_id BIGINT NOT NULL,
+    PRIMARY KEY (session_id, character_id)
+);
+
+-- Relación encounters - participants
+CREATE TABLE IF NOT EXISTS encounter_participants (
+    encounter_id BIGINT NOT NULL,
+    character_id BIGINT NOT NULL,
+    PRIMARY KEY (encounter_id, character_id)
+);
+
+-- Relación characters - traits
+CREATE TABLE IF NOT EXISTS character_traits (
+    character_id BIGINT NOT NULL,
+    trait_id BIGINT NOT NULL,
+    PRIMARY KEY (character_id, trait_id)
+);
+
+-- Relación characters - spells (para player characters)
+CREATE TABLE IF NOT EXISTS character_spells (
+    character_id BIGINT NOT NULL,
+    spell_id BIGINT NOT NULL,
+    PRIMARY KEY (character_id, spell_id)
+);
+
+-- Relación characters - features (para player characters)
+CREATE TABLE IF NOT EXISTS character_features (
+    character_id BIGINT NOT NULL,
+    feature_id BIGINT NOT NULL,
+    PRIMARY KEY (character_id, feature_id)
+);
+
+-- Tabla para items equipados en player characters (MapKey por slot)
+CREATE TABLE IF NOT EXISTS character_equipped_items (
+    character_id BIGINT NOT NULL,
+    equip_slot VARCHAR(50) NOT NULL,
+    item_id BIGINT NOT NULL,
+    PRIMARY KEY (character_id, equip_slot)
+);
+
+-- ÍNDICES ADICIONALES PARA PERFORMANCE
+
+-- Índices para búsquedas frecuentes
+CREATE INDEX idx_characters_name ON characters(name);
+CREATE INDEX idx_characters_race ON characters(race);
+CREATE INDEX idx_characters_level ON characters(level);
+CREATE INDEX idx_spells_level ON spells(level);
+CREATE INDEX idx_spells_school ON spells(school);
+CREATE INDEX idx_items_rarity ON items(rarity);
+CREATE INDEX idx_items_owner ON items(owner_id);
+CREATE INDEX idx_items_creator ON items(creator_id);
+CREATE INDEX idx_campaigns_dm ON campaigns(dm_id);
+CREATE INDEX idx_campaigns_active ON campaigns(is_active);
+CREATE INDEX idx_npcs_type ON non_player_characters(npc_type);
+CREATE INDEX idx_npcs_creator ON non_player_characters(creator_id);
 
 -- Insertar datos iniciales básicos
 INSERT IGNORE INTO character_states (name, state_type, description) VALUES 
 ('Normal', 'NORMAL', 'Character is in normal state'),
 ('Dead', 'DEAD', 'Character has died'),
 ('Unconscious', 'UNCONSCIOUS', 'Character is unconscious'),
-('Paralyzed', 'PARALYZED', 'Character is paralyzed');
+('Paralyzed', 'PARALYZED', 'Character is paralyzed'),
+('Poisoned', 'POISONED', 'Character is poisoned'),
+('Frightened', 'FRIGHTENED', 'Character is frightened'),
+('Charmed', 'CHARMED', 'Character is charmed'),
+('Stunned', 'STUNNED', 'Character is stunned'),
+('Inspired', 'INSPIRED', 'Character is inspired');
 
 -- Commit de transacción
 COMMIT;

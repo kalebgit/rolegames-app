@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthContainer from './components/auth/AuthContainer';
 import Navigation from './components/layout/Navigation';
@@ -52,86 +52,104 @@ function ProtectedRouteWithAuth({ children, requiredRole = null }) {
   );
 }
 
+function AppInitializer({ children }) {
+  const initialize = useUserStore(state => state.initialize);
+  const loading = useUserStore(state => state.loading);
+
+  useEffect(() => {
+    console.log("🚀 App: Inicializando aplicación...");
+    initialize();
+  }, [initialize]);
+
+  if (loading) {
+    return <LoadingSpinner message="Inicializando aplicación..." />;
+  }
+
+  return children;
+}
+
 export default function App() {
   return (
     <Router>
-      <Routes>
-        {/* Autenticación */}
-        <Route path="/auth" element={<AuthContainer />} />
-        
-        {/* Dashboard - sin rol específico */}
-        <Route path="/" element={
-          <ProtectedRouteWithAuth>
-            <Dashboard />
-          </ProtectedRouteWithAuth>
-        } />
-        
-        {/* Gestión de roles */}
-        <Route path="/roles" element={
-          <ProtectedRouteWithAuth>
-            <RoleManager />
-          </ProtectedRouteWithAuth>
-        } />
-        
-        {/* RUTAS QUE REQUIEREN ROL DE PLAYER */}
-        <Route path="/characters/new" element={
-          <ProtectedRouteWithAuth requiredRole="PLAYER">
-            <CharacterForm />
-          </ProtectedRouteWithAuth>
-        } />
-        <Route path="/characters/:id/edit" element={
-          <ProtectedRouteWithAuth requiredRole="PLAYER">
-            <CharacterForm />
-          </ProtectedRouteWithAuth>
-        } />
-        
-        {/* RUTAS QUE REQUIEREN ROL DE DUNGEON_MASTER */}
-        <Route path="/npcs/new" element={
-          <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
-            <NPCForm />
-          </ProtectedRouteWithAuth>
-        } />
-        <Route path="/npcs/:id/edit" element={
-          <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
-            <NPCForm />
-          </ProtectedRouteWithAuth>
-        } />
-        <Route path="/campaigns/new" element={
-          <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
-            <CampaignForm />
-          </ProtectedRouteWithAuth>
-        } />
-        <Route path="/campaigns/:id/edit" element={
-          <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
-            <CampaignForm />
-          </ProtectedRouteWithAuth>
-        } />
-        
-        {/* RUTAS GENERALES (sin rol específico) */}
-        <Route path="/characters" element={
-          <ProtectedRouteWithAuth>
-            <CharacterList />
-          </ProtectedRouteWithAuth>
-        } />
-        <Route path="/campaigns" element={
-          <ProtectedRouteWithAuth>
-            <CampaignList />
-          </ProtectedRouteWithAuth>
-        } />
-        <Route path="/spells" element={
-          <ProtectedRouteWithAuth>
-            <SpellList />
-          </ProtectedRouteWithAuth>
-        } />
-        <Route path="/combat" element={
-          <ProtectedRouteWithAuth>
-            <CombatTracker />
-          </ProtectedRouteWithAuth>
-        } />
-        
-        {/* Redirect any unknown route */}
-        <Route path="*" element={<Navigate to="/auth" replace />} />
-      </Routes>
+      <AppInitializer>
+        <Routes>
+          {/* Autenticación */}
+          <Route path="/auth" element={<AuthContainer />} />
+          
+          {/* Dashboard - sin rol específico */}
+          <Route path="/" element={
+            <ProtectedRouteWithAuth>
+              <Dashboard />
+            </ProtectedRouteWithAuth>
+          } />
+          
+          {/* Gestión de roles */}
+          <Route path="/roles" element={
+            <ProtectedRouteWithAuth>
+              <RoleManager />
+            </ProtectedRouteWithAuth>
+          } />
+          
+          {/* RUTAS QUE REQUIEREN ROL DE PLAYER */}
+          <Route path="/characters/new" element={
+            <ProtectedRouteWithAuth requiredRole="PLAYER">
+              <CharacterForm />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/characters/:id/edit" element={
+            <ProtectedRouteWithAuth requiredRole="PLAYER">
+              <CharacterForm />
+            </ProtectedRouteWithAuth>
+          } />
+          
+          {/* RUTAS QUE REQUIEREN ROL DE DUNGEON_MASTER */}
+          <Route path="/npcs/new" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <NPCForm />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/npcs/:id/edit" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <NPCForm />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/campaigns/new" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <CampaignForm />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/campaigns/:id/edit" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <CampaignForm />
+            </ProtectedRouteWithAuth>
+          } />
+          
+          {/* RUTAS GENERALES (sin rol específico) */}
+          <Route path="/characters" element={
+            <ProtectedRouteWithAuth>
+              <CharacterList />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/campaigns" element={
+            <ProtectedRouteWithAuth>
+              <CampaignList />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/spells" element={
+            <ProtectedRouteWithAuth>
+              <SpellList />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/combat" element={
+            <ProtectedRouteWithAuth>
+              <CombatTracker />
+            </ProtectedRouteWithAuth>
+          } />
+          
+          {/* Redirect any unknown route */}
+          <Route path="*" element={<Navigate to="/auth" replace />} />
+        </Routes>
+      </AppInitializer>
     </Router>
   );
 }

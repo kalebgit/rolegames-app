@@ -46,6 +46,7 @@ public class SimpleGlobalExceptionHandler {
             IllegalArgumentException.class})
     public ResponseEntity<SimpleErrorResponse> handleBadRequest(Exception ex) {
         logger.warn("Bad request: {}", ex.getMessage());
+        logger.info("Bad request: {}", ex.getMessage());
 
         SimpleErrorResponse error = SimpleErrorResponse.builder()
                 .status(400)

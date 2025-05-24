@@ -7,7 +7,7 @@ export const useUserStore = create(
         (set, get) => ({
             user: null,
             isAuthenticated: false,
-            loading: true,
+            loading: false, 
             error: null,
             
             // Setters
@@ -18,24 +18,29 @@ export const useUserStore = create(
             
             // Actions
             fetchUserData: async () => {
-                console.log("🔐 useAuth: Obteniendo datos del usuario...");
+                console.log("🔐 useUserStore: Obteniendo datos del usuario...");
                 const token = localStorage.getItem('token');
                 
                 if (!token) {
-                    console.log("🔐 useAuth: token no encontrado");
-                    set({ isAuthenticated: false, loading: false, user: null });
+                    console.log("🔐 useUserStore: No hay token disponible");
+                    set({ 
+                        isAuthenticated: false, 
+                        loading: false, 
+                        user: null,
+                        error: null 
+                    });
                     return false;
                 }
                 
-                // Configurar el token en las headers
                 api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 
                 try {
-                    set({ loading: true }); // Asegurarse de que está en loading
-                    console.log("🔐 useAuth: Enviando petición a /api/users/me");
+                    set({ loading: true, error: null });
+                    console.log("🔐 useUserStore: Enviando petición a /api/users/me");
+                    
                     const res = await api.get("/api/users/me");
                     
-                    console.log("🔐 useAuth: Respuesta recibida exitosamente");
+                    console.log("🔐 useUserStore: Respuesta recibida exitosamente");
                     set({ 
                         user: res.data, 
                         isAuthenticated: true, 
@@ -45,25 +50,23 @@ export const useUserStore = create(
                     return true;
                     
                 } catch (err) {
-                    console.error('🔐 useAuth: Error fetching user data:', err);
+                    console.error('🔐 useUserStore: Error fetching user data:', err);
                     
-                    // Si es error de autenticación, limpiar todo
                     if (err.response?.status === 401 || err.response?.status === 403) {
-                        console.log("🔐 useAuth: Token inválido, limpiando...");
+                        console.log("🔐 useUserStore: Token inválido, limpiando...");
                         get().logout();
+                        return false;
                     } else {
+                        // Otros errores, mantener estado pero marcar error
                         set({
-                            error: err.message,
-                            isAuthenticated: false,
-                            user: null,
+                            error: 'Error al obtener datos del usuario',
                             loading: false
                         });
+                        return false;
                     }
-                    return false;
                 }
             },
             
-            // Verificación rápida del token sin hacer petición al servidor
             checkTokenValidity: () => {
                 const token = localStorage.getItem('token');
                 if (!token) {
@@ -72,26 +75,25 @@ export const useUserStore = create(
                 }
                 
                 try {
-                    // Decodificar el token JWT para verificar expiración
                     const payload = JSON.parse(atob(token.split('.')[1]));
                     const isExpired = payload.exp * 1000 < Date.now();
                     
                     if (isExpired) {
-                        console.log("🔐 useAuth: Token expirado");
+                        console.log("🔐 useUserStore: Token expirado");
                         get().logout();
                         return false;
                     }
                     
                     return true;
                 } catch (error) {
-                    console.error("🔐 useAuth: Error decodificando token:", error);
+                    console.error("🔐 useUserStore: Error decodificando token:", error);
                     get().logout();
                     return false;
                 }
             },
             
             logout: (navigate = null) => {
-                console.log("🔐 useAuth: Cerrando sesión...");
+                console.log("🔐 useUserStore: Cerrando sesión...");
                 localStorage.removeItem('token');
                 delete api.defaults.headers.common['Authorization'];
                 
@@ -103,30 +105,41 @@ export const useUserStore = create(
                 });
                 
                 // Si se proporciona navigate, redirigir
-                if (navigate) {
+                if (navigate && typeof navigate === 'function') {
                     navigate("/auth");
                 }
             },
             
-            // Método para refrescar datos del usuario
             refreshUserData: async () => {
                 if (!get().isAuthenticated) return false;
                 return await get().fetchUserData();
+            },
+
+            initialize: async () => {
+                console.log("🔐 useUserStore: Inicializando...");
+                set({ loading: true });
+                
+                const isValidToken = get().checkTokenValidity();
+                if (isValidToken) {
+                    await get().fetchUserData();
+                } else {
+                    set({ loading: false });
+                }
             }
         }),
         {
             name: 'user-storage',
-            // Solo persistir datos básicos, no funciones
             partialize: (state) => ({
                 user: state.user,
                 isAuthenticated: state.isAuthenticated
             }),
-            // Configurar la hidratación para evitar problemas
-            // onRehydrateStorage: () => (state) => {
-            //     if (state) {
-            //         state.loading = false;
-            //     }
-            // }
+            onRehydrateStorage: () => (state) => {
+                console.log("🔐 useUserStore: Rehidratando estado...");
+                if (state) {
+                    state.loading = false;
+                    state.error = null;
+                }
+            }
         }
     )
 )

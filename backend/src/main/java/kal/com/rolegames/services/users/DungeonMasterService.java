@@ -9,6 +9,8 @@ import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.models.util.UserType;
 import kal.com.rolegames.repositories.users.DungeonMasterRepository;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ import java.util.Optional;
 public class DungeonMasterService {
 
     private final DungeonMasterRepository dungeonMasterRepository;
+    private final static Logger logger = LoggerFactory.getLogger(DungeonMasterService.class);
 
     /**
      * Encuentra un DM por su ID de usuario
@@ -57,11 +60,11 @@ public class DungeonMasterService {
      */
     @Transactional
     public DungeonMaster createDungeonMasterFromUser(User user) {
-        if (user.getUserType() != UserType.DUNGEON_MASTER) {
-            throw new IllegalArgumentException("User must be of type DUNGEON_MASTER");
-        }
+//        if (user.getUserType() != UserType.DUNGEON_MASTER) {
+//            throw new IllegalArgumentException("User must be of type DUNGEON_MASTER");
+//        }
 
-        // Verificar si ya existe un DM para este usuario
+        logger.info("[SERVICE] [DM] Creando dm a partir del usuario: {}", user);
         if (dungeonMasterRepository.findByUserId(user.getUserId()).isPresent()) {
             throw new IllegalStateException("DungeonMaster already exists for this user");
         }
@@ -75,6 +78,7 @@ public class DungeonMasterService {
                 .dmStyle("Standard")
                 .rating(0.0f)
                 .build();
+        logger.info("[SERVICE] [DM] Dm craedo: {}", dm);
 
         return dungeonMasterRepository.save(dm);
     }

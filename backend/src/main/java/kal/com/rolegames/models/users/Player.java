@@ -11,6 +11,7 @@ import java.util.Set;
 
 @Entity
 @PrimaryKeyJoinColumn(name="player_id")
+@Table(name ="players")
 //lombok annotations
 @SuperBuilder
 @Getter @Setter

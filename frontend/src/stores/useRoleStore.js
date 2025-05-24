@@ -160,13 +160,7 @@ const creation = create(
           return { success: false, message };
         }
 
-        // OPCIÓN A: Solo cambio local (más rápido)
-        set({ currentRole: targetRole, error: null });
-        console.log(`✅ Zustand: Contexto cambiado a ${targetRole}`);
-        return { success: true, message: `Cambiado a modo ${targetRole}` };
 
-        // OPCIÓN B: También notificar al backend (más robusto)
-        /*
         try {
           const response = await api.post('/api/user/roles/switch-context', { targetRole });
           
@@ -188,7 +182,6 @@ const creation = create(
           set({ error: message });
           return { success: false, message };
         }
-        */
       },
 
       /**

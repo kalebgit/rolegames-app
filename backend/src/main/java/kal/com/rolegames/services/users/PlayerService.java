@@ -45,9 +45,9 @@ public class PlayerService {
      */
     @Transactional
     public Player createPlayerFromUser(User user) {
-        if (user.getUserType() != UserType.PLAYER) {
-            throw new IllegalArgumentException("User must be of type PLAYER");
-        }
+//        if (user.getUserType() != UserType.PLAYER) {
+//            throw new IllegalArgumentException("User must be of type PLAYER");
+//        }
 
         // Verificar si ya existe un Player para este usuario
         if (playerRepository.findByUserId(user.getUserId()).isPresent()) {

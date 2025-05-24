@@ -49,6 +49,7 @@ export default function useLoginForm(initialValue, onLoginSuccess){
                     const userResponse = await api.get('/api/users/me');
                     
                     console.log("✅ login exitoso, ejecutando onLoginSucess...")
+
                     if (onLoginSuccess) {
                         onLoginSuccess(userResponse.data);
                     }
@@ -61,6 +62,7 @@ export default function useLoginForm(initialValue, onLoginSuccess){
             }
         }catch(err){
             console.error('❌ ERROR:', err);
+            localStorage.removeItem('token');
             console.error('📄 Error response data:', err.response?.data);
             console.error('📊 Error status:', err.response?.status);
             
