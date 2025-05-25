@@ -75,10 +75,16 @@ public class PlayerService {
         try {
             User registeredUser;
             if(!userRepository.existsUserByEmail(user.getEmail())){
+                logger.warn("Creando usuario nuevo (email diferente)");
                 registeredUser = userService.createUser(user);
+
             }else{
                 registeredUser = userRepository.findByEmail(user.getEmail())
                         .orElseThrow(()-> new NoSuchElementException("Usuario no encontrado para agregar rol"));
+
+                //agregar el rol y guardarlo
+                registeredUser.addRole(user.getUserType());
+                userRepository.save(registeredUser);
             }
 
             logger.info("[DM SERVICE] ✅ usuario recupeardo de la base de datos: {}", registeredUser);

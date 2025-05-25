@@ -82,9 +82,15 @@ public class UserRoleService {
         Optional<Player> existingPlayer = playerRepository.findByUserId(userId);
         if (existingPlayer.isPresent()) {
             logger.info("[SERVICE] [role] El jugador ya existia: " + user);
+
+            //agrega rol
             user.addRole(UserType.PLAYER);
+
             logger.info("[SERVICE] [role] Despues de agregar el rol: " + user);
+
+            //guarda el usuario con rol agregado
             User userWithNewRole = userRepository.save(user);
+
             logger.info("[SERVICE] [role] Despues de persistirlo: " + userWithNewRole);
             return playerService.getPlayerByUserId(userId);
         }
@@ -93,10 +99,14 @@ public class UserRoleService {
         logger.info("[SERVICE] [role] El jugador no existia: " );
         PlayerDTO player = playerService.createPlayerFromUser(user);
 
+        //agrega el rol cuando sea un nuevo jugador
         user.addRole(UserType.PLAYER);
-        logger.info("[SERVICE] [role] Despues de agregar el rol: " + user);
+        logger.info("[SERVICE] [role]  ❗ ❗ ❗ ❗Despues de agregar el rol: " + user);
+
+        //guarda el usuario con el rol agreago
         User userWithNewRole = userRepository.save(user);
-        logger.info("[SERVICE] [role] Despues de persistirlo: " + userWithNewRole);
+        logger.info("[SERVICE] [role]  ❗ ❗ ❗ ❗ Despues de persistirlo: " + userWithNewRole);
+
         return player;
     }
 
@@ -113,18 +123,23 @@ public class UserRoleService {
         Optional<DungeonMaster> existingDM = dungeonMasterRepository.findByUserId(userId);
         if (existingDM.isPresent() && user.canActAsDungeonMaster()) {
             logger.info("[SERVICE] [ROL] el dm ya existía");
+            //agrega rol
             user.addRole(UserType.DUNGEON_MASTER);
+            //guarda el usuario con rol agragado
             userRepository.save(user);
             return dmService.getDungeonMasterByUserId(userId);
         }
 
         logger.info("[SERVICE] [ROL] no existia el dm, se esta creando...");
 
+        //crea dungeon_master
         DungeonMasterDTO dm = dmService.createDungeonMasterFromUser(user);
 
         logger.info("[SERVICE] [ROL] se ha creado el dm: {}", dm);
 
+        //agrega el rol al usuario existente
         user.addRole(UserType.DUNGEON_MASTER);
+        //vuelve a guardar con rol agregado
         User updatedUser = userRepository.save(user);
 
         logger.info("[SERVICE] [ROL] el usuario fue actualizado: {}", updatedUser);

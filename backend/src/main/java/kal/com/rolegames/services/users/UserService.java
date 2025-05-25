@@ -77,13 +77,10 @@ public class UserService {
             throw new IllegalArgumentException("Email already exists: " + user.getEmail());
         }
 
-        if (user.getUserType() == null) {
-            logger.warn("[USER SERVICE] EL USUARIO NO TIENE USER TYPE (ROLE)");
-            user.addRole(user.getUserType());
-        }
+        user.addRole(user.getUserType());
 
         User savedUser = userRepository.save(user);
-        logger.info("[USER_SERVICE] Usuario creado exitosamente: {}", savedUser.getUsername());
+        logger.info("[USER_SERVICE]  ❗ ❗ ❗ ❗ ❗Usuario creado exitosamente: {}", savedUser);
 
         return savedUser;
     }

@@ -80,6 +80,10 @@ public class DungeonMasterService {
             }else{
                 registeredUser = userRepository.findByEmail(user.getEmail())
                         .orElseThrow(()-> new NoSuchElementException("Usuario no encontrado para agregar rol"));
+
+                //agregar el rol y guardarlo
+                registeredUser.addRole(user.getUserType());
+                userRepository.save(registeredUser);
             }
 
             logger.info("[DM SERVICE] ✅ usuario recupeardo de la base de datos: {}", registeredUser);

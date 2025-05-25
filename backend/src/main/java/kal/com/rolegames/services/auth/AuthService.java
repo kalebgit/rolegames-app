@@ -96,7 +96,10 @@ public class AuthService {
             throw new UsernameAlreadyInUseException("El nombre de usuario '" + user.getUsername() + "' ya está en uso");
         }
 
-        // Encriptar la contraseña
+        // debe tener un rol
+        if (user.getUserType() == null) {
+            throw new IllegalArgumentException("Debe haber un userType");
+        }
 
         try {
             //todavia no se crea el usuario, se setea el password codficiado
