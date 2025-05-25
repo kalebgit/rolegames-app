@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react'; 
 import  useEncounterForm  from '../../hooks/encounters/useEncounterForm';
 import { toast } from 'react-toastify';
 

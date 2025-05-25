@@ -16,9 +16,8 @@ const creation = create(
       },
       loading: false,
       error: null,
+      initialized: false, // Nuevo campo para saber si ya se inicializó
 
-
-      setLoading: (loading)=>set({loading}),
       // ========================================
       // ACCIONES QUE LLAMAN AL BACKEND
       // ========================================
@@ -39,19 +38,29 @@ const creation = create(
           if (data.canActAsPlayer) available.push('PLAYER');
           if (data.canActAsDungeonMaster) available.push('DUNGEON_MASTER');
           
+          // Solo establecer currentRole si no existe o si cambió en el backend
+          const currentState = get();
+          const newCurrentRole = currentState.currentRole || data.primaryRole || null;
+          
           set({
             availableRoles: available,
-            currentRole: get().currentRole || data.primaryRole,
-            loading: false
+            currentRole: newCurrentRole,
+            loading: false,
+            initialized: true
           });
           
-          console.log("✅ Zustand: Roles actualizados desde backend", available);
+          console.log("✅ Zustand: Roles actualizados desde backend", {
+            available,
+            currentRole: newCurrentRole,
+            primaryRole: data.primaryRole
+          });
           
         } catch (error) {
           console.error("❌ Zustand: Error al obtener roles", error);
           set({ 
             error: 'Error al cargar roles del usuario',
-            loading: false 
+            loading: false,
+            initialized: true // Marcar como inicializado incluso con error
           });
         }
       },
@@ -70,8 +79,9 @@ const creation = create(
             // Actualizar estado local después de éxito en backend
             const currentAvailable = get().availableRoles;
             if (!currentAvailable.includes('PLAYER')) {
+              const newAvailableRoles = [...currentAvailable, 'PLAYER'];
               set({ 
-                availableRoles: [...currentAvailable, 'PLAYER'],
+                availableRoles: newAvailableRoles,
                 currentRole: 'PLAYER' // Cambiar automáticamente al nuevo rol
               });
             }
@@ -85,8 +95,7 @@ const creation = create(
                   level: response.data.playerLevel,
                   experience: response.data.experience
                 }
-              },
-              loading: false
+              }
             }));
             
             console.log("✅ Zustand: Rol Player activado");
@@ -117,8 +126,9 @@ const creation = create(
           if (response.data.success) {
             const currentAvailable = get().availableRoles;
             if (!currentAvailable.includes('DUNGEON_MASTER')) {
+              const newAvailableRoles = [...currentAvailable, 'DUNGEON_MASTER'];
               set({ 
-                availableRoles: [...currentAvailable, 'DUNGEON_MASTER'],
+                availableRoles: newAvailableRoles,
                 currentRole: 'DUNGEON_MASTER'
               });
             }
@@ -132,8 +142,7 @@ const creation = create(
                   campaignCount: response.data.campaignCount,
                   dmStyle: response.data.dmStyle
                 }
-              },
-              loading: false
+              }
             }));
             
             console.log("✅ Zustand: Rol DM activado");
@@ -152,27 +161,25 @@ const creation = create(
       },
 
       /**
-       * Cambia contexto de rol (sin llamar backend, solo local)
+       * Cambia contexto de rol (llamada al backend)
        */
       switchRoleContext: async (targetRole) => {
-        console.log(`🔄 Zustand: (intento) Cambiando contexto a ${targetRole}`);
+        console.log(`🔄 Zustand: Cambiando contexto a ${targetRole}`);
         
         const { availableRoles } = get();
-        console.log(availableRoles)
         if (!availableRoles.includes(targetRole)) {
           const message = `No tienes acceso al rol ${targetRole}`;
           set({ error: message });
           return { success: false, message };
         }
 
-
         try {
-          console.log(targetRole)
           const response = await api.post('/api/user/roles/switch-context', { targetRole });
           
           if (response.data.success) {
             set({ currentRole: targetRole, error: null });
             
+            // Si el backend devuelve nuevo JWT, actualizar
             if (response.data.newToken) {
               localStorage.setItem('token', response.data.newToken);
               api.defaults.headers.common['Authorization'] = `Bearer ${response.data.newToken}`;
@@ -291,8 +298,21 @@ const creation = create(
         availableRoles: [],
         roleInstances: { player: null, dungeonMaster: null },
         loading: false,
-        error: null
-      })
+        error: null,
+        initialized: false
+      }),
+
+      // ========================================
+      // INICIALIZACIÓN
+      // ========================================
+      
+      initialize: async () => {
+        const state = get();
+        if (!state.initialized) {
+          console.log("🔄 Zustand: Inicializando roles...");
+          await get().fetchUserRoles();
+        }
+      }
     }),
     {
       name: 'role-context-storage',
@@ -300,8 +320,19 @@ const creation = create(
       partialize: (state) => ({
         currentRole: state.currentRole,
         availableRoles: state.availableRoles,
-        roleInstances: state.roleInstances
-      })
+        roleInstances: state.roleInstances,
+        initialized: state.initialized
+      }),
+      // Al rehidratar, asegurar que initialized se mantenga
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          console.log("🔄 Zustand: Rehidratando estado de roles...");
+          // Si no hay datos persistidos, marcar como no inicializado
+          if (!state.availableRoles || state.availableRoles.length === 0) {
+            state.initialized = false;
+          }
+        }
+      }
     }
   )
 );

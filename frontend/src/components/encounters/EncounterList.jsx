@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import  useEncounters  from '../../hooks/encounters/useEncounters';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { toast } from 'react-toastify';

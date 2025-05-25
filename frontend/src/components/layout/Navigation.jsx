@@ -4,7 +4,6 @@ import { useUserStore } from '../../stores/useUserStore';
 import { useRoleStore } from '../../stores/useRoleStore';
 import { toast } from 'react-toastify';
 
-
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -32,7 +31,6 @@ export default function Navigation() {
     });
     logout(navigate);
   };
-  
 
   const handleRoleSwitch = async (targetRole) => {
     try {
@@ -56,7 +54,6 @@ export default function Navigation() {
       });
     }
   };
-  
 
   const getCurrentView = () => {
     const path = location.pathname;
@@ -71,31 +68,36 @@ export default function Navigation() {
   const canActAsDM = () => availableRoles.includes('DUNGEON_MASTER');
   const isInPlayerMode = () => currentRole === 'PLAYER';
   const isInDMMode = () => currentRole === 'DUNGEON_MASTER';
+  const hasMultipleRoles = () => availableRoles.length > 1;
 
   // Items principales que siempre se muestran
   const primaryItems = [
     { key: 'dashboard', label: 'Dashboard', icon: '🏠', path: '/' }
   ];
 
-  // Items específicos para Players
+  // Items específicos para Players - SOLO mostrar si tiene el rol
   const playerItems = canActAsPlayer() ? [
     { key: 'characters', label: 'Personajes', icon: '👤', path: '/characters' }
   ] : [];
 
-  // Items específicos para DMs
+  // Items específicos para DMs - SOLO mostrar si tiene el rol
   const dmItems = canActAsDM() ? [
     { key: 'npcs', label: 'NPCs', icon: '👥', path: '/npcs' },
-    { key: 'campaigns', label: 'Campañas', icon: '📖', path: '/ncampaigp' },
+    { key: 'campaigns', label: 'Campañas', icon: '📖', path: '/campaigns' },
     { key: 'sessions', label: 'Sesiones', icon: '📅', path: '/sessions' },
     { key: 'encounters', label: 'Encuentros', icon: '🗡️', path: '/encounters' },
   ] : [];
 
-  // Items compartidos (ambos roles pueden acceder)
-  const sharedItems = [
+  // Items compartidos (ambos roles pueden acceder) - SOLO si tiene al menos un rol
+  const sharedItems = availableRoles.length > 0 ? [
     { key: 'spells', label: 'Hechizos', icon: '✨', path: '/spells' },
     { key: 'items', label: 'Objetos', icon: '🎒', path: '/items' },
-    { key: 'combat', label: 'Combate', icon: '⚔️', path: '/combat' },
-    { key: 'roles', label: 'Roles', icon: '⚙️', path: '/roles' }  
+    { key: 'combat', label: 'Combate', icon: '⚔️', path: '/combat' }
+  ] : [];
+
+  // Item de roles siempre disponible
+  const roleItems = [
+    { key: 'roles', label: 'Roles', icon: '⚙️', path: '/roles' }
   ];
 
   // Combinar items según el rol actual y disponible
@@ -114,6 +116,9 @@ export default function Navigation() {
     // Agregar items compartidos
     items = [...items, ...sharedItems];
     
+    // Agregar gestión de roles
+    items = [...items, ...roleItems];
+    
     return items;
   };
 
@@ -124,8 +129,7 @@ export default function Navigation() {
     const groups = [
       {
         title: "Panel Principal",
-        items: [{ key: 'dashboard', label: 'Dashboard', icon: '🏠', path: '/' }, 
-      ]
+        items: [{ key: 'dashboard', label: 'Dashboard', icon: '🏠', path: '/' }]
       }
     ];
 
@@ -150,7 +154,7 @@ export default function Navigation() {
       });
     }
 
-    if (canActAsPlayer() || canActAsDM()) {
+    if (availableRoles.length > 0) {
       groups.push({
         title: "Recursos del Juego",
         items: [
@@ -162,11 +166,18 @@ export default function Navigation() {
       groups.push({
         title: "Herramientas",
         items: [
-          { key: 'combat', label: 'Combate', icon: '⚔️', path: '/combat' },
-        { key: 'roles', label: 'Gestión de Roles', icon: '⚙️', path: '/roles' }  
+          { key: 'combat', label: 'Combate', icon: '⚔️', path: '/combat' }
         ]
       });
     }
+
+    // Gestión de roles siempre disponible
+    groups.push({
+      title: "Configuración",
+      items: [
+        { key: 'roles', label: 'Gestión de Roles', icon: '⚙️', path: '/roles' }
+      ]
+    });
 
     return groups;
   };
@@ -286,7 +297,7 @@ export default function Navigation() {
                 🏠
               </button>
               
-              {menuGroups.slice(1).map(group => (
+              {menuGroups.slice(1, -1).map(group => ( // Excluir "Panel Principal" y "Configuración" del dropdown
                 <div key={group.title} className="relative group">
                   <button className="text-gray-600 hover:text-blue-600 px-2 py-1 text-xs font-medium flex items-center rounded hover:bg-gray-50">
                     {group.title.split(' ')[0]}
@@ -322,12 +333,20 @@ export default function Navigation() {
                   </div>
                 </div>
               ))}
+              
+              {/* Botón directo para roles */}
+              <button
+                onClick={() => navigate('/roles')}
+                className={currentView === 'roles' ? 'bg-blue-50 text-blue-600 px-2 py-1 rounded text-sm font-medium' : 'text-gray-600 hover:bg-gray-50 px-2 py-1 rounded text-sm font-medium'}
+              >
+                ⚙️
+              </button>
             </div>
           </div>
 
           <div className="flex items-center">
-            {/* Indicador de rol actual y switch */}
-            {availableRoles.length > 1 && (
+            {/* Indicador de rol actual y switch - SOLO mostrar si tiene múltiples roles */}
+            {hasMultipleRoles() && (
               <div className="hidden sm:flex items-center mr-4">
                 <div className="flex rounded-md shadow-sm">
                   {availableRoles.map(role => (
@@ -391,8 +410,8 @@ export default function Navigation() {
       {isMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 bg-gray-50">
-            {/* Selector de rol para móvil */}
-            {availableRoles.length > 1 && (
+            {/* Selector de rol para móvil - SOLO si tiene múltiples roles */}
+            {hasMultipleRoles() && (
               <div className="px-3 py-2 border-b border-gray-200 mb-2">
                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
                   Cambiar Rol
