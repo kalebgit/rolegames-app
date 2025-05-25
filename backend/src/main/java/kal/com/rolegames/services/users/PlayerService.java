@@ -30,6 +30,7 @@ public class PlayerService {
     private final UserRepository userRepository;
     private final PlayerMapper playerMapper;
     private final UserMapper userMapper;
+    private final UserService userService;
 
     private static final Logger logger = LoggerFactory.getLogger(PlayerService.class);
 
@@ -63,8 +64,8 @@ public class PlayerService {
     }
 
     @Transactional
-    public PlayerDTO createPlayerFromUser(UserDTO user) {
-        logger.info("[PLAYER_SERVICE] Creando player a partir del usuario: {}", user.getUsername());
+    public PlayerDTO createPlayerFromUser(User user) {
+        logger.info("[PLAYER_SERVICE] Creando player a partir del usuario: {}", user);
 
         if (playerRepository.findByEmail(user.getEmail()).isPresent()) {
             logger.warn("[PLAYER_SERVICE] Player ya existe para este usuario");
@@ -72,9 +73,17 @@ public class PlayerService {
         }
 
         try {
-            User userfound = userRepository.getReferenceById(user.getUserId());
+            User registeredUser;
+            if(!userRepository.existsUserByEmail(user.getEmail())){
+                registeredUser = userService.createUser(user);
+            }else{
+                registeredUser = userRepository.findByEmail(user.getEmail())
+                        .orElseThrow(()-> new NoSuchElementException("Usuario no encontrado para agregar rol"));
+            }
+
+            logger.info("[DM SERVICE] ✅ usuario recupeardo de la base de datos: {}", registeredUser);
             Player newPlayer = Player.builder()
-                    .user(userfound)
+                    .user(registeredUser)
                     .experience(0)
                     .build();
 
@@ -99,7 +108,7 @@ public class PlayerService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
 
-        return createPlayerFromUser(userMapper.toDto(user));
+        return createPlayerFromUser(user);
     }
 
     /**

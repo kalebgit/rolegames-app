@@ -66,26 +66,26 @@ public class UserService {
      * Crea un nuevo usuario básico (sin Player/DM)
      */
     @Transactional
-    public UserDTO createUser(UserDTO userDTO) {
-        logger.info("[USER_SERVICE] Creando nuevo usuario: {}", userDTO.getUsername());
+    public User createUser(User user) {
+        logger.info("[USER_SERVICE] Creando nuevo usuario: {}", user.getUsername());
 
         // Verificar que username y email no existan
-        if (userRepository.findByUsername(userDTO.getUsername()).isPresent()) {
-            throw new IllegalArgumentException("Username already exists: " + userDTO.getUsername());
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new IllegalArgumentException("Username already exists: " + user.getUsername());
         }
-        if (userRepository.findByEmail(userDTO.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("Email already exists: " + userDTO.getEmail());
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email already exists: " + user.getEmail());
         }
 
-        User user = userMapper.toEntity(userDTO);
         if (user.getUserType() == null) {
-            user.setUserType(UserType.PLAYER); // Default type
+            logger.warn("[USER SERVICE] EL USUARIO NO TIENE USER TYPE (ROLE)");
+            user.addRole(user.getUserType());
         }
 
         User savedUser = userRepository.save(user);
         logger.info("[USER_SERVICE] Usuario creado exitosamente: {}", savedUser.getUsername());
 
-        return userMapper.toDto(savedUser);
+        return savedUser;
     }
 
     /**

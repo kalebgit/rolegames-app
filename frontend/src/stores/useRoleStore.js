@@ -85,7 +85,8 @@ const creation = create(
                   level: response.data.playerLevel,
                   experience: response.data.experience
                 }
-              }
+              },
+              loading: false
             }));
             
             console.log("✅ Zustand: Rol Player activado");
@@ -131,7 +132,8 @@ const creation = create(
                   campaignCount: response.data.campaignCount,
                   dmStyle: response.data.dmStyle
                 }
-              }
+              },
+              loading: false
             }));
             
             console.log("✅ Zustand: Rol DM activado");
@@ -171,7 +173,6 @@ const creation = create(
           if (response.data.success) {
             set({ currentRole: targetRole, error: null });
             
-            // Si el backend devuelve nuevo JWT, actualizar
             if (response.data.newToken) {
               localStorage.setItem('token', response.data.newToken);
               api.defaults.headers.common['Authorization'] = `Bearer ${response.data.newToken}`;

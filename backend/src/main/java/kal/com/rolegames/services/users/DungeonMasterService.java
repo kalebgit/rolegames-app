@@ -10,6 +10,7 @@ import kal.com.rolegames.models.items.Item;
 import kal.com.rolegames.models.sessions.Campaign;
 import kal.com.rolegames.models.users.DungeonMaster;
 import kal.com.rolegames.models.users.User;
+import kal.com.rolegames.models.util.UserType;
 import kal.com.rolegames.repositories.users.DungeonMasterRepository;
 import kal.com.rolegames.repositories.users.UserRepository;
 import lombok.AllArgsConstructor;
@@ -31,7 +32,8 @@ public class DungeonMasterService {
     private final DungeonMasterRepository dungeonMasterRepository;
     private final UserRepository userRepository;
     private final DungeonMasterMapper dungeonMasterMapper;
-    private final UserMapper userMapper;
+    private final UserService userService;
+
 
     private static final Logger logger = LoggerFactory.getLogger(DungeonMasterService.class);
 
@@ -62,7 +64,7 @@ public class DungeonMasterService {
     }
 
     @Transactional
-    public DungeonMasterDTO createDungeonMasterFromUser(UserDTO user) {
+    public DungeonMasterDTO createDungeonMasterFromUser(User user) {
         logger.info("[DM_SERVICE] Creando dm a partir del usuario: {}", user.getUsername());
 
         if (dungeonMasterRepository.findByEmail(user.getEmail()).isPresent()) {
@@ -71,7 +73,16 @@ public class DungeonMasterService {
         }
 
         try {
-            User registeredUser = userRepository.getReferenceById(user.getUserId());
+
+            User registeredUser;
+            if(!userRepository.existsUserByEmail(user.getEmail())){
+               registeredUser = userService.createUser(user);
+            }else{
+                registeredUser = userRepository.findByEmail(user.getEmail())
+                        .orElseThrow(()-> new NoSuchElementException("Usuario no encontrado para agregar rol"));
+            }
+
+            logger.info("[DM SERVICE] ✅ usuario recupeardo de la base de datos: {}", registeredUser);
 
             DungeonMaster newDm = DungeonMaster.builder()
                     .user(registeredUser)
@@ -83,7 +94,6 @@ public class DungeonMasterService {
             logger.info("[DM_SERVICE] ✅DM guardado exitosamente con ID: {}", savedDm.getDungeonMasterId());
 
             return dungeonMasterMapper.toDto(savedDm);
-
         } catch (Exception exc) {
             logger.error("[DM_SERVICE] Error al crear DungeonMaster: {} - {}",
                     exc.getClass().getSimpleName(), exc.getMessage(), exc);
@@ -98,7 +108,7 @@ public class DungeonMasterService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
 
-        return createDungeonMasterFromUser(userMapper.toDto(user));
+        return createDungeonMasterFromUser(user);
     }
 
     /**

@@ -15,7 +15,6 @@ export default function RoleManager() {
   const currentRole = useRoleStore(state => state.currentRole);
   const availableRoles = useRoleStore(state => state.availableRoles);
   const loading = useRoleStore(state => state.loading);
-  const setLoading = useRoleStore(state=>state.setLoading)
   const error = useRoleStore(state => state.error);
   const roleInstances = useRoleStore(state => state.roleInstances);
   
@@ -151,7 +150,7 @@ export default function RoleManager() {
     }
   };
 
-  if (loading || actionLoading) {
+  if (loading) {
     return <LoadingSpinner message="Cargando roles..." />;
   }
 

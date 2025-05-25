@@ -33,6 +33,7 @@ public class UserRoleService {
 
     private final static Logger logger = LoggerFactory.getLogger(UserRoleService.class);
 
+
     /**
      * Obtiene los roles activos de un usuario de forma segura
      */
@@ -90,7 +91,7 @@ public class UserRoleService {
 
 
         logger.info("[SERVICE] [role] El jugador no existia: " );
-        PlayerDTO player = playerService.createPlayerFromUser(userMapper.toDto(user));
+        PlayerDTO player = playerService.createPlayerFromUser(user);
 
         user.addRole(UserType.PLAYER);
         logger.info("[SERVICE] [role] Despues de agregar el rol: " + user);
@@ -117,16 +118,16 @@ public class UserRoleService {
             return dmService.getDungeonMasterByUserId(userId);
         }
 
-        logger.info("[SERVICE] [ROL] creando dm con el service");
+        logger.info("[SERVICE] [ROL] no existia el dm, se esta creando...");
 
-        DungeonMasterDTO dm = dmService.createDungeonMasterFromUser(userMapper.toDto(user));
+        DungeonMasterDTO dm = dmService.createDungeonMasterFromUser(user);
 
-        logger.info("[SERVICE] [ROL] se ha creado el dm: {}", dm.getDungeonMasterId());
+        logger.info("[SERVICE] [ROL] se ha creado el dm: {}", dm);
 
         user.addRole(UserType.DUNGEON_MASTER);
         User updatedUser = userRepository.save(user);
 
-        logger.info("[SERVICE] [ROL] el usuario fue actualizado: {}", updatedUser.getUsername());
+        logger.info("[SERVICE] [ROL] el usuario fue actualizado: {}", updatedUser);
         logger.info("[SERVICE] [ROL] todo bien para actualizar al usuario con su nuevo rol");
 
         return dm;

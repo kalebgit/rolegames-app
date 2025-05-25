@@ -1,5 +1,7 @@
 package kal.com.rolegames.services.auth;
 
+import kal.com.rolegames.dto.users.DungeonMasterDTO;
+import kal.com.rolegames.dto.users.PlayerDTO;
 import kal.com.rolegames.dto.users.UserDTO;
 import kal.com.rolegames.exceptions.EmailAlreadyInUseException;
 import kal.com.rolegames.exceptions.InvalidUserTypeException;
@@ -97,30 +99,36 @@ public class AuthService {
         // Encriptar la contraseña
 
         try {
-            // Crear usuario según el tipo
-            User registeredUser = userRepository.save(user);
-            registeredUser.setPassword(passwordEncoder.encode(registeredUser.getPassword()));
+            //todavia no se crea el usuario, se setea el password codficiado
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
 
+            // para player
             if (user.getUserType() == UserType.PLAYER) {
                 logger.info("[SERVICE] Creando usuario tipo PLAYER");
-                playerService.createPlayerFromUser(userMapper.toDto(registeredUser));
+                 PlayerDTO player = playerService.createPlayerFromUser(user);
 
+                 logger.warn("[USUARIOOOO EN BASE DE DATOOSS] este es el usuario ya en base de " +
+                         "datos: " + userRepository.findById(player.getUserId()));
+                // para dm
             } else if (user.getUserType() == UserType.DUNGEON_MASTER) {
                 logger.info("[SERVICE] Creando usuario tipo DUNGEON_MASTER");
-               dmService.createDungeonMasterFromUser(userMapper.toDto(registeredUser));
+                DungeonMasterDTO dm = dmService.createDungeonMasterFromUser(user);
 
-            } else if (user.getUserType() == UserType.ADMIN) {
-                logger.info("[SERVICE] Creando usuario tipo ADMIN");
-                // Por ahora guardar como usuario básico, implementar AdminService después
-                registeredUser = userRepository.save(registeredUser);
+                logger.warn("[USUARIOOOO EN BASE DE DATOOSS] este es el usuario ya en base de " +
+                        "datos: " + userRepository.findById(dm.getUserId()));
 
+               //para admin
+//            } else if (user.getUserType() == UserType.ADMIN) {
+//                logger.info("[SERVICE] Creando usuario tipo ADMIN");
+//                // Por ahora guardar como usuario básico, implementar AdminService después
+//                user = userRepository.save(user);
             } else {
                 logger.error("[SERVICE] Tipo de usuario no válido: {}", user.getUserType());
                 throw new InvalidUserTypeException("Tipo de usuario no válido: " + user.getUserType());
             }
 
-            logger.info("[SERVICE] Usuario registrado exitosamente: {}", registeredUser.getUsername());
-            return userMapper.toDto(registeredUser);
+            logger.info("[SERVICE] Usuario registrado exitosamente: {}", user);
+            return userMapper.toDto(user);
 
         } catch (EmailAlreadyInUseException | UsernameAlreadyInUseException | InvalidUserTypeException e) {
             // Re-lanzar excepciones específicas

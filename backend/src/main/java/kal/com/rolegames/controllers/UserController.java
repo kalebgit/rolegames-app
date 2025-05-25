@@ -1,4 +1,4 @@
-package kal.com.rolegames.controllers.users;
+package kal.com.rolegames.controllers;
 
 import kal.com.rolegames.dto.users.UserDTO;
 import kal.com.rolegames.models.users.User;
