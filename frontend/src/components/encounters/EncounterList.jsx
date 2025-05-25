@@ -6,6 +6,11 @@ import { toast } from 'react-toastify';
 
 export default function EncounterList({ onEncounterSelect, onCreateEncounter, onStartCombat }) {
 
+
+  const { encounters, loading, error, deleteEncounter, completeEncounter } = useEncounters();
+  const [typeFilter, setTypeFilter] = useState('');
+  const [difficultyFilter, setDifficultyFilter] = useState('');
+
   useEffect(() => {
     if (error) {
       toast.error(error, {
@@ -14,10 +19,6 @@ export default function EncounterList({ onEncounterSelect, onCreateEncounter, on
       });
     }
   }, [error]);
-
-  const { encounters, loading, error, deleteEncounter, completeEncounter } = useEncounters();
-  const [typeFilter, setTypeFilter] = useState('');
-  const [difficultyFilter, setDifficultyFilter] = useState('');
 
   const difficultyColors = {
     TRIVIAL: 'bg-green-100 text-green-800',

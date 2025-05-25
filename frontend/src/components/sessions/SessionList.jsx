@@ -1,7 +1,7 @@
 import LoadingSpinner from '../common/LoadingSpinner';
 import { toast } from 'react-toastify';
 import React, { useState, useEffect } from 'react'; 
-import { toast } from 'react-toastify';
+import useSessions from '../../hooks/sessions/useSessions';
 
 
 export default function SessionList({ onSessionSelect, onCreateSession }) {

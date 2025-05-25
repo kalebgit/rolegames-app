@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate} from 'react-router-dom';
 import AuthContainer from './components/auth/AuthContainer';
 import Navigation from './components/layout/Navigation';
 import Dashboard from './components/dashboard/Dashboard';
@@ -7,17 +7,27 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Componentes que requieren roles específicos
 import CharacterForm from './components/characters/CharacterForm';
+import CharacterDetail from './components/characters/CharacterDetail';
 import NPCForm from './components/npcs/NPCForm';
 import CampaignForm from './components/campaigns/CampaignForm';
+import SessionForm from './components/sessions/SessionForm';
+import EncounterForm from './components/encounters/EncounterForm';
 
 // Componentes generales
 import CharacterList from './components/characters/CharacterList';
+import NPCList from './components/npcs/NPCList';
 import CampaignList from './components/campaigns/CampaignList';
+import SessionList from './components/sessions/SessionList';
+import EncounterList from './components/encounters/EncounterList';
 import SpellList from './components/spells/SpellList';
+import SpellForm from './components/spells/SpellForm';
+import ItemList from './components/items/ItemList';
+import ItemForm from './components/items/ItemForm';
 import CombatTracker from './components/combat/CombatTracker';
 
 // Gestión de roles
 import RoleManager from './components/auth/RoleManager';
+import NotFound from './components/NotFound';
 
 import { useUserStore } from './stores/useUserStore';
 import LoadingSpinner from './components/common/LoadingSpinner';
@@ -94,10 +104,24 @@ export default function App() {
             </ProtectedRouteWithAuth>
           } />
           
+          {/* ========================================= */}
           {/* RUTAS QUE REQUIEREN ROL DE PLAYER */}
+          {/* ========================================= */}
+          
+          {/* Personajes - PLAYER */}
+          <Route path="/characters" element={
+            <ProtectedRouteWithAuth requiredRole="PLAYER">
+              <CharacterList />
+            </ProtectedRouteWithAuth>
+          } />
           <Route path="/characters/new" element={
             <ProtectedRouteWithAuth requiredRole="PLAYER">
               <CharacterForm />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/characters/:id" element={
+            <ProtectedRouteWithAuth requiredRole="PLAYER">
+              <CharacterDetail />
             </ProtectedRouteWithAuth>
           } />
           <Route path="/characters/:id/edit" element={
@@ -106,7 +130,16 @@ export default function App() {
             </ProtectedRouteWithAuth>
           } />
           
+          {/* ========================================= */}
           {/* RUTAS QUE REQUIEREN ROL DE DUNGEON_MASTER */}
+          {/* ========================================= */}
+          
+          {/* NPCs - DUNGEON_MASTER */}
+          <Route path="/npcs" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <NPCListPage />
+            </ProtectedRouteWithAuth>
+          } />
           <Route path="/npcs/new" element={
             <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
               <NPCForm />
@@ -115,6 +148,13 @@ export default function App() {
           <Route path="/npcs/:id/edit" element={
             <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
               <NPCForm />
+            </ProtectedRouteWithAuth>
+          } />
+          
+          {/* Campañas - DUNGEON_MASTER */}
+          <Route path="/campaigns" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <CampaignList />
             </ProtectedRouteWithAuth>
           } />
           <Route path="/campaigns/new" element={
@@ -128,33 +168,93 @@ export default function App() {
             </ProtectedRouteWithAuth>
           } />
           
+          {/* Sesiones - DUNGEON_MASTER */}
+          <Route path="/sessions" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <SessionListPage />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/sessions/new" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <SessionForm />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/sessions/:id/edit" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <SessionForm />
+            </ProtectedRouteWithAuth>
+          } />
+          
+          {/* Encuentros - DUNGEON_MASTER */}
+          <Route path="/encounters" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <EncounterListPage />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/encounters/new" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <EncounterForm />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/encounters/:id/edit" element={
+            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+              <EncounterForm />
+            </ProtectedRouteWithAuth>
+          } />
+          
+          {/* ========================================= */}
           {/* RUTAS GENERALES (sin rol específico) */}
-          <Route path="/characters" element={
-            <ProtectedRouteWithAuth>
-              <CharacterList />
-            </ProtectedRouteWithAuth>
-          } />
-          <Route path="/campaigns" element={
-            <ProtectedRouteWithAuth>
-              <CampaignList />
-            </ProtectedRouteWithAuth>
-          } />
+          {/* ========================================= */}
+          
+          {/* Hechizos */}
           <Route path="/spells" element={
             <ProtectedRouteWithAuth>
               <SpellList />
             </ProtectedRouteWithAuth>
           } />
+          <Route path="/spells/new" element={
+            <ProtectedRouteWithAuth>
+              <SpellForm />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/spells/:id/edit" element={
+            <ProtectedRouteWithAuth>
+              <SpellForm />
+            </ProtectedRouteWithAuth>
+          } />
+          
+          {/* OBJETOS - Esta era la ruta que faltaba */}
+          <Route path="/items" element={
+            <ProtectedRouteWithAuth>
+              <ItemListPage />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/items/new" element={
+            <ProtectedRouteWithAuth>
+              <ItemFormPage />
+            </ProtectedRouteWithAuth>
+          } />
+          <Route path="/items/:id/edit" element={
+            <ProtectedRouteWithAuth>
+              <ItemFormPage />
+            </ProtectedRouteWithAuth>
+          } />
+          
+          {/* Combate */}
           <Route path="/combat" element={
             <ProtectedRouteWithAuth>
               <CombatTracker />
             </ProtectedRouteWithAuth>
           } />
           
-          {/* Redirect any unknown route */}
-          <Route path="*" element={<Navigate to="/auth" replace />} />
+          {/* Página 404 */}
+          <Route path="/404" element={<NotFound />} />
+          
+          {/* Redirect any unknown route to 404 */}
+          <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
         
-        {/* Toast Container - Configuración global */}
+        {/* Toast Container */}
         {/* <ToastContainer
           position="top-right"
           autoClose={4000}
@@ -169,5 +269,128 @@ export default function App() {
         /> */}
       </AppInitializer>
     </Router>
+  );
+}
+
+// ========================================
+// Componentes Wrapper para páginas con lógica de navegación
+// ========================================
+
+function ItemListPage() {
+  const navigate = useNavigate();
+  
+  const handleItemSelect = (itemId, mode = 'view') => {
+    if (mode === 'edit') {
+      navigate(`/items/${itemId}/edit`);
+    } else {
+      navigate(`/items/${itemId}`);
+    }
+  };
+
+  const handleCreateItem = () => {
+    navigate('/items/new');
+  };
+
+  return (
+    <ItemList 
+      onItemSelect={handleItemSelect}
+      onCreateItem={handleCreateItem}
+    />
+  );
+}
+
+function ItemFormPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  
+  const handleSave = () => {
+    navigate('/items');
+  };
+
+  const handleCancel = () => {
+    navigate('/items');
+  };
+
+  return (
+    <ItemForm 
+      itemId={id}
+      onSave={handleSave}
+      onCancel={handleCancel}
+    />
+  );
+}
+
+function NPCListPage() {
+  const navigate = useNavigate();
+  
+  const handleNPCSelect = (npcId, mode = 'view') => {
+    if (mode === 'edit') {
+      navigate(`/npcs/${npcId}/edit`);
+    } else {
+      navigate(`/npcs/${npcId}`);
+    }
+  };
+
+  const handleCreateNPC = () => {
+    navigate('/npcs/new');
+  };
+
+  return (
+    <NPCList 
+      onNPCSelect={handleNPCSelect}
+      onCreateNPC={handleCreateNPC}
+    />
+  );
+}
+
+function SessionListPage() {
+  const navigate = useNavigate();
+  
+  const handleSessionSelect = (sessionId, mode = 'view') => {
+    if (mode === 'edit') {
+      navigate(`/sessions/${sessionId}/edit`);
+    } else {
+      navigate(`/sessions/${sessionId}`);
+    }
+  };
+
+  const handleCreateSession = () => {
+    navigate('/sessions/new');
+  };
+
+  return (
+    <SessionList 
+      onSessionSelect={handleSessionSelect}
+      onCreateSession={handleCreateSession}
+    />
+  );
+}
+
+function EncounterListPage() {
+  const navigate = useNavigate();
+  
+  const handleEncounterSelect = (encounterId, mode = 'view') => {
+    if (mode === 'edit') {
+      navigate(`/encounters/${encounterId}/edit`);
+    } else {
+      navigate(`/encounters/${encounterId}`);
+    }
+  };
+
+  const handleCreateEncounter = () => {
+    navigate('/encounters/new');
+  };
+
+  const handleStartCombat = (encounter) => {
+    // Lógica para iniciar combate
+    navigate('/combat');
+  };
+
+  return (
+    <EncounterList 
+      onEncounterSelect={handleEncounterSelect}
+      onCreateEncounter={handleCreateEncounter}
+      onStartCombat={handleStartCombat}
+    />
   );
 }
