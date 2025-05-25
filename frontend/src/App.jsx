@@ -25,6 +25,11 @@ import ItemList from './components/items/ItemList';
 import ItemForm from './components/items/ItemForm';
 import CombatTracker from './components/combat/CombatTracker';
 
+import CampaignDetail from './components/campaigns/CampaignDetail';
+import CampaignSessionForm from './components/sessions/campaignSessionForm';
+import SessionRoom from './components/sessions/SessionRoom';
+
+
 // Gestión de roles
 import RoleManager from './components/auth/RoleManager';
 import NotFound from './components/NotFound';
@@ -201,6 +206,44 @@ export default function App() {
               <EncounterForm />
             </ProtectedRouteWithAuth>
           } />
+          
+          {/*
+          RUTAS PARA EL NUEVO SISTEMA DE SESIONSES
+          */}
+          {/* Detalle de campaña con estadísticas */}
+<Route path="/campaigns/:id" element={
+  <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+    <CampaignDetail />
+  </ProtectedRouteWithAuth>
+} />
+
+{/* Crear sesión para una campaña específica */}
+<Route path="/campaigns/:campaignId/sessions/new" element={
+  <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+    <CampaignSessionForm />
+  </ProtectedRouteWithAuth>
+} />
+
+{/* Sala de sesión en vivo */}
+<Route path="/sessions/:id/room" element={
+  <ProtectedRouteWithAuth>
+    <SessionRoom />
+  </ProtectedRouteWithAuth>
+} />
+
+{/* Editar sesión específica */}
+<Route path="/sessions/:sessionId/edit" element={
+  <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+    <CampaignSessionForm />
+  </ProtectedRouteWithAuth>
+} />
+
+{/* Ver detalles de sesión */}
+<Route path="/sessions/:id" element={
+  <ProtectedRouteWithAuth>
+    <SessionDetail />
+  </ProtectedRouteWithAuth>
+} />
           
           {/* ========================================= */}
           {/* RUTAS GENERALES (sin rol específico) */}
