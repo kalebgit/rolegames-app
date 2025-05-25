@@ -12,14 +12,38 @@ import java.util.Map;
         unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface NonPlayerCharacterMapper {
 
-    @Mapping(target = "abilities", ignore = true) // Ignoramos el mapeo automático de abilities
+    @Mapping(target = "abilities", ignore = true)
+    @Mapping(target = "currentState", source = "currentState.stateId")
     @Mapping(target = "creatorId", source = "creator.dungeonMasterId")
+    @Mapping(target = "creatorName", source = "creator.user.username")
     NonPlayerCharacterDTO toDTO(NonPlayerCharacter character);
 
-    @Mapping(target = "abilities", ignore = true) // Ignoramos el mapeo automático de abilities
+    @Mapping(target = "abilities", ignore = true)
+    @Mapping(target = "currentState", ignore = true)
+    @Mapping(target = "traits", ignore = true)
+    @Mapping(target = "skills", ignore = true)
+    @Mapping(target = "savingThrows", ignore = true)
+    @Mapping(target = "encounters", ignore = true)
+    @Mapping(target = "behavior", ignore = true)
+    @Mapping(target = "associations", ignore = true)
+    @Mapping(target = "inventory", ignore = true)
+    @Mapping(target = "campaigns", ignore = true)
     NonPlayerCharacter toEntity(NonPlayerCharacterDTO dto);
 
     List<NonPlayerCharacterDTO> toNonPlayerCharacterListDto(List<NonPlayerCharacter> npcs);
+
+    @Mapping(target = "abilities", ignore = true)
+    @Mapping(target = "currentState", ignore = true)
+    @Mapping(target = "traits", ignore = true)
+    @Mapping(target = "skills", ignore = true)
+    @Mapping(target = "savingThrows", ignore = true)
+    @Mapping(target = "encounters", ignore = true)
+    @Mapping(target = "creator", ignore = true)
+    @Mapping(target = "behavior", ignore = true)
+    @Mapping(target = "associations", ignore = true)
+    @Mapping(target = "inventory", ignore = true)
+    @Mapping(target = "campaigns", ignore = true)    void updateNonPlayerCharacterFromDto(NonPlayerCharacterDTO dto, @MappingTarget NonPlayerCharacter character);
+
 
     @AfterMapping
     default void mapAbilities(NonPlayerCharacter source, @MappingTarget NonPlayerCharacterDTO target) {
@@ -35,8 +59,6 @@ public interface NonPlayerCharacterMapper {
         }
     }
 
-    @Mapping(target = "abilities", ignore = true)
-    void updateNonPlayerCharacterFromDto(NonPlayerCharacterDTO dto, @MappingTarget NonPlayerCharacter character);
 
     @AfterMapping
     default void updateAbilities(NonPlayerCharacterDTO source, @MappingTarget NonPlayerCharacter target) {

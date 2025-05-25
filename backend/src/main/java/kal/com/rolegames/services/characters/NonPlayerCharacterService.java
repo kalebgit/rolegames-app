@@ -11,6 +11,8 @@ import kal.com.rolegames.repositories.characters.NonPlayerCharacterRepository;
 import kal.com.rolegames.repositories.users.DungeonMasterRepository;
 import kal.com.rolegames.services.users.DungeonMasterService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,8 @@ public class NonPlayerCharacterService {
     private final NonPlayerCharacterMapper mapper;
 
     private final DungeonMasterService dmService;
+
+    private static final Logger logger = LoggerFactory.getLogger(NonPlayerCharacterService.class);
 
     public List<NonPlayerCharacterDTO> getAllNPCs() {
         return mapper.toNonPlayerCharacterListDto(new ArrayList<>(npcRepository.findAll()));
@@ -50,8 +54,10 @@ public class NonPlayerCharacterService {
 
     @Transactional
     public NonPlayerCharacterDTO createNPC(NonPlayerCharacterDTO dto, Long creatorId) {
+        logger.warn("[SERVICE NPC] DTO: {}", dto);
         DungeonMaster creator = dmRepository.findById(creatorId)
                 .orElseThrow(() -> new NoSuchElementException("Dungeon Master not found"));
+
 
         NonPlayerCharacter npc = mapper.toEntity(dto);
         npc.setCreator(creator);
@@ -71,7 +77,9 @@ public class NonPlayerCharacterService {
         dmService.addCreatedNpcToDM(creator.getDungeonMasterId(), npc);
         dmRepository.save(creator);
 
+
         NonPlayerCharacter savedNPC = npcRepository.save(npc);
+
         return mapper.toDTO(savedNPC);
     }
 
