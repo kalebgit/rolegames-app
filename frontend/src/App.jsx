@@ -28,6 +28,7 @@ import CombatTracker from './components/combat/CombatTracker';
 import CampaignDetail from './components/campaigns/CampaignDetail';
 import CampaignSessionForm from './components/sessions/campaignSessionForm';
 import SessionRoom from './components/sessions/SessionRoom';
+import SessionDetail from './components/sessions/sessionDetail';
 
 
 // Gestión de roles
