@@ -31,8 +31,8 @@ public class CombatService {
     private final GameCharacterRepository characterRepository;
 
     //mappers
-    private InitiativeMapper initiativeMapper;
-    private EffectMapper effectMapper;
+//    private InitiativeMapper initiativeMapper;
+//    private EffectMapper effectMapper;
     private CombatStateMapper combatMapper;
 
 
@@ -105,5 +105,19 @@ public class CombatService {
         return combatMapper.toDTO(updatedState);
     }
 
+    @Transactional
+    public CombatStateDTO removeParticipant(Long characterId) {
+        CombatState activeState = combatStateRepository.findByIsActiveTrue()
+                .orElseThrow(() -> new NoSuchElementException("No active combat found"));
+
+        GameCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new NoSuchElementException("Character not found"));
+
+        activeState.removeParticipant(character);
+        CombatState updatedState = combatStateRepository.save(activeState);
+
+        logger.info("[COMBAT SERVICE] Character {} removed from combat", characterId);
+        return combatMapper.toDTO(updatedState);
+    }
 
 }

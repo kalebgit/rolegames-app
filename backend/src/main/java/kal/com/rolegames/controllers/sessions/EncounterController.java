@@ -77,20 +77,38 @@ public class EncounterController {
     }
 
 
-
-    //mas importante para el combato
+    /*
+    RELACIONADO CON EL COMBATE
+     */
 
     @PostMapping("/{id}/start-combat")
     public ResponseEntity<EncounterDTO> startCombat(@PathVariable Long id, @RequestBody Map<Long, Integer> diceThrows) {
         return ResponseEntity.ok(encounterService.startCombat(id, diceThrows));
     }
 
+    @PostMapping("/{id}/end-combat")
+    public ResponseEntity<EncounterDTO> endCombat(@PathVariable Long id, @RequestBody Map<Long, Integer> diceThrows) {
+        return ResponseEntity.ok(encounterService.completeEncounterAndEndCombat(id));
+    }
+
+
+    @PostMapping("/{id}/next-turn")
+    public ResponseEntity<EncounterDTO> nextTurn(@PathVariable Long id) {
+        logger.info("[ENCOUNTER CONTROLLER] Advancing to next turn for encounter: {}", id);
+        return ResponseEntity.ok(encounterService.nextTurn(id));
+    }
+
+
+
     @PostMapping("/{id}/participants/{characterId}")
     public ResponseEntity<EncounterDTO> addParticipant(
             @PathVariable Long id,
-            @PathVariable Long characterId) {
+            @PathVariable Long characterId,
+            @RequestParam(required = false) Integer initiativeRoll) {
+        //faltaria implementar el initiative roll
         return ResponseEntity.ok(encounterService.addParticipant(id, characterId));
     }
+
 
     @DeleteMapping("/{id}/participants/{characterId}")
     public ResponseEntity<EncounterDTO> removeParticipant(
@@ -98,6 +116,24 @@ public class EncounterController {
             @PathVariable Long characterId) {
         return ResponseEntity.ok(encounterService.removeParticipant(id, characterId));
     }
+
+
+
+    //PENDIENTE
+//    @Data
+//    @NoArgsConstructor
+//    @AllArgsConstructor
+//    public static class AddParticipantRequest {
+//        private Long characterId;
+//        private Integer initiativeRoll;
+//    }
+//
+//    @PostMapping("/{id}/participants")
+//    public ResponseEntity<EncounterDTO> addParticipantWithInitiative(
+//            @PathVariable Long id,
+//            @RequestBody AddParticipantRequest request) {
+//        return ResponseEntity.ok(encounterService.addParticipant(id, request.getCharacterId(), request.getInitiativeRoll()));
+//    }
 
     @PostMapping("/{id}/rewards")
     public ResponseEntity<EncounterDTO> addReward(

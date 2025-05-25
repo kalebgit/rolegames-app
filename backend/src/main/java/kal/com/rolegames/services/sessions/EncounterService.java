@@ -227,20 +227,56 @@ public class EncounterService {
                 updatedCombatWithInitiatives);
 
         Encounter updatedEncounter = encounterRepository.save(encounter);
-        logger.info("[ENCOUNTER SERVICE] Combat started for encounter {}", encounterId);
+        logger.info("[ENCOUNTER SERVICE] Combat se ha iniciado para encuentro {}", encounterId);
         return mapToDetailedDTO(updatedEncounter);
+    }
+
+    @Transactional
+    public EncounterDTO nextTurn(Long encounterId) {
+        Encounter encounter = encounterRepository.findById(encounterId)
+                .orElseThrow(() -> new NoSuchElementException("Encuentro no encontrado"));
+
+        if (encounter.getEncounterType() != EncounterType.COMBAT) {
+            throw new IllegalArgumentException("Encuentro no es de tipo COMBAT");
+        }
+
+        if (encounter.getCombatState() == null || !encounter.getCombatState().getIsActive()) {
+            throw new IllegalStateException("No se encontro combate active para este encuentro");
+        }
+
+        combatService.nextTurn();
+
+        logger.info("[ENCOUNTER SERVICE] siguiente turno para el encuentro {}", encounterId);
+
+        Encounter refreshedEncounter = encounterRepository.findById(encounterId).orElseThrow();
+        return mapToDetailedDTO(refreshedEncounter);
     }
 
     @Transactional
     public EncounterDTO addParticipant(Long encounterId, Long characterId) {
         Encounter encounter = encounterRepository.findById(encounterId)
-                .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
+                .orElseThrow(() -> new NoSuchElementException("Encuentro no encontrado"));
 
         GameCharacter character = characterRepository.findById(characterId)
-                .orElseThrow(() -> new NoSuchElementException("Character not found"));
+                .orElseThrow(() -> new NoSuchElementException("Personaje no encontrado"));
 
         encounter.addParticipant(character);
         Encounter updatedEncounter = encounterRepository.save(encounter);
+
+        if (encounter.getEncounterType() == EncounterType.COMBAT &&
+                encounter.getCombatState() != null &&
+                encounter.getCombatState().getIsActive()) {
+
+            // Delegar al CombatService: necesitaremos una tirada de iniciativa
+            // Por ahora usamos un valor por defecto, pero deberías pasarlo como parámetro
+            try {
+                combatService.addParticipant(characterId, 10);
+                logger.info("[ENCOUNTER SERVICE] Character {} se ha añadido al combato", characterId);
+            } catch (Exception e) {
+                logger.warn("[ENCOUNTER SERVICE] Could not add character to combat: {}", e.getMessage());
+            }
+        }
+
         logger.info("[ENCOUNTER SERVICE] Character {} added to encounter {}", characterId, encounterId);
         return mapToDetailedDTO(updatedEncounter);
     }
@@ -253,7 +289,21 @@ public class EncounterService {
         GameCharacter character = characterRepository.findById(characterId)
                 .orElseThrow(() -> new NoSuchElementException("Character not found"));
 
+        // Remover del encuentro
         encounter.removeParticipant(character);
+
+        if (encounter.getEncounterType() == EncounterType.COMBAT &&
+                encounter.getCombatState() != null &&
+                encounter.getCombatState().getIsActive()) {
+
+            try {
+                combatService.removeParticipant(characterId);
+                logger.info("[ENCOUNTER SERVICE] Character {} se ha removido del combate actual", characterId);
+            } catch (Exception e) {
+                logger.warn("[ENCOUNTER SERVICE] No se pudo remover del combate: {}", e.getMessage());
+            }
+        }
+
         Encounter updatedEncounter = encounterRepository.save(encounter);
         logger.info("[ENCOUNTER SERVICE] Character {} removed from encounter {}", characterId, encounterId);
         return mapToDetailedDTO(updatedEncounter);

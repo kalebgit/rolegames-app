@@ -57,12 +57,40 @@ public class CombatState {
     @Setter(AccessLevel.NONE)
     private Long version;
 
+    /*
+    Relacionado con participantes
+     */
 
     public void addParticipant(GameCharacter character, int initiativeRoll) {
         initiativeOrder.add(Initiative.builder().combatState(this).character(character).initiativeRoll(initiativeRoll)
                 .currentTurn(false).hasActed(false).bonusActionsUsed(0).reactionsUsed(0).reactionsUsed(0)
                 .movementUsed(0).build());
         initiativeOrder.sort((a, b)-> b.getInitiativeRoll() - a.getInitiativeRoll());
+    }
+
+    public void removeParticipant(GameCharacter character) {
+        Initiative toRemove = initiativeOrder.stream()
+                .filter(initiative -> initiative.getCharacter().equals(character))
+                .findFirst()
+                .orElse(null);
+
+        if (toRemove != null) {
+            boolean wasCurrentTurn = toRemove.getCurrentTurn();
+
+            initiativeOrder.remove(toRemove);
+
+            if (wasCurrentTurn && !initiativeOrder.isEmpty()) {
+                int nextIndex = 0;
+                if (!initiativeOrder.isEmpty()) {
+                    Initiative next = initiativeOrder.get(nextIndex);
+                    next.setCurrentTurn(true);
+                }
+            }
+
+            if (initiativeOrder.isEmpty()) {
+                endCombat();
+            }
+        }
     }
 
 
