@@ -95,8 +95,7 @@ export default function useCampaignSessionForm(campaignId, sessionId, onSuccess)
     error,
     success,
     handleSubmit,
-    handleChange,
-    setError,
+    handrror,
     setSuccess
   };
 }

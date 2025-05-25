@@ -17,7 +17,7 @@ export default function CampaignSessionForm() {
   } = useCampaignSessionForm(
     campaignId, 
     sessionId, 
-    (sessionData) => {
+    (sessionData) => {gg
       // Redirigir a la sala de la sesión después de crearla
       navigate(`/sessions/${sessionData.sessionId}/room`);
     }

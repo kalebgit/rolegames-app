@@ -1,102 +1,106 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useRoleStore } from '../../stores/useRoleStore';
-import useSessionRoom from '../../hooks/sessions/useSessionRoom';
-import LoadingSpinner from '../common/LoadingSpinner';
-import { toast } from 'react-toastify';
+import React, { useState, useRef } from 'react';
+import './room.css'
 
 export default function SessionRoom() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const sessionId = parseInt(id);
+  const [connectedPlayers, setConnectedPlayers] = useState([
+    { id: 1, name: 'Jugador 1', avatar: '🧙‍♂️', isReady: true, x: 20, y: 50 },
+    { id: 2, name: 'Jugador 2', avatar: '⚔️', isReady: false, x: 80, y: 30 },
+    { id: 3, name: 'Jugador 3', avatar: '🏹', isReady: true, x: 80, y: 70 },
+    { id: 4, name: 'Jugador 4', avatar: '🛡️', isReady: true, x: 50, y: 20 },
+    { id: 5, name: 'Jugador 5', avatar: '⚡', isReady: false, x: 50, y: 80 }
+  ]);
   
-  // Role management
-  const isInDMMode = useRoleStore(state => state.isInDMMode);
-  
-  // Session room data
-  const {
-    session,
-    connectedPlayers,
-    combatState,
-    loading,
-    error,
-    startCombat,
-    nextTurn,
-    endCombat,
-    castSpell,
-    performAttack
-  } = useSessionRoom(sessionId);
-
-  // Local state
-  const [selectedAction, setSelectedAction] = useState(null);
   const [showActionMenu, setShowActionMenu] = useState(false);
+  const [draggedPlayer, setDraggedPlayer] = useState(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const boardRef = useRef(null);
 
-  const handleAction = async (actionType) => {
-    try {
-      switch (actionType) {
-        case 'attack':
-          await performAttack({ type: 'basic_attack' });
-          toast.success('Ataque realizado');
-          break;
-        case 'spell':
-          await castSpell({ spellId: 1 });
-          toast.success('Hechizo lanzado');
-          break;
-        case 'next_turn':
-          if (isInDMMode) {
-            await nextTurn();
-            toast.success('Turno avanzado');
-          }
-          break;
-        default:
-          break;
-      }
-      setShowActionMenu(false);
-      setSelectedAction(null);
-    } catch (err) {
-      toast.error(`Error al ejecutar ${actionType}`);
-    }
+  const handleMouseDown = (e, player) => {
+    const rect = boardRef.current.getBoundingClientRect();
+    const playerElement = e.currentTarget;
+    const playerRect = playerElement.getBoundingClientRect();
+    
+    setDraggedPlayer(player.id);
+    setDragOffset({
+      x: (playerRect.left - rect.left + playerRect.width / 2) - (e.clientX - rect.left),
+      y: (playerRect.top - rect.top + playerRect.height / 2) - (e.clientY - rect.top)
+    });
   };
 
-  const getPlayerPosition = (index, total) => {
-    const angle = (index * 360) / total;
-    const radius = 200; // Radio del círculo
-    const centerX = 50; // Centro en porcentaje
-    const centerY = 50;
+  const handleMouseMove = (e) => {
+    if (draggedPlayer === null) return;
     
-    const x = centerX + (radius / 8) * Math.cos((angle * Math.PI) / 180);
-    const y = centerY + (radius / 8) * Math.sin((angle * Math.PI) / 180);
+    const rect = boardRef.current.getBoundingClientRect();
+    const newX = ((e.clientX - rect.left + dragOffset.x) / rect.width) * 100;
+    const newY = ((e.clientY - rect.top + dragOffset.y) / rect.height) * 100;
     
-    return {
-      left: `${x}%`,
-      top: `${y}%`,
-      transform: 'translate(-50%, -50%)'
-    };
-  };
-
-  if (loading) {
-    return <LoadingSpinner message="Conectando a la sesión..." />;
-  }
-
-  if (error || !session) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="text-red-600 text-6xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Error</h1>
-            <p className="text-gray-600 mb-6">{error || 'Sesión no encontrada'}</p>
-            <button
-              onClick={() => navigate('/campaigns')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md"
-            >
-              Volver a Campañas
-            </button>
-          </div>
-        </div>
-      </div>
+    // Limitar a los bordes del tablero
+    const clampedX = Math.max(8, Math.min(92, newX));
+    const clampedY = Math.max(8, Math.min(92, newY));
+    
+    setConnectedPlayers(prev => 
+      prev.map(player => 
+        player.id === draggedPlayer 
+          ? { ...player, x: clampedX, y: clampedY }
+          : player
+      )
     );
-  }
+  };
+
+  const handleMouseUp = () => {
+    setDraggedPlayer(null);
+    setDragOffset({ x: 0, y: 0 });
+  };
+
+  const handleAction = (actionType) => {
+    console.log(`Acción ejecutada: ${actionType}`);
+    setShowActionMenu(false);
+  };
+
+  const actionButtons = [
+    { 
+      id: 'attack', 
+      icon: '⚔️', 
+      color: 'bg-red-500 hover:bg-red-600', 
+      tooltip: 'Realizar Ataque',
+      description: 'Ataca a un enemigo con tu arma equipada'
+    },
+    { 
+      id: 'spell', 
+      icon: '✨', 
+      color: 'bg-purple-500 hover:bg-purple-600', 
+      tooltip: 'Lanzar Hechizo',
+      description: 'Usa magia para afectar el campo de batalla'
+    },
+    { 
+      id: 'move', 
+      icon: '🏃', 
+      color: 'bg-blue-500 hover:bg-blue-600', 
+      tooltip: 'Mover Personaje',
+      description: 'Mueve tu personaje por el tablero'
+    },
+    { 
+      id: 'item', 
+      icon: '🎒', 
+      color: 'bg-green-500 hover:bg-green-600', 
+      tooltip: 'Usar Objeto',
+      description: 'Utiliza un objeto de tu inventario'
+    },
+    { 
+      id: 'defend', 
+      icon: '🛡️', 
+      color: 'bg-yellow-500 hover:bg-yellow-600', 
+      tooltip: 'Defenderse',
+      description: 'Adopta una postura defensiva'
+    },
+    { 
+      id: 'next_turn', 
+      icon: '➡️', 
+      color: 'bg-indigo-500 hover:bg-indigo-600', 
+      tooltip: 'Siguiente Turno',
+      description: 'Pasar al siguiente jugador (Solo DM)'
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-8">
@@ -106,9 +110,9 @@ export default function SessionRoom() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Sesión #{session.sessionNumber}
+                Sesión #3
               </h1>
-              <p className="text-gray-600">{session.campaignName}</p>
+              <p className="text-gray-600">Campaña: La Forja del Destino</p>
             </div>
             
             <div className="flex items-center space-x-4">
@@ -119,181 +123,145 @@ export default function SessionRoom() {
               <span className="text-sm text-gray-500">
                 {connectedPlayers.length} jugadores conectados
               </span>
-              <button
-                onClick={() => navigate('/campaigns')}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
-              >
-                Salir
-              </button>
             </div>
           </div>
         </div>
 
-        {/* Área principal de juego */}
-        <div className="bg-white rounded-lg shadow-lg p-8 relative">
-          <div className="w-full h-96 relative">
-            {/* Círculo de jugadores */}
+        {/* Área principal de juego con fondo de pasto */}
+        <div className="bg-white rounded-lg shadow-lg p-8 relative overflow-hidden">
+          {/* AQUÍ INSERTAR IMAGEN DE FONDO DE PASTO */}
+          {/* Reemplaza la siguiente línea con: */}
+          {/* <div className="absolute inset-0 opacity-30" style={{backgroundImage: 'url("/path/to/grass-texture.jpg")', backgroundSize: 'cover', backgroundRepeat: 'repeat'}}></div> */}
+          <div 
+            className="absolute inset-0 opacity-30" 
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2334d399' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              backgroundSize: 'cover'
+            }}
+          ></div>
+          
+          <div 
+            ref={boardRef}
+            className="w-full h-96 relative cursor-crosshair"
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          >
+            {/* Círculo central - AQUÍ INSERTAR IMAGEN PERSONALIZADA */}
+            {/* Reemplaza el siguiente div con una imagen: */}
+            {/* <img src="/path/to/central-icon.png" alt="Centro" className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 cursor-pointer z-20" onClick={() => setShowActionMenu(true)} /> */}
+            
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+              <div 
+                className="w-32 h-32 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full shadow-xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform relative overflow-hidden"
+                onClick={() => setShowActionMenu(!showActionMenu)}
+              >
+                {/* Efecto de textura */}
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-amber-400 to-orange-500 opacity-75"></div>
+                <div className="absolute inset-2 bg-gradient-to-br from-amber-300 to-orange-400 rounded-full"></div>
+                
+                <div className="relative z-10 text-white text-4xl font-bold">
+                  {!showActionMenu ? '⚡' : '🎯'}
+                </div>
+              </div>
+            </div>
+
             {connectedPlayers.map((player, index) => (
               <div
                 key={player.id}
-                className="absolute w-20 h-20 bg-white rounded-full shadow-lg border-4 border-blue-200 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors"
-                style={getPlayerPosition(index, connectedPlayers.length)}
+                className={`absolute w-20 h-20 bg-white rounded-full shadow-lg border-4 ${
+                  player.isReady ? 'border-green-400' : 'border-gray-300'
+                } flex flex-col items-center justify-center cursor-move hover:scale-110 transition-all duration-200 z-50 ${
+                  draggedPlayer === player.id ? 'scale-110' : ''
+                }`}
+                style={{
+                  left: `${player.x}%`,
+                  top: `${player.y}%`,
+                  transform: 'translate(-50%, -50%)'
+                }}
+                onMouseDown={(e) => handleMouseDown(e, player)}
               >
                 <div className="text-2xl mb-1">{player.avatar}</div>
-                <div className="text-xs font-medium text-gray-700 text-center">
+                <div className="text-xs font-medium text-gray-700 text-center leading-tight">
                   {player.name}
                 </div>
                 {player.isReady && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center shadow-md">
                     <span className="text-white text-xs">✓</span>
                   </div>
                 )}
               </div>
             ))}
 
-            {/* Centro del círculo - Área de acciones */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-              <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full shadow-xl flex items-center justify-center">
-                {!showActionMenu ? (
-                  <button
-                    onClick={() => setShowActionMenu(true)}
-                    className="text-white text-4xl hover:scale-110 transition-transform"
-                  >
-                    ⚡
-                  </button>
-                ) : (
-                  <div className="flex space-x-2">
-                    {/* Botón de Ataque */}
-                    <button
-                      onClick={() => handleAction('attack')}
-                      className="w-8 h-8 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-sm transition-colors"
-                      title="Atacar"
-                    >
-                      ⚔️
-                    </button>
+            {/* Menu de acciones expandido - Z-INDEX ALTO PARA ESTAR ENCIMA DE TODO */}
+            {showActionMenu && (
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-9999">
+                <div className="relative">
+                  {actionButtons.map((action, index) => {
+                    const angle = (index * 360) / actionButtons.length;
+                    const radius = 100;
+                    const x = radius * Math.cos((angle * Math.PI) / 180);
+                    const y = radius * Math.sin((angle * Math.PI) / 180);
                     
-                    {/* Botón de Hechizo */}
-                    <button
-                      onClick={() => handleAction('spell')}
-                      className="w-8 h-8 bg-purple-500 hover:bg-purple-600 rounded-full flex items-center justify-center text-white text-sm transition-colors"
-                      title="Lanzar Hechizo"
-                    >
-                      ✨
-                    </button>
-                    
-                    {/* Botón de Siguiente Turno (solo DM) */}
-                    {isInDMMode && (
-                      <button
-                        onClick={() => handleAction('next_turn')}
-                        className="w-8 h-8 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white text-sm transition-colors"
-                        title="Siguiente Turno"
+                    return (
+                      <div
+                        key={action.id}
+                        className="absolute group z-9999"
+                        style={{
+                          left: `${x}px`,
+                          top: `${y}px`,
+                          transform: 'translate(-50%, -50%)'
+                        }}
                       >
-                        ➡️
-                      </button>
-                    )}
-                    
-                    {/* Botón de cerrar */}
-                    <button
-                      onClick={() => setShowActionMenu(false)}
-                      className="w-8 h-8 bg-gray-500 hover:bg-gray-600 rounded-full flex items-center justify-center text-white text-sm transition-colors"
-                      title="Cerrar"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Panel de información de combate */}
-        {combatState && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mt-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Combate en Progreso - Ronda {combatState.currentRound}
-              </h3>
-              {isInDMMode && (
-                <button
-                  onClick={endCombat}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm"
-                >
-                  Finalizar Combate
-                </button>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {combatState.initiativeOrder?.slice(0, 3).map((initiative, index) => (
-                <div 
-                  key={initiative.initiativeId}
-                  className={`p-4 rounded-lg border ${
-                    initiative.currentTurn 
-                      ? 'bg-yellow-50 border-yellow-300' 
-                      : 'bg-gray-50 border-gray-200'
-                  }`}
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-medium">{initiative.characterName}</h4>
-                    <span className="text-sm font-bold bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                      {initiative.initiativeRoll}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    <div>PV: {initiative.hitPoints}/{initiative.maxHitPoints}</div>
-                    <div>CA: {initiative.armorClass}</div>
-                    {initiative.currentTurn && (
-                      <div className="text-yellow-600 font-medium mt-1">
-                        🎯 Turno actual
+                        <button
+                          onClick={() => handleAction(action.id)}
+                          className={`w-16 h-16 ${action.color} rounded-full flex items-center justify-center text-white text-xl transition-all duration-200 shadow-2xl hover:scale-110 hover:shadow-2xl border-2 border-white relative z-9999`}
+                          title={action.tooltip}
+                        >
+                          {action.icon}
+                        </button>
+                        
+                        {/* Tooltip con descripción */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10000">
+                          <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-2xl border border-gray-700">
+                            <div className="font-semibold">{action.tooltip}</div>
+                            <div className="text-gray-300 text-xs mt-1">{action.description}</div>
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                    );
+                  })}
+                  
+                  {/* Botón de cerrar en el centro */}
+                  <button
+                    onClick={() => setShowActionMenu(false)}
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-gray-600 hover:bg-gray-700 rounded-full flex items-center justify-center text-white text-lg transition-colors shadow-2xl border-2 border-white z-9999"
+                    title="Cerrar menú"
+                  >
+                    ✕
+                  </button>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Panel de chat/log de acciones */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mt-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Log de Acciones</h3>
-          <div className="h-32 bg-gray-50 rounded-lg p-4 overflow-y-auto">
-            <div className="text-sm text-gray-600 space-y-1">
-              <div>🎮 <span className="font-medium">Jugador 1</span> se ha unido a la sesión</div>
-              <div>⚔️ <span className="font-medium">Jugador 2</span> atacó al Goblin</div>
-              <div>✨ <span className="font-medium">Jugador 3</span> lanzó Proyectil Mágico</div>
-              <div>🎲 <span className="font-medium">DM</span> avanzó al siguiente turno</div>
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Panel de controles del DM */}
-        {isInDMMode && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mt-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Controles del DM</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <button
-                onClick={() => navigate(`/encounters/new?sessionId=${sessionId}`)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium"
-              >
-                Crear Encuentro
-              </button>
-              <button
-                onClick={() => {/* TODO: Implementar inicio de combate */}}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-medium"
-              >
-                Iniciar Combate
-              </button>
-              <button
-                onClick={() => navigate(`/sessions/${sessionId}/edit`)}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-lg font-medium"
-              >
-                Configurar Sesión
-              </button>
+        {/* Instrucciones para el usuario */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+          <div className="flex items-start space-x-3">
+            <div className="text-blue-500 text-xl">💡</div>
+            <div>
+              <h3 className="font-semibold text-blue-900 mb-2">Instrucciones de Juego</h3>
+              <ul className="text-blue-700 text-sm space-y-1">
+                <li>• <strong>Arrastra</strong> los jugadores por el tablero para posicionarlos</li>
+                <li>• <strong>Haz clic</strong> en el centro para abrir el menú de acciones</li>
+                <li>• <strong>Pasa el mouse</strong> sobre los botones para ver qué hacen</li>
+                <li>• Los jugadores con ✓ verde están listos para la acción</li>
+              </ul>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

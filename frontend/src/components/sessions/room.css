@@ -1,0 +1,19 @@
+.session-room {
+    position: relative;
+  }
+  
+  .circle-large-center {
+    z-index: 1; /* Más bajo - al fondo */
+  }
+  
+  .players {
+    z-index: 2; /* Encima del círculo grande */
+  }
+  
+  .circles-small {
+    z-index: 3; /* Encima de los jugadores */
+  }
+  
+  .background-grass {
+    z-index: 4; /* Más alto - pero detrás de todo lo demás */
+  }
