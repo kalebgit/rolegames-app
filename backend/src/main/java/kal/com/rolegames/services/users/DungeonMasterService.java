@@ -65,7 +65,7 @@ public class DungeonMasterService {
     public DungeonMasterDTO createDungeonMasterFromUser(UserDTO user) {
         logger.info("[DM_SERVICE] Creando dm a partir del usuario: {}", user.getUsername());
 
-        if (dungeonMasterRepository.findByUserId(user.getUserId()).isPresent()) {
+        if (dungeonMasterRepository.findByEmail(user.getEmail()).isPresent()) {
             logger.warn("[DM_SERVICE] DungeonMaster ya existe para este usuario");
             throw new IllegalStateException("DungeonMaster already exists for this user");
         }

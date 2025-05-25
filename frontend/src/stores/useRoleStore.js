@@ -17,6 +17,8 @@ const creation = create(
       loading: false,
       error: null,
 
+
+      setLoading: (loading)=>set({loading}),
       // ========================================
       // ACCIONES QUE LLAMAN AL BACKEND
       // ========================================
@@ -151,9 +153,10 @@ const creation = create(
        * Cambia contexto de rol (sin llamar backend, solo local)
        */
       switchRoleContext: async (targetRole) => {
-        console.log(`🔄 Zustand: Cambiando contexto a ${targetRole}`);
+        console.log(`🔄 Zustand: (intento) Cambiando contexto a ${targetRole}`);
         
         const { availableRoles } = get();
+        console.log(availableRoles)
         if (!availableRoles.includes(targetRole)) {
           const message = `No tienes acceso al rol ${targetRole}`;
           set({ error: message });
@@ -162,6 +165,7 @@ const creation = create(
 
 
         try {
+          console.log(targetRole)
           const response = await api.post('/api/user/roles/switch-context', { targetRole });
           
           if (response.data.success) {

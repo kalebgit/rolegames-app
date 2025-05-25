@@ -77,18 +77,25 @@ public class UserRoleService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("User not found"));
 
+        //verificar que el jugador exista
         Optional<Player> existingPlayer = playerRepository.findByUserId(userId);
         if (existingPlayer.isPresent()) {
+            logger.info("[SERVICE] [role] El jugador ya existia: " + user);
             user.addRole(UserType.PLAYER);
-            userRepository.save(user);
+            logger.info("[SERVICE] [role] Despues de agregar el rol: " + user);
+            User userWithNewRole = userRepository.save(user);
+            logger.info("[SERVICE] [role] Despues de persistirlo: " + userWithNewRole);
             return playerService.getPlayerByUserId(userId);
         }
 
+
+        logger.info("[SERVICE] [role] El jugador no existia: " );
         PlayerDTO player = playerService.createPlayerFromUser(userMapper.toDto(user));
 
         user.addRole(UserType.PLAYER);
-        userRepository.save(user);
-
+        logger.info("[SERVICE] [role] Despues de agregar el rol: " + user);
+        User userWithNewRole = userRepository.save(user);
+        logger.info("[SERVICE] [role] Despues de persistirlo: " + userWithNewRole);
         return player;
     }
 

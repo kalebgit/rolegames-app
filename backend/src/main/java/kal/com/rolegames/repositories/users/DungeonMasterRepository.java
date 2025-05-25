@@ -9,4 +9,9 @@ import java.util.Optional;
 
 public interface DungeonMasterRepository extends JpaRepository<DungeonMaster, Long> {
     @Query("SELECT dm FROM DungeonMaster dm WHERE dm.user.userId = :userId")
-    Optional<DungeonMaster> findByUserId(@Param("userId") Long userId);}
+    Optional<DungeonMaster> findByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT dm FROM DungeonMaster dm WHERE dm.user.email = :email")
+    Optional<DungeonMaster> findByEmail(@Param("email") String email);
+}
+

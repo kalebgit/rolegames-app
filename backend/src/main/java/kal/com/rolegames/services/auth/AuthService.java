@@ -78,7 +78,7 @@ public class AuthService {
      * @throws UserRegistrationException si ocurre un error durante el registro
      */
     @Transactional
-    public UserDTO register(UserDTO user) {
+    public UserDTO register(User user) {
         logger.info("[SERVICE] Iniciando registro para usuario: {}", user.getUsername());
 
 
@@ -98,7 +98,7 @@ public class AuthService {
 
         try {
             // Crear usuario según el tipo
-            User registeredUser = userRepository.getReferenceById(user.getUserId());
+            User registeredUser = userRepository.save(user);
             registeredUser.setPassword(passwordEncoder.encode(registeredUser.getPassword()));
 
             if (user.getUserType() == UserType.PLAYER) {

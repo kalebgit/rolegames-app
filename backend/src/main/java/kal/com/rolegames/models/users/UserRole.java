@@ -9,7 +9,7 @@ import lombok.*;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-@ToString(includeFieldNames = true)
+@ToString(includeFieldNames = true, exclude ={"user"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class UserRole {
     @Id

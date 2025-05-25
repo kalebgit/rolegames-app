@@ -54,7 +54,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody UserDTO user){
+    public ResponseEntity<?> registerUser(@RequestBody User user){
         logger.info("[CONTROLLER][USER: {}] [Register] Datos recibidos", user);
         try {
             if(user.getUserType() == null){

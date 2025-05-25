@@ -66,7 +66,7 @@ public class PlayerService {
     public PlayerDTO createPlayerFromUser(UserDTO user) {
         logger.info("[PLAYER_SERVICE] Creando player a partir del usuario: {}", user.getUsername());
 
-        if (playerRepository.findByUserId(user.getUserId()).isPresent()) {
+        if (playerRepository.findByEmail(user.getEmail()).isPresent()) {
             logger.warn("[PLAYER_SERVICE] Player ya existe para este usuario");
             throw new IllegalStateException("Player already exists for this user");
         }

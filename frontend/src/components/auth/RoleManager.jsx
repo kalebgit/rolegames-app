@@ -15,6 +15,7 @@ export default function RoleManager() {
   const currentRole = useRoleStore(state => state.currentRole);
   const availableRoles = useRoleStore(state => state.availableRoles);
   const loading = useRoleStore(state => state.loading);
+  const setLoading = useRoleStore(state=>state.setLoading)
   const error = useRoleStore(state => state.error);
   const roleInstances = useRoleStore(state => state.roleInstances);
   
@@ -88,9 +89,10 @@ export default function RoleManager() {
         position: "top-right",
         autoClose: 5000,
       });
-    }
-    
+    }finally{
     setActionLoading(false);
+    
+    }
   };
 
   const handleEnableDM = async () => {
@@ -118,9 +120,10 @@ export default function RoleManager() {
         position: "top-right",
         autoClose: 5000,
       });
+    }finally{
+      setActionLoading(false);
     }
     
-    setActionLoading(false);
   };
 
   const handleSwitchContext = async (targetRole) => {
@@ -148,7 +151,7 @@ export default function RoleManager() {
     }
   };
 
-  if (loading) {
+  if (loading || actionLoading) {
     return <LoadingSpinner message="Cargando roles..." />;
   }
 

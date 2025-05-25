@@ -5,6 +5,7 @@ import kal.com.rolegames.dto.users.PlayerDTO;
 import kal.com.rolegames.models.users.*;
 import kal.com.rolegames.models.util.UserType;
 // import kal.com.rolegames.services.users.UserInstanceService; // Para Opción 2
+import kal.com.rolegames.repositories.users.UserRepository;
 import kal.com.rolegames.services.users.UserRoleService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -25,6 +26,9 @@ import java.util.Optional;
 @CrossOrigin(origins = "*")
 @AllArgsConstructor(onConstructor=@__({@Autowired}))
 public class UserRoleController {
+
+    //para debug
+    private final UserRepository userRepository;
 
     private final UserRoleService userRoleService;
 
@@ -186,8 +190,9 @@ public class UserRoleController {
             @AuthenticationPrincipal User user,
             @RequestBody SwitchContextRequest request) {
 
+        logger.info("Usuario para cambiar el contexto de roles: " + user);
         Map<String, Object> response = new HashMap<>();
-
+        logger.info("Usuario que esta en repositorio: " + userRepository.findById(user.getUserId()));
         if (!user.hasRole(request.getTargetRole())) {
             response.put("success", false);
             response.put("message", "User does not have access to " + request.getTargetRole() + " role");
