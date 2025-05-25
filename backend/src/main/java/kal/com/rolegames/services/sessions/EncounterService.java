@@ -16,6 +16,8 @@ import kal.com.rolegames.repositories.items.ItemRepository;
 import kal.com.rolegames.repositories.sessions.EncounterRepository;
 import kal.com.rolegames.repositories.sessions.SessionRepository;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,12 +38,22 @@ public class EncounterService {
     private final EncounterMapper encounterMapper;
     private final RewardMapper rewardMapper;
 
+    private static final Logger logger = LoggerFactory.getLogger(EncounterService.class);
+
     public List<EncounterDTO> getAllEncounters() {
         return encounterMapper.toEncounterListDto(new ArrayList<>(encounterRepository.findAll()));
     }
 
     public List<EncounterDTO> getEncountersBySession(Long sessionId) {
         return encounterMapper.toEncounterListDto(new ArrayList<>(encounterRepository.findBySessionSessionId(sessionId)));
+    }
+
+    public List<EncounterDTO> getCompletedEncounters() {
+        return encounterMapper.toEncounterListDto(new ArrayList<>(encounterRepository.findByIsCompleted(true)));
+    }
+
+    public List<EncounterDTO> getPendingEncounters() {
+        return encounterMapper.toEncounterListDto(new ArrayList<>(encounterRepository.findByIsCompleted(false)));
     }
 
     public EncounterDTO getEncounterById(Long id) {
@@ -52,6 +64,8 @@ public class EncounterService {
 
     @Transactional
     public EncounterDTO createEncounter(EncounterDTO dto, Long sessionId) {
+        logger.info("[ENCOUNTER SERVICE] Creating encounter for session ID: {}", sessionId);
+
         Session session = null;
         if (sessionId != null) {
             session = sessionRepository.findById(sessionId)
@@ -61,9 +75,15 @@ public class EncounterService {
         Encounter encounter = encounterMapper.toEntity(dto);
         if (session != null) {
             encounter.setSession(session);
+            session.addEncounter(encounter);
+        }
+
+        if (encounter.getIsCompleted() == null) {
+            encounter.setIsCompleted(false);
         }
 
         Encounter savedEncounter = encounterRepository.save(encounter);
+        logger.info("[ENCOUNTER SERVICE] Encounter created successfully with ID: {}", savedEncounter.getEncounterId());
         return mapToDetailedDTO(savedEncounter);
     }
 
@@ -91,11 +111,24 @@ public class EncounterService {
                 .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
 
         encounter.setIsCompleted(true);
+
         if (encounter.getCombatState() != null && encounter.getCombatState().getIsActive()) {
             encounter.endCombat();
         }
 
         Encounter updatedEncounter = encounterRepository.save(encounter);
+        logger.info("[ENCOUNTER SERVICE] Encounter {} marked as completed", encounterId);
+        return mapToDetailedDTO(updatedEncounter);
+    }
+
+    @Transactional
+    public EncounterDTO startCombat(Long encounterId) {
+        Encounter encounter = encounterRepository.findById(encounterId)
+                .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
+
+        encounter.startCombat();
+        Encounter updatedEncounter = encounterRepository.save(encounter);
+        logger.info("[ENCOUNTER SERVICE] Combat started for encounter {}", encounterId);
         return mapToDetailedDTO(updatedEncounter);
     }
 
@@ -109,6 +142,21 @@ public class EncounterService {
 
         encounter.addParticipant(character);
         Encounter updatedEncounter = encounterRepository.save(encounter);
+        logger.info("[ENCOUNTER SERVICE] Character {} added to encounter {}", characterId, encounterId);
+        return mapToDetailedDTO(updatedEncounter);
+    }
+
+    @Transactional
+    public EncounterDTO removeParticipant(Long encounterId, Long characterId) {
+        Encounter encounter = encounterRepository.findById(encounterId)
+                .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
+
+        GameCharacter character = characterRepository.findById(characterId)
+                .orElseThrow(() -> new NoSuchElementException("Character not found"));
+
+        encounter.removeParticipant(character);
+        Encounter updatedEncounter = encounterRepository.save(encounter);
+        logger.info("[ENCOUNTER SERVICE] Character {} removed from encounter {}", characterId, encounterId);
         return mapToDetailedDTO(updatedEncounter);
     }
 
@@ -125,17 +173,41 @@ public class EncounterService {
             reward.setItemReward(item);
         }
 
+        if (reward.getClaimed() == null) {
+            reward.setClaimed(false);
+        }
+
         encounter.addReward(reward);
         Encounter updatedEncounter = encounterRepository.save(encounter);
+        logger.info("[ENCOUNTER SERVICE] Reward added to encounter {}", encounterId);
+        return mapToDetailedDTO(updatedEncounter);
+    }
+
+    @Transactional
+    public EncounterDTO removeReward(Long encounterId, Long rewardId) {
+        Encounter encounter = encounterRepository.findById(encounterId)
+                .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
+
+        Reward rewardToRemove = encounter.getRewards().stream()
+                .filter(reward -> reward.getRewardId().equals(rewardId))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Reward not found in this encounter"));
+
+        encounter.removeReward(rewardToRemove);
+        Encounter updatedEncounter = encounterRepository.save(encounter);
+        logger.info("[ENCOUNTER SERVICE] Reward {} removed from encounter {}", rewardId, encounterId);
         return mapToDetailedDTO(updatedEncounter);
     }
 
     private EncounterDTO mapToDetailedDTO(Encounter encounter) {
         EncounterDTO dto = encounterMapper.toDTO(encounter);
 
-        // Map participant IDs
         dto.setParticipantIds(encounter.getParticipants().stream()
                 .map(GameCharacter::getCharacterId)
+                .collect(Collectors.toSet()));
+
+        dto.setRewards(encounter.getRewards().stream()
+                .map(rewardMapper::toDTO)
                 .collect(Collectors.toSet()));
 
         return dto;
