@@ -57,6 +57,7 @@ public class CombatState {
     @Setter(AccessLevel.NONE)
     private Long version;
 
+
     public void addParticipant(GameCharacter character, int initiativeRoll) {
         initiativeOrder.add(Initiative.builder().combatState(this).character(character).initiativeRoll(initiativeRoll)
                 .currentTurn(false).hasActed(false).bonusActionsUsed(0).reactionsUsed(0).reactionsUsed(0)
@@ -64,14 +65,6 @@ public class CombatState {
         initiativeOrder.sort((a, b)-> b.getInitiativeRoll() - a.getInitiativeRoll());
     }
 
-    public void startCombat() {
-        isActive = true;
-        startTime = LocalDateTime.now();
-        currentRound = 1;
-        if(!initiativeOrder.isEmpty()){
-            initiativeOrder.get(0).setCurrentTurn(true);
-        }
-    }
 
     public void endCombat() {
         isActive = false;

@@ -1,29 +1,34 @@
 package kal.com.rolegames.services.sessions;
 
 import jakarta.transaction.Transactional;
+import kal.com.rolegames.dto.combat.CombatStateDTO;
 import kal.com.rolegames.dto.items.RewardDTO;
 import kal.com.rolegames.dto.sessions.EncounterDTO;
 import kal.com.rolegames.mappers.items.RewardMapper;
 import kal.com.rolegames.mappers.sessions.EncounterMapper;
 import kal.com.rolegames.models.characters.GameCharacter;
+import kal.com.rolegames.models.combat.CombatState;
+import kal.com.rolegames.models.combat.Initiative;
 import kal.com.rolegames.models.items.Item;
 import kal.com.rolegames.models.items.Reward;
 import kal.com.rolegames.models.sessions.Encounter;
 import kal.com.rolegames.models.sessions.Session;
+import kal.com.rolegames.models.util.EncounterType;
 import kal.com.rolegames.models.util.RewardType;
 import kal.com.rolegames.repositories.characters.GameCharacterRepository;
+import kal.com.rolegames.repositories.combat.CombatStateRepository;
+import kal.com.rolegames.repositories.combat.InitiativeRepository;
 import kal.com.rolegames.repositories.items.ItemRepository;
 import kal.com.rolegames.repositories.sessions.EncounterRepository;
 import kal.com.rolegames.repositories.sessions.SessionRepository;
+import kal.com.rolegames.services.combat.CombatService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,7 +38,12 @@ public class EncounterService {
     private final EncounterRepository encounterRepository;
     private final SessionRepository sessionRepository;
     private final GameCharacterRepository characterRepository;
-    private final ItemRepository itemRepository;
+    private final ItemRepository itemRepository ;
+    private final CombatStateRepository combatStateRepository;
+
+    private final InitiativeRepository initiativeRepository;
+
+    private final CombatService combatService;
 
     private final EncounterMapper encounterMapper;
     private final RewardMapper rewardMapper;
@@ -66,23 +76,25 @@ public class EncounterService {
     public EncounterDTO createEncounter(EncounterDTO dto, Long sessionId) {
         logger.info("[ENCOUNTER SERVICE] Creating encounter for session ID: {}", sessionId);
 
-        Session session = null;
-        if (sessionId != null) {
-            session = sessionRepository.findById(sessionId)
-                    .orElseThrow(() -> new NoSuchElementException("Session not found"));
+        if (sessionId == null) {
+           throw new IllegalArgumentException("El usuario de la sesion es nulo");
         }
 
+        Session session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NoSuchElementException("Session not found"));
+
         Encounter encounter = encounterMapper.toEntity(dto);
-        if (session != null) {
-            encounter.setSession(session);
-            session.addEncounter(encounter);
-        }
+
+        //se agrega el encuentro a la sesion
+        encounter.setSession(session);
+        session.addEncounter(encounter);
 
         if (encounter.getIsCompleted() == null) {
             encounter.setIsCompleted(false);
         }
 
         Encounter savedEncounter = encounterRepository.save(encounter);
+
         logger.info("[ENCOUNTER SERVICE] Encounter created successfully with ID: {}", savedEncounter.getEncounterId());
         return mapToDetailedDTO(savedEncounter);
     }
@@ -105,15 +117,23 @@ public class EncounterService {
         encounterRepository.deleteById(encounterId);
     }
 
+
+    /*
+    CON MAS RELACIONES A OTROS SERVICES O REPOSITORIES
+     */
+
+    // USO DE TEMPLATE
     @Transactional
-    public EncounterDTO completeEncounter(Long encounterId) {
+    public EncounterDTO completeEncounterBase(Long encounterId, boolean endCombatIfActive) {
         Encounter encounter = encounterRepository.findById(encounterId)
                 .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
 
         encounter.setIsCompleted(true);
 
-        if (encounter.getCombatState() != null && encounter.getCombatState().getIsActive()) {
-            encounter.endCombat();
+        if (endCombatIfActive &&
+                encounter.getCombatState() != null &&
+                encounter.getCombatState().getIsActive()) {
+            encounter.getCombatState().endCombat();
         }
 
         Encounter updatedEncounter = encounterRepository.save(encounter);
@@ -122,11 +142,90 @@ public class EncounterService {
     }
 
     @Transactional
-    public EncounterDTO startCombat(Long encounterId) {
+    public EncounterDTO completeEncounter(Long id) {
+        return completeEncounterBase(id, false);
+    }
+
+    @Transactional
+    public EncounterDTO completeEncounterAndEndCombat(Long id) {
+        return completeEncounterBase(id, true);
+    }
+
+
+
+    // CUANDO NO SE USO TEMPLATE
+//    @Transactional
+//    public EncounterDTO completeEncounter(Long encounterId) {
+//        Encounter encounter = encounterRepository.findById(encounterId)
+//                .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
+//
+//        encounter.setIsCompleted(true);
+//
+//        Encounter updatedEncounter = encounterRepository.save(encounter);
+//        logger.info("[ENCOUNTER SERVICE] Encounter {} marked as completed", encounterId);
+//        return mapToDetailedDTO(updatedEncounter);
+//    }
+//
+//    @Transactional
+//    public EncounterDTO completeEncounterAndEndCombat(Long encounterId) {
+//        Encounter encounter = encounterRepository.findById(encounterId)
+//                .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
+//
+//        encounter.setIsCompleted(true);
+//
+//        //TERMINAR COMBATES
+//        if (encounter.getCombatState() != null && encounter.getCombatState().getIsActive()) {
+//            encounter.getCombatState().endCombat();
+//        }
+//
+//        Encounter updatedEncounter = encounterRepository.save(encounter);
+//        logger.info("[ENCOUNTER SERVICE] Encounter {} marked as completed", encounterId);
+//        return mapToDetailedDTO(updatedEncounter);
+//    }
+//
+
+    // solo lo que hace: iniciar el combate que tiene asociado con las iniciativas
+    // e indicar el primer turno
+    @Transactional
+    public EncounterDTO startCombat(Long encounterId, Map<Long, Integer> diceThrows) {
         Encounter encounter = encounterRepository.findById(encounterId)
                 .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
 
-        encounter.startCombat();
+        if(encounter.getEncounterType() != EncounterType.COMBAT){
+            throw new IllegalArgumentException("El encuentro no tiene tipo combato");
+        }else if(diceThrows.isEmpty()){
+            throw new IllegalArgumentException("No hay tiradas asi que no podemos establecer un orden en combate");
+        }
+
+        //creacion de combate e iniciativa
+        //crear combate:
+        CombatState createdCombat =  combatService.createCombatForEncounter(encounter.getEncounterId());
+        logger.warn("❗ ❗ ❗  Se ha creado el combate e iniciado [combat: {}]", createdCombat);
+
+
+        //❗falta incializar los turnos
+        //inicializar turnos (necesita resultado de dados)
+        //va sobre cada character en encounter y crea un nuevo Initiative con intiativeRoll
+        List<Initiative> initiatives  = encounter.getParticipants().stream().map( (GameCharacter character)->{
+            Initiative newInitiative = Initiative.builder()
+                    .combatState(createdCombat)
+                    .initiativeRoll(diceThrows.get(character.getCharacterId()))
+                    .character(character)
+                    .build();
+            return initiativeRepository.save(newInitiative);
+            //ademas abajo los ordenamos
+        }).sorted(Comparator.comparing(Initiative::getInitiativeRoll)).collect(Collectors.toList());
+        createdCombat.setInitiativeOrder(initiatives);
+
+
+        //inicializar el primer turno
+        initiatives.get(0).setCurrentTurn(true);
+
+        //guardar combat
+        CombatState updatedCombatWithInitiatives = combatStateRepository.save(createdCombat);
+        logger.warn("❗❗️❗️❗️❗️️ Se ha inicializado el combate con iniciativas [combate: {}]",
+                updatedCombatWithInitiatives);
+
         Encounter updatedEncounter = encounterRepository.save(encounter);
         logger.info("[ENCOUNTER SERVICE] Combat started for encounter {}", encounterId);
         return mapToDetailedDTO(updatedEncounter);

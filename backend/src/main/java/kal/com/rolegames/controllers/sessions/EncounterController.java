@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/encounters")
@@ -49,6 +50,8 @@ public class EncounterController {
         return ResponseEntity.ok(encounterService.getPendingEncounters());
     }
 
+
+    //creation
     @PostMapping
     public ResponseEntity<EncounterDTO> createEncounter(@RequestBody CreateEncounterRequest request) {
         logger.info("[ENCOUNTER CONTROLLER] Creating encounter for session: {}", request.getSessionId());
@@ -73,9 +76,13 @@ public class EncounterController {
         return ResponseEntity.ok(encounterService.completeEncounter(id));
     }
 
+
+
+    //mas importante para el combato
+
     @PostMapping("/{id}/start-combat")
-    public ResponseEntity<EncounterDTO> startCombat(@PathVariable Long id) {
-        return ResponseEntity.ok(encounterService.startCombat(id));
+    public ResponseEntity<EncounterDTO> startCombat(@PathVariable Long id, @RequestBody Map<Long, Integer> diceThrows) {
+        return ResponseEntity.ok(encounterService.startCombat(id, diceThrows));
     }
 
     @PostMapping("/{id}/participants/{characterId}")

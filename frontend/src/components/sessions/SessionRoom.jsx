@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import './room.css'
 
 export default function SessionRoom() {
   const [connectedPlayers, setConnectedPlayers] = useState([
@@ -129,11 +128,9 @@ export default function SessionRoom() {
 
         {/* Área principal de juego con fondo de pasto */}
         <div className="bg-white rounded-lg shadow-lg p-8 relative overflow-hidden">
-          {/* AQUÍ INSERTAR IMAGEN DE FONDO DE PASTO */}
-          {/* Reemplaza la siguiente línea con: */}
-          {/* <div className="absolute inset-0 opacity-30" style={{backgroundImage: 'url("/path/to/grass-texture.jpg")', backgroundSize: 'cover', backgroundRepeat: 'repeat'}}></div> */}
+          {/* FONDO DE PASTO - Z-INDEX 1 */}
           <div 
-            className="absolute inset-0 opacity-30" 
+            className="absolute inset-0 opacity-30 z-1" 
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2334d399' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
               backgroundSize: 'cover'
@@ -147,11 +144,8 @@ export default function SessionRoom() {
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
           >
-            {/* Círculo central - AQUÍ INSERTAR IMAGEN PERSONALIZADA */}
-            {/* Reemplaza el siguiente div con una imagen: */}
-            {/* <img src="/path/to/central-icon.png" alt="Centro" className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 cursor-pointer z-20" onClick={() => setShowActionMenu(true)} /> */}
-            
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+            {/* Círculo central - Z-INDEX 10 (encima del pasto, debajo de jugadores) */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
               <div 
                 className="w-32 h-32 bg-gradient-to-br from-amber-400 to-orange-600 rounded-full shadow-xl flex items-center justify-center cursor-pointer hover:scale-105 transition-transform relative overflow-hidden"
                 onClick={() => setShowActionMenu(!showActionMenu)}
@@ -166,12 +160,13 @@ export default function SessionRoom() {
               </div>
             </div>
 
+            {/* Jugadores - Z-INDEX 20 (encima del círculo central) */}
             {connectedPlayers.map((player, index) => (
               <div
                 key={player.id}
                 className={`absolute w-20 h-20 bg-white rounded-full shadow-lg border-4 ${
                   player.isReady ? 'border-green-400' : 'border-gray-300'
-                } flex flex-col items-center justify-center cursor-move hover:scale-110 transition-all duration-200 z-50 ${
+                } flex flex-col items-center justify-center cursor-move hover:scale-110 transition-all duration-200 z-20 ${
                   draggedPlayer === player.id ? 'scale-110' : ''
                 }`}
                 style={{
@@ -193,9 +188,9 @@ export default function SessionRoom() {
               </div>
             ))}
 
-            {/* Menu de acciones expandido - Z-INDEX ALTO PARA ESTAR ENCIMA DE TODO */}
+            {/* Círculos pequeños de acción - Z-INDEX 30 (encima de jugadores) */}
             {showActionMenu && (
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-9999">
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-30">
                 <div className="relative">
                   {actionButtons.map((action, index) => {
                     const angle = (index * 360) / actionButtons.length;
@@ -206,7 +201,7 @@ export default function SessionRoom() {
                     return (
                       <div
                         key={action.id}
-                        className="absolute group z-9999"
+                        className="absolute group z-30"
                         style={{
                           left: `${x}px`,
                           top: `${y}px`,
@@ -215,14 +210,14 @@ export default function SessionRoom() {
                       >
                         <button
                           onClick={() => handleAction(action.id)}
-                          className={`w-16 h-16 ${action.color} rounded-full flex items-center justify-center text-white text-xl transition-all duration-200 shadow-2xl hover:scale-110 hover:shadow-2xl border-2 border-white relative z-9999`}
+                          className={`w-16 h-16 ${action.color} rounded-full flex items-center justify-center text-white text-xl transition-all duration-200 shadow-2xl hover:scale-110 hover:shadow-2xl border-2 border-white relative z-30`}
                           title={action.tooltip}
                         >
                           {action.icon}
                         </button>
                         
-                        {/* Tooltip con descripción */}
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10000">
+                        {/* Tooltip con descripción - Z-INDEX 40 (encima de todo) */}
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
                           <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-2xl border border-gray-700">
                             <div className="font-semibold">{action.tooltip}</div>
                             <div className="text-gray-300 text-xs mt-1">{action.description}</div>
@@ -233,10 +228,10 @@ export default function SessionRoom() {
                     );
                   })}
                   
-                  {/* Botón de cerrar en el centro */}
+                  {/* Botón de cerrar en el centro - Z-INDEX 30 */}
                   <button
                     onClick={() => setShowActionMenu(false)}
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-gray-600 hover:bg-gray-700 rounded-full flex items-center justify-center text-white text-lg transition-colors shadow-2xl border-2 border-white z-9999"
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-gray-600 hover:bg-gray-700 rounded-full flex items-center justify-center text-white text-lg transition-colors shadow-2xl border-2 border-white z-30"
                     title="Cerrar menú"
                   >
                     ✕

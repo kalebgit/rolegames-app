@@ -7,11 +7,15 @@ import kal.com.rolegames.mappers.effects.EffectMapper;
 import kal.com.rolegames.mappers.combat.InitiativeMapper;
 import kal.com.rolegames.models.characters.GameCharacter;
 import kal.com.rolegames.models.combat.CombatState;
+import kal.com.rolegames.models.combat.Initiative;
 import kal.com.rolegames.models.sessions.Encounter;
+import kal.com.rolegames.models.util.EncounterType;
 import kal.com.rolegames.repositories.characters.GameCharacterRepository;
 import kal.com.rolegames.repositories.combat.CombatStateRepository;
 import kal.com.rolegames.repositories.sessions.EncounterRepository;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +36,8 @@ public class CombatService {
     private CombatStateMapper combatMapper;
 
 
+    private static final Logger logger = LoggerFactory.getLogger(CombatService.class);
+
     public CombatStateDTO getCurrentCombat() {
         CombatState activeState = combatStateRepository.findByIsActiveTrue()
                 .orElseThrow(() -> new NoSuchElementException("No active combat found"));
@@ -40,21 +46,39 @@ public class CombatService {
     }
 
     @Transactional
-    public CombatStateDTO startCombatForEncounter(Long encounterId) {
+    public CombatState createCombatForEncounter(Long encounterId){
         Encounter encounter = encounterRepository.findById(encounterId)
                 .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
 
+
+        // terminar el ultimo combate activo
         combatStateRepository.findByIsActiveTrue().ifPresent(active -> {
             active.setIsActive(false);
             active.setEndTime(LocalDateTime.now());
             combatStateRepository.save(active);
         });
 
-        encounter.startCombat();
-        Encounter savedEncounter = encounterRepository.save(encounter);
+        //lo que hacia encoutner.startCombat
+        if(!encounter.getEncounterType().equals(EncounterType.COMBAT) && encounter.getCombatState() != null){
+            throw new IllegalArgumentException("El encuentro no es de tipo de combate o ya habia un combat para este encuentro");
+        }
 
-        return combatMapper.toDTO(savedEncounter.getCombatState());
+        CombatState newCombat = CombatState.builder()
+                .encounter(encounter)
+                .currentRound(1)
+                .isActive(true)
+                .startTime(LocalDateTime.now())
+                .build();
+        CombatState savedCombat = combatStateRepository.save(newCombat);
+
+        logger.warn("❗❗️❗️❗️️ Se ha creado exitosamente el combatState: {}", savedCombat);
+        encounter.setCombatState(savedCombat);
+        encounterRepository.save(encounter);
+        logger.warn("❗❗️❗️❗️️ Se le ha asignado el state al encuentro con id: {}", encounterId);
+
+        return savedCombat;
     }
+
 
     @Transactional
     public CombatStateDTO nextTurn() {
@@ -65,19 +89,6 @@ public class CombatService {
         CombatState updatedState = combatStateRepository.save(activeState);
 
         return combatMapper.toDTO(updatedState);
-    }
-
-    @Transactional
-    public void endCombat() {
-        CombatState activeState = combatStateRepository.findByIsActiveTrue()
-                .orElseThrow(() -> new NoSuchElementException("No active combat found"));
-
-        activeState.endCombat();
-        combatStateRepository.save(activeState);
-
-        Encounter encounter = activeState.getEncounter();
-        encounter.endCombat();
-        encounterRepository.save(encounter);
     }
 
     @Transactional

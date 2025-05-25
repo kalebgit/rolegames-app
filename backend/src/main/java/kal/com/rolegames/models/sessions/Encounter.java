@@ -88,18 +88,6 @@ public class Encounter {
         rewards.remove(reward);
     }
 
-    public void startCombat() {
-        if(encounterType.equals(EncounterType.COMBAT) && combatState == null){
-            CombatState newCombat = CombatState.builder().encounter(this).currentRound(1).isActive(true).build();
-            setCombatState(newCombat);
-        }
-    }
+    //iniciar el combate ya lo hace createCombat del servicio
 
-    public void endCombat() {
-        // TODO: Check if combatState is not null
-        // TODO: If so, set its isActive to false
-        if (combatState != null) {
-            combatState.setIsActive(false);
-        }
-    }
 }
