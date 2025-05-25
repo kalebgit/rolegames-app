@@ -1,15 +1,17 @@
 package kal.com.rolegames.services.users;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import kal.com.rolegames.dto.users.DungeonMasterDTO;
+import kal.com.rolegames.dto.users.UserDTO;
+import kal.com.rolegames.mappers.users.DungeonMasterMapper;
+import kal.com.rolegames.mappers.users.UserMapper;
 import kal.com.rolegames.models.characters.NonPlayerCharacter;
 import kal.com.rolegames.models.items.Item;
 import kal.com.rolegames.models.sessions.Campaign;
 import kal.com.rolegames.models.users.DungeonMaster;
 import kal.com.rolegames.models.users.User;
-import kal.com.rolegames.models.util.UserType;
 import kal.com.rolegames.repositories.users.DungeonMasterRepository;
+import kal.com.rolegames.repositories.users.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,210 +29,179 @@ import java.util.Optional;
 public class DungeonMasterService {
 
     private final DungeonMasterRepository dungeonMasterRepository;
-    private final static Logger logger = LoggerFactory.getLogger(DungeonMasterService.class);
+    private final UserRepository userRepository;
+    private final DungeonMasterMapper dungeonMasterMapper;
+    private final UserMapper userMapper;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
-
-    /**
-     * Obtiene un DM por su ID de usuario, lanza excepción si no existe
-     */
-    public DungeonMaster getByUserId(Long userId) {
-        return dungeonMasterRepository.findByUserId(userId)
-                .orElseThrow(() -> new NoSuchElementException("DungeonMaster no encontrado con user ID: " + userId));
-    }
-
-    /**
-     * Obtiene un DM por su ID, lanza excepción si no existe
-     */
-    public DungeonMaster getById(Long dmId) {
-        return dungeonMasterRepository.findById(dmId)
-                .orElseThrow(() -> new NoSuchElementException("DungeonMaster no encontrado con ID: " + dmId));
-    }
-
-    /**
-     * Crea un nuevo DM a partir de un usuario existente
-     */
-    @Transactional
-    public DungeonMaster createDungeonMasterFromUser(User user) {
-        logger.info("[SERVICE] [DM] Creando dm a partir del usuario: {}", user.getUsername());
-
-        if (dungeonMasterRepository.findByUserId(user.getUserId()).isPresent()) {
-            logger.warn("[SERVICE] [DM] DungeonMaster ya existe para este usuario");
-            throw new IllegalStateException("DungeonMaster already exists for this user");
-        }
-
-        try {
-            entityManager.createNativeQuery(
-                            "INSERT INTO dungeon_masters (dm_id, dm_style, rating) VALUES (?, ?, ?)")
-                    .setParameter(1, user.getUserId())
-                    .setParameter(2, "Standard")
-                    .setParameter(3, 0.0f)
-                    .executeUpdate();
-
-            entityManager.flush();
-
-            DungeonMaster savedDm = dungeonMasterRepository.findByUserId(user.getUserId())
-                    .orElseThrow(() -> new RuntimeException("Error al recuperar DungeonMaster creado"));
-
-            logger.info("[SERVICE] [DM] DM guardado exitosamente con ID: {}", savedDm.getUserId());
-
-            return savedDm;
-
-        } catch (Exception exc) {
-            logger.error("[SERVICE] [DM] Error al crear DungeonMaster: {} - {}",
-                    exc.getClass().getSimpleName(), exc.getMessage(), exc);
-            throw new RuntimeException("Error al crear DungeonMaster: " + exc.getMessage(), exc);
-        }
-    }
+    private static final Logger logger = LoggerFactory.getLogger(DungeonMasterService.class);
 
     /**
      * Obtiene todos los DMs
      */
-    public List<DungeonMaster> getAllDungeonMasters() {
-        return dungeonMasterRepository.findAll();
+    public List<DungeonMasterDTO> getAllDungeonMasters() {
+        List<DungeonMaster> dms = dungeonMasterRepository.findAll();
+        return dungeonMasterMapper.toDungeonMasterDtoList(dms);
+    }
+
+    /**
+     * Obtiene un DM por ID
+     */
+    public DungeonMasterDTO getDungeonMasterById(Long dmId) {
+        DungeonMaster dm = dungeonMasterRepository.findById(dmId)
+                .orElseThrow(() -> new NoSuchElementException("DungeonMaster not found with id: " + dmId));
+        return dungeonMasterMapper.toDto(dm);
+    }
+
+    /**
+     * Obtiene un DM por su ID de usuario
+     */
+    public DungeonMasterDTO getDungeonMasterByUserId(Long userId) {
+        DungeonMaster dm = dungeonMasterRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("DungeonMaster not found for user ID: " + userId));
+        return dungeonMasterMapper.toDto(dm);
+    }
+
+    @Transactional
+    public DungeonMasterDTO createDungeonMasterFromUser(UserDTO user) {
+        logger.info("[DM_SERVICE] Creando dm a partir del usuario: {}", user.getUsername());
+
+        if (dungeonMasterRepository.findByUserId(user.getUserId()).isPresent()) {
+            logger.warn("[DM_SERVICE] DungeonMaster ya existe para este usuario");
+            throw new IllegalStateException("DungeonMaster already exists for this user");
+        }
+
+        try {
+            User registeredUser = userRepository.getReferenceById(user.getUserId());
+
+            DungeonMaster newDm = DungeonMaster.builder()
+                    .user(registeredUser)
+                    .dmStyle("Standard")
+                    .rating(0.0f)
+                    .build();
+
+            DungeonMaster savedDm = dungeonMasterRepository.save(newDm);
+            logger.info("[DM_SERVICE] ✅DM guardado exitosamente con ID: {}", savedDm.getDungeonMasterId());
+
+            return dungeonMasterMapper.toDto(savedDm);
+
+        } catch (Exception exc) {
+            logger.error("[DM_SERVICE] Error al crear DungeonMaster: {} - {}",
+                    exc.getClass().getSimpleName(), exc.getMessage(), exc);
+            throw new RuntimeException("Error al crear DungeonMaster: " + exc.getMessage(), exc);
+        }
+    }
+    /**
+     * Crea un DM desde un DTO
+     */
+    @Transactional
+    public DungeonMasterDTO createDungeonMaster(DungeonMasterDTO dmDTO, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with id: " + userId));
+
+        return createDungeonMasterFromUser(userMapper.toDto(user));
+    }
+
+    /**
+     * Actualiza un DM existente
+     */
+    @Transactional
+    public DungeonMasterDTO updateDungeonMaster(Long dmId, DungeonMasterDTO dmDTO) {
+        DungeonMaster existingDm = dungeonMasterRepository.findById(dmId)
+                .orElseThrow(() -> new NoSuchElementException("DungeonMaster not found with id: " + dmId));
+
+        dungeonMasterMapper.updateDungeonMasterFromDto(dmDTO, existingDm);
+        DungeonMaster updatedDm = dungeonMasterRepository.save(existingDm);
+
+        logger.info("[DM_SERVICE] DM actualizado: {}", updatedDm.getDungeonMasterId());
+        return dungeonMasterMapper.toDto(updatedDm);
     }
 
     /**
      * Agrega una campaña al DM
      */
     @Transactional
-    public DungeonMaster addCampaignToDM(Long dmId, Campaign campaign) {
-        DungeonMaster dm = getById(dmId);
+    public DungeonMasterDTO addCampaignToDM(Long dmId, Campaign campaign) {
+        DungeonMaster dm = dungeonMasterRepository.findById(dmId)
+                .orElseThrow(() -> new NoSuchElementException("DungeonMaster not found with id: " + dmId));
+
         dm.addCampaign(campaign);
-        return dungeonMasterRepository.save(dm);
+        DungeonMaster updatedDm = dungeonMasterRepository.save(dm);
+
+        logger.info("[DM_SERVICE] Campaña agregada al DM: {}", dmId);
+        return dungeonMasterMapper.toDto(updatedDm);
     }
 
     /**
      * Agrega una campaña al DM por userId
      */
     @Transactional
-    public DungeonMaster addCampaignToDMByUserId(Long userId, Campaign campaign) {
-        DungeonMaster dm = getByUserId(userId);
-        dm.addCampaign(campaign);
-        return dungeonMasterRepository.save(dm);
-    }
+    public DungeonMasterDTO addCampaignToDMByUserId(Long userId, Campaign campaign) {
+        DungeonMaster dm = dungeonMasterRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("DungeonMaster not found for user ID: " + userId));
 
-    /**
-     * Remueve una campaña del DM
-     */
-    @Transactional
-    public DungeonMaster removeCampaignFromDM(Long dmId, Campaign campaign) {
-        DungeonMaster dm = getById(dmId);
-        dm.removeCampaign(campaign);
-        return dungeonMasterRepository.save(dm);
+        dm.addCampaign(campaign);
+        DungeonMaster updatedDm = dungeonMasterRepository.save(dm);
+
+        logger.info("[DM_SERVICE] Campaña agregada al DM por userId: {}", userId);
+        return dungeonMasterMapper.toDto(updatedDm);
     }
 
     /**
      * Agrega un NPC creado al DM
      */
     @Transactional
-    public DungeonMaster addCreatedNpcToDM(Long dmId, NonPlayerCharacter npc) {
-        DungeonMaster dm = getById(dmId);
+    public DungeonMasterDTO addCreatedNpcToDM(Long dmId, NonPlayerCharacter npc) {
+        DungeonMaster dm = dungeonMasterRepository.findById(dmId)
+                .orElseThrow(() -> new NoSuchElementException("DungeonMaster not found with id: " + dmId));
+
         dm.createNpc(npc);
-        return dungeonMasterRepository.save(dm);
+        DungeonMaster updatedDm = dungeonMasterRepository.save(dm);
+
+        logger.info("[DM_SERVICE] NPC agregado al DM: {}", dmId);
+        return dungeonMasterMapper.toDto(updatedDm);
     }
 
     /**
      * Agrega un NPC creado al DM por userId
      */
     @Transactional
-    public DungeonMaster addCreatedNpcToDMByUserId(Long userId, NonPlayerCharacter npc) {
-        DungeonMaster dm = getByUserId(userId);
+    public DungeonMasterDTO addCreatedNpcToDMByUserId(Long userId, NonPlayerCharacter npc) {
+        DungeonMaster dm = dungeonMasterRepository.findByUserId(userId)
+                .orElseThrow(() -> new NoSuchElementException("DungeonMaster not found for user ID: " + userId));
+
         dm.createNpc(npc);
-        return dungeonMasterRepository.save(dm);
+        DungeonMaster updatedDm = dungeonMasterRepository.save(dm);
+
+        logger.info("[DM_SERVICE] NPC agregado al DM por userId: {}", userId);
+        return dungeonMasterMapper.toDto(updatedDm);
     }
 
     /**
      * Agrega un item creado al DM
      */
     @Transactional
-    public DungeonMaster addCreatedItemToDM(Long dmId, Item item) {
-        DungeonMaster dm = getById(dmId);
+    public DungeonMasterDTO addCreatedItemToDM(Long dmId, Item item) {
+        DungeonMaster dm = dungeonMasterRepository.findById(dmId)
+                .orElseThrow(() -> new NoSuchElementException("DungeonMaster not found with id: " + dmId));
+
         dm.createItem(item);
-        return dungeonMasterRepository.save(dm);
+        DungeonMaster updatedDm = dungeonMasterRepository.save(dm);
+
+        logger.info("[DM_SERVICE] Item agregado al DM: {}", dmId);
+        return dungeonMasterMapper.toDto(updatedDm);
     }
 
     /**
-     * Agrega un item creado al DM por userId
+     * Elimina un DM
      */
     @Transactional
-    public DungeonMaster addCreatedItemToDMByUserId(Long userId, Item item) {
-        DungeonMaster dm = getByUserId(userId);
-        dm.createItem(item);
-        return dungeonMasterRepository.save(dm);
-    }
-
-    /**
-     * Obtiene todas las campañas de un DM
-     */
-    public List<Campaign> getDMCampaigns(Long dmId) {
-        DungeonMaster dm = getById(dmId);
-        return dm.getCampaigns().stream().toList();
-    }
-
-    /**
-     * Obtiene todas las campañas de un DM por userId
-     */
-    public List<Campaign> getDMCampaignsByUserId(Long userId) {
-        DungeonMaster dm = getByUserId(userId);
-        return dm.getCampaigns().stream().toList();
-    }
-
-    /**
-     * Obtiene todos los NPCs creados por un DM
-     */
-    public List<NonPlayerCharacter> getDMCreatedNpcs(Long dmId) {
-        DungeonMaster dm = getById(dmId);
-        return dm.getCreatedNpcs().stream().toList();
-    }
-
-    /**
-     * Obtiene todos los NPCs creados por un DM por userId
-     */
-    public List<NonPlayerCharacter> getDMCreatedNpcsByUserId(Long userId) {
-        DungeonMaster dm = getByUserId(userId);
-        return dm.getCreatedNpcs().stream().toList();
-    }
-
-    /**
-     * Obtiene todos los items creados por un DM
-     */
-    public List<Item> getDMCreatedItems(Long dmId) {
-        DungeonMaster dm = getById(dmId);
-        return dm.getCreatedItems().stream().toList();
-    }
-
-    /**
-     * Obtiene todos los items creados por un DM por userId
-     */
-    public List<Item> getDMCreatedItemsByUserId(Long userId) {
-        DungeonMaster dm = getByUserId(userId);
-        return dm.getCreatedItems().stream().toList();
-    }
-
-    /**
-     * Actualiza el estilo de DM
-     */
-    @Transactional
-    public DungeonMaster updateDMStyle(Long dmId, String newStyle) {
-        DungeonMaster dm = getById(dmId);
-        dm.setDmStyle(newStyle);
-        return dungeonMasterRepository.save(dm);
-    }
-
-    /**
-     * Actualiza la calificación del DM
-     */
-    @Transactional
-    public DungeonMaster updateDMRating(Long dmId, Float newRating) {
-        DungeonMaster dm = getById(dmId);
-        if (newRating < 0.0f || newRating > 5.0f) {
-            throw new IllegalArgumentException("Rating must be between 0.0 and 5.0");
+    public void deleteDungeonMaster(Long dmId) {
+        if (!dungeonMasterRepository.existsById(dmId)) {
+            throw new NoSuchElementException("DungeonMaster not found with id: " + dmId);
         }
-        dm.setRating(newRating);
-        return dungeonMasterRepository.save(dm);
+
+        dungeonMasterRepository.deleteById(dmId);
+        logger.info("[DM_SERVICE] DM eliminado con ID: {}", dmId);
     }
 
     /**
@@ -248,35 +219,24 @@ public class DungeonMasterService {
     }
 
     /**
-     * Actualiza la información del DM
+     * Obtiene la instancia DungeonMaster si existe
      */
-    @Transactional
-    public DungeonMaster updateDungeonMaster(DungeonMaster dungeonMaster) {
-        if (!existsById(dungeonMaster.getUserId())) {
-            throw new NoSuchElementException("DungeonMaster not found with ID: " + dungeonMaster.getUserId());
-        }
-        return dungeonMasterRepository.save(dungeonMaster);
-    }
-
-    /**
-     * Elimina un DM
-     */
-    @Transactional
-    public void deleteDungeonMaster(Long dmId) {
-        if (!existsById(dmId)) {
-            throw new NoSuchElementException("DungeonMaster not found with ID: " + dmId);
-        }
-        dungeonMasterRepository.deleteById(dmId);
+    public Optional<DungeonMaster> getDungeonMasterInstance(Long userId) {
+        return dungeonMasterRepository.findByUserId(userId);
     }
 
     /**
      * Calcula estadísticas del DM
      */
-    public DMStats getDMStats(Long dmId) {
-        DungeonMaster dm = getById(dmId);
-        return DMStats.builder()
+    public DMStatsDTO getDMStats(Long dmId) {
+        DungeonMaster dm = dungeonMasterRepository.findById(dmId)
+                .orElseThrow(() -> new NoSuchElementException("DungeonMaster not found with id: " + dmId));
+
+        return DMStatsDTO.builder()
                 .totalCampaigns(dm.getCampaigns().size())
-                .activeCampaigns((int) dm.getCampaigns().stream().filter(Campaign::getIsActive).count())
+                .activeCampaigns((int) dm.getCampaigns().stream()
+                        .filter(campaign -> campaign.getIsActive() != null && campaign.getIsActive())
+                        .count())
                 .totalNpcsCreated(dm.getCreatedNpcs().size())
                 .totalItemsCreated(dm.getCreatedItems().size())
                 .rating(dm.getRating())
@@ -289,7 +249,7 @@ public class DungeonMasterService {
      */
     @Data
     @Builder
-    public static class DMStats {
+    public static class DMStatsDTO {
         private int totalCampaigns;
         private int activeCampaigns;
         private int totalNpcsCreated;

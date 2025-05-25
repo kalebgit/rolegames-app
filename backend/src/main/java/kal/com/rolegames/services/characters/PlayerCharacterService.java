@@ -40,10 +40,9 @@ public class PlayerCharacterService {
         return mapper.toPlayerCharacterDtoList( playerCharacterRepository.findAll());
     }
 
-    public List<PlayerCharacterDTO> getCharactersByPlayer(Long playerId) {
-        return mapper.toPlayerCharacterDtoList( playerCharacterRepository.findByPlayerUserId(playerId));
+    public List<PlayerCharacterDTO> getCharactersByPlayer(Long userId) {
+        return mapper.toPlayerCharacterDtoList(playerCharacterRepository.findByPlayerUserId(userId));
     }
-
     public PlayerCharacterDTO getCharacterById(Long id) {
         return mapper.toDto( playerCharacterRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("No se encontro el personaje")));
@@ -66,7 +65,7 @@ public class PlayerCharacterService {
             character.setDeathSaves(deathSaves);
             deathSaves.setCharacter(character);
         }
-        playerService.addCharacterToPlayer(userId, character);
+        playerService.addCharacterToPlayer(player.getPlayerId(), character);
         return mapper.toDto( playerCharacterRepository.save(character));
     }
 

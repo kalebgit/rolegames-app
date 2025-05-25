@@ -1,5 +1,6 @@
 package kal.com.rolegames.controllers;
 
+import kal.com.rolegames.dto.users.UserDTO;
 import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.models.util.UserType;
 import kal.com.rolegames.services.auth.AuthService;
@@ -53,14 +54,14 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody User user){
+    public ResponseEntity<?> registerUser(@RequestBody UserDTO user){
         logger.info("[CONTROLLER][USER: {}] [Register] Datos recibidos", user);
         try {
             if(user.getUserType() == null){
                 user.setUserType(UserType.PLAYER);
             }
 
-            User registeredUser = authService.register(user);
+            UserDTO registeredUser = authService.register(user);
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "User registered successfully");

@@ -1,9 +1,12 @@
 package kal.com.rolegames.services.auth;
 
+import kal.com.rolegames.dto.users.UserDTO;
 import kal.com.rolegames.exceptions.EmailAlreadyInUseException;
 import kal.com.rolegames.exceptions.InvalidUserTypeException;
 import kal.com.rolegames.exceptions.UserRegistrationException;
 import kal.com.rolegames.exceptions.UsernameAlreadyInUseException;
+import kal.com.rolegames.mappers.users.UserMapper;
+import kal.com.rolegames.models.users.Player;
 import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.models.util.UserType;
 import kal.com.rolegames.repositories.users.UserRepository;
@@ -28,10 +31,12 @@ import org.springframework.transaction.annotation.Transactional;
 @AllArgsConstructor(onConstructor_=@__({@Autowired}))
 public class AuthService {
 
+    private final UserMapper userMapper;
     private AuthenticationManager authenticationManager;
     private JwtTokenProvider tokenProvider;
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
+
     private PlayerService playerService;
     private DungeonMasterService dmService;
 
@@ -73,8 +78,9 @@ public class AuthService {
      * @throws UserRegistrationException si ocurre un error durante el registro
      */
     @Transactional
-    public User register(User user) {
+    public UserDTO register(UserDTO user) {
         logger.info("[SERVICE] Iniciando registro para usuario: {}", user.getUsername());
+
 
         // Validar que el email no esté en uso
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
@@ -89,24 +95,24 @@ public class AuthService {
         }
 
         // Encriptar la contraseña
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         try {
             // Crear usuario según el tipo
-            User registeredUser;
+            User registeredUser = userRepository.getReferenceById(user.getUserId());
+            registeredUser.setPassword(passwordEncoder.encode(registeredUser.getPassword()));
 
             if (user.getUserType() == UserType.PLAYER) {
                 logger.info("[SERVICE] Creando usuario tipo PLAYER");
-                registeredUser = playerService.createPlayerFromUser(user);
+                playerService.createPlayerFromUser(userMapper.toDto(registeredUser));
 
             } else if (user.getUserType() == UserType.DUNGEON_MASTER) {
                 logger.info("[SERVICE] Creando usuario tipo DUNGEON_MASTER");
-                registeredUser = dmService.createDungeonMasterFromUser(user);
+               dmService.createDungeonMasterFromUser(userMapper.toDto(registeredUser));
 
             } else if (user.getUserType() == UserType.ADMIN) {
                 logger.info("[SERVICE] Creando usuario tipo ADMIN");
                 // Por ahora guardar como usuario básico, implementar AdminService después
-                registeredUser = userRepository.save(user);
+                registeredUser = userRepository.save(registeredUser);
 
             } else {
                 logger.error("[SERVICE] Tipo de usuario no válido: {}", user.getUserType());
@@ -114,7 +120,7 @@ public class AuthService {
             }
 
             logger.info("[SERVICE] Usuario registrado exitosamente: {}", registeredUser.getUsername());
-            return registeredUser;
+            return userMapper.toDto(registeredUser);
 
         } catch (EmailAlreadyInUseException | UsernameAlreadyInUseException | InvalidUserTypeException e) {
             // Re-lanzar excepciones específicas

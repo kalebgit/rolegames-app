@@ -51,7 +51,7 @@ public class CampaignService {
         Campaign campaign = campaignMapper.toEntity(dto);
         campaign.setDungeonMaster(dm);
 
-        dmService.addCampaignToDM(dm.getUserId(), campaign);
+        dmService.addCampaignToDM(dmId, campaign);
         dmRepository.save(dm);
 
         Campaign savedCampaign = campaignRepository.save(campaign);

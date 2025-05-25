@@ -8,8 +8,8 @@ import org.mapstruct.*;
         unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface CampaignMapper {
 
-    @Mapping(target = "dungeonMasterId", source = "dungeonMaster.userId")
-    @Mapping(target = "dungeonMasterName", source = "dungeonMaster.username")
+    @Mapping(target = "dungeonMasterId", source = "dungeonMaster.dungeonMasterId")
+    @Mapping(target = "dungeonMasterName", expression = "java(campaign.getDungeonMaster().getUsername())")
     @Mapping(target = "playerIds", ignore = true)
     @Mapping(target = "importantNPCIds", ignore = true)
     @Mapping(target = "sessionCount", expression = "java(campaign.getSessions().size())")

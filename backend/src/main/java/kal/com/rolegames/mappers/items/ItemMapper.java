@@ -24,7 +24,7 @@ public interface ItemMapper {
     @Mapping(target="ownerName", source ="owner.name")
     //user
     @Mapping(target="creatorId", source ="creator.dungeonMasterId")
-    @Mapping(target="creatorName", expression ="java(item.getUsername())")
+    @Mapping(target="creatorName", expression ="java(item.getCreator().getUsername())")
     //tipo de arma
 //    @Mapping(target = "itemType", expression = "java(item instanceof Weapon ? \"Weapon\" : (item instanceof Armor ? \"Armor\" : \"General\"))")
     ItemDTO toDTO(Item item);

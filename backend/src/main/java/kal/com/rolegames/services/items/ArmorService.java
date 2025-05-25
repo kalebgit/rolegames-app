@@ -5,9 +5,11 @@ import kal.com.rolegames.dto.items.ArmorDTO;
 import kal.com.rolegames.mappers.items.ArmorMapper;
 import kal.com.rolegames.mappers.items.WeaponMapper;
 import kal.com.rolegames.models.items.Armor;
+import kal.com.rolegames.models.users.DungeonMaster;
 import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.repositories.items.ArmorRepository;
 import kal.com.rolegames.repositories.items.WeaponRepository;
+import kal.com.rolegames.repositories.users.DungeonMasterRepository;
 import kal.com.rolegames.repositories.users.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +26,7 @@ import java.util.stream.Collectors;
 public class ArmorService {
 
     private final ArmorRepository armorRepository;
-    private final UserRepository userRepository;
+    private final DungeonMasterRepository dmRepository;
     private final ArmorMapper armorMapper;
     private final WebApplicationContext webApplicationContext;
 
@@ -41,7 +43,7 @@ public class ArmorService {
     @Transactional
     public ArmorDTO createArmor(ArmorDTO dto, Long creatorId){
         Armor armor = armorMapper.toEntity(dto);
-        User creator = userRepository.findById(creatorId).orElseThrow(()->new NoSuchElementException("el creador no existe como usuario en el sistema"));
+        DungeonMaster creator = dmRepository.findById(creatorId).orElseThrow(()->new NoSuchElementException("el creador no existe como usuario en el sistema"));
         armor.setCreator(creator);
         return armorMapper.toDTO(armorRepository.save(armor));
     }

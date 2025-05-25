@@ -16,12 +16,12 @@ public interface ArmorMapper {
     @Mapping(target="ownerId", source ="owner.characterId")
     @Mapping(target="ownerName", source ="owner.name")
     //user
-    @Mapping(target="creatorId", source ="creator.userId")
-    @Mapping(target="creatorName", source ="creator.username")
+    @Mapping(target="creatorId", source ="creator.dungeonMasterId")
+    @Mapping(target="creatorName", expression ="java(item.getCreator().getUsername())")
     //tipo de arma
 //    @Mapping(target = "itemType", defaultValue = "Armor")
     //propio de weapon
-    ArmorDTO toDTO(Armor source);
+    ArmorDTO toDTO(Armor item);
 
     @Mapping(target = "itemId", ignore = true)
     @Mapping(target = "version", ignore = true)

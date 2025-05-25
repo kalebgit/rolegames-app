@@ -9,9 +9,11 @@ import kal.com.rolegames.models.effects.ItemEffect;
 import kal.com.rolegames.models.items.Item;
 import kal.com.rolegames.models.items.Range;
 import kal.com.rolegames.models.items.Weapon;
+import kal.com.rolegames.models.users.DungeonMaster;
 import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.repositories.characters.GameCharacterRepository;
 import kal.com.rolegames.repositories.items.WeaponRepository;
+import kal.com.rolegames.repositories.users.DungeonMasterRepository;
 import kal.com.rolegames.repositories.users.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +30,7 @@ import java.util.stream.Collectors;
 public class WeaponService {
 
     private final WeaponRepository weaponRepository;
-    private final UserRepository userRepository;
+    private final DungeonMasterRepository dmRepository;
     private final WeaponMapper weaponMapper;
     private final WebApplicationContext webApplicationContext;
 
@@ -45,7 +47,7 @@ public class WeaponService {
     @Transactional
     public WeaponDTO createWeapon(WeaponDTO dto, Long creatorId){
         Weapon weapon = weaponMapper.toEntity(dto);
-        User creator = userRepository.findById(creatorId).orElseThrow(()->new NoSuchElementException("el creador no existe como usuario en el sistema"));
+        DungeonMaster creator = dmRepository.findById(creatorId).orElseThrow(()->new NoSuchElementException("el creador no existe como usuario en el sistema"));
         weapon.setCreator(creator);
         return weaponMapper.toDTO(weaponRepository.save(weapon));
     }

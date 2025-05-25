@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@PrimaryKeyJoinColumn(name = "dm_id")
 @Table(name="dungeon_masters")
 //lombok annotations
 @Builder
@@ -22,6 +21,7 @@ public class DungeonMaster {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="dm_id")
     private Long dungeonMasterId;
 
     @OneToOne(fetch = FetchType.LAZY)

@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@PrimaryKeyJoinColumn(name="player_id")
 @Table(name ="players")
 //lombok annotations
 @Builder
@@ -36,6 +35,10 @@ public class Player{
     private int experience = 0;
 
     //metodos producto de composicion
+    public Long getUserId() {
+        return user != null ? user.getUserId() : null;
+    }
+
     public String getUsername() {
         return user != null ? user.getUsername() : null;
     }
@@ -43,6 +46,7 @@ public class Player{
     public String getEmail() {
         return user != null ? user.getEmail() : null;
     }
+
 
     /**
      * Adds a character to this player's list of characters.

@@ -68,7 +68,7 @@ public class NonPlayerCharacterService {
         }
 
 
-        dmService.addCreatedNpcToDM(creator.getUserId(), npc);
+        dmService.addCreatedNpcToDM(creator.getDungeonMasterId(), npc);
         dmRepository.save(creator);
 
         NonPlayerCharacter savedNPC = npcRepository.save(npc);

@@ -1,5 +1,7 @@
 package kal.com.rolegames.controllers;
 
+import kal.com.rolegames.dto.users.DungeonMasterDTO;
+import kal.com.rolegames.dto.users.PlayerDTO;
 import kal.com.rolegames.models.users.*;
 import kal.com.rolegames.models.util.UserType;
 // import kal.com.rolegames.services.users.UserInstanceService; // Para Opción 2
@@ -52,7 +54,7 @@ public class UserRoleController {
     @PostMapping("/enable-player")
     public ResponseEntity<Map<String, Object>> enablePlayerRole(@AuthenticationPrincipal User user) {
         try {
-            Player player = userRoleService.enablePlayerRole(user.getUserId());
+            PlayerDTO player = userRoleService.enablePlayerRole(user.getUserId());
 
 
             Map<String, Object> response = new HashMap<>();
@@ -80,7 +82,7 @@ public class UserRoleController {
         logger.info("[ROLES] [DM] activando role de dungeon master");
 
         try {
-            DungeonMaster dm = userRoleService.enableDungeonMasterRole(user.getUserId());
+            DungeonMasterDTO dm = userRoleService.enableDungeonMasterRole(user.getUserId());
 
             logger.info("[ROLES] [DM] ✅Se ha creado el dungeon_master");
 
@@ -88,7 +90,7 @@ public class UserRoleController {
             response.put("success", true);
             response.put("message", "Dungeon Master role activated successfully");
             response.put("dmId", dm.getUserId());
-            response.put("campaignCount", dm.getCampaigns().size());
+            response.put("campaignCount", dm.getCampaignCount());
             response.put("dmStyle", dm.getDmStyle());
 
             return ResponseEntity.ok(response);
@@ -129,7 +131,7 @@ public class UserRoleController {
      */
     @GetMapping("/player-instance")
     public ResponseEntity<Map<String, Object>> getPlayerInstance(@AuthenticationPrincipal User user) {
-        Optional<Player> player = userRoleService.getPlayerInstance(user.getUserId());
+        Optional<PlayerDTO> player = userRoleService.getPlayerInstance(user.getUserId());
 
         if (player.isPresent()) {
             Map<String, Object> response = new HashMap<>();
@@ -137,7 +139,7 @@ public class UserRoleController {
             response.put("playerId", player.get().getUserId());
             response.put("level", player.get().getLevel());
             response.put("experience", player.get().getExperience());
-            response.put("characterCount", player.get().getCharacters().size());
+            response.put("characterCount", player.get().getCharacterCount());
 
             return ResponseEntity.ok(response);
         } else {
@@ -154,16 +156,16 @@ public class UserRoleController {
     @GetMapping("/dm-instance")
     public ResponseEntity<Map<String, Object>> getDungeonMasterInstance(@AuthenticationPrincipal User user) {
 
-        Optional<DungeonMaster> dm = userRoleService.getDungeonMasterInstance(user.getUserId());
+        Optional<DungeonMasterDTO> dm = userRoleService.getDungeonMasterInstance(user.getUserId());
 
 
         if (dm.isPresent()) {
             Map<String, Object> response = new HashMap<>();
             response.put("hasDMInstance", true);
             response.put("dmId", dm.get().getUserId());
-            response.put("campaignCount", dm.get().getCampaigns().size());
-            response.put("npcCount", dm.get().getCreatedNpcs().size());
-            response.put("itemCount", dm.get().getCreatedItems().size());
+            response.put("campaignCount", dm.get().getCampaignCount());
+            response.put("npcCount", dm.get().getNpcCount());
+            response.put("itemCount", dm.get().getItemCount());
             response.put("dmStyle", dm.get().getDmStyle());
             response.put("rating", dm.get().getRating());
 

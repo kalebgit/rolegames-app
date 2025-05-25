@@ -16,14 +16,14 @@ public interface WeaponMapper {
     @Mapping(target="ownerId", source ="owner.characterId")
     @Mapping(target="ownerName", source ="owner.name")
     //user
-    @Mapping(target="creatorId", source ="creator.userId")
-    @Mapping(target="creatorName", source ="creator.username")
+    @Mapping(target="creatorId", source ="creator.dungeonMasterId")
+    @Mapping(target="creatorName", expression ="java(item.getCreator().getUsername())")
     //tipo de arma
 //    @Mapping(target = "itemType", defaultValue = "Weapon")
     //propio de weapon
     @Mapping(target = "normalRange", source = "range.normal")
     @Mapping(target = "maximumRange", source = "range.maximum")
-    WeaponDTO toDTO(Weapon source);
+    WeaponDTO toDTO(Weapon item);
 
     @Mapping(target = "itemId", ignore = true)
     @Mapping(target = "version", ignore = true)
