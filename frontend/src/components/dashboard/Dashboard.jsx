@@ -36,61 +36,58 @@ export default function Dashboard() {
   };
 
   const quickActions = [
-    // Acciones que requieren rol de Player - SOLO mostrar si tiene el rol
-    ...(canActAsPlayer() ? [{
+    // Acciones que requieren rol de Player
+    {
       title: 'Crear Personaje',
       description: 'Diseña un nuevo aventurero',
       icon: '👤',
       action: () => handleQuickAction('/characters/new', 'PLAYER'),
       color: 'bg-blue-500',
-      requiredRole: 'PLAYER'
-    }] : []),
-    
-    // Acciones que requieren rol de DM - SOLO mostrar si tiene el rol
-    ...(canActAsDM() ? [
-      {
-        title: 'Crear NPC',
-        description: 'Diseña personajes no jugables',
-        icon: '👥',
-        action: () => handleQuickAction('/npcs/new', 'DUNGEON_MASTER'),
-        color: 'bg-purple-500',
-        requiredRole: 'DUNGEON_MASTER'
-      },
-      {
-        title: 'Nueva Campaña',
-        description: 'Comienza una nueva aventura',
-        icon: '📖',
-        action: () => handleQuickAction('/campaigns/new', 'DUNGEON_MASTER'),
-        color: 'bg-green-500',
-        requiredRole: 'DUNGEON_MASTER'
-      }
-    ] : []),
-    
-    // Acciones generales (sin rol específico) - SOLO si tiene al menos un rol
-    ...(availableRoles.length > 0 ? [
-      {
-        title: 'Iniciar Combate',
-        description: 'Gestiona encuentros épicos',
-        icon: '⚔️',
-        action: () => handleQuickAction('/combat'),
-        color: 'bg-red-500',
-        requiredRole: null
-      },
-      {
-        title: 'Explorar Hechizos',
-        description: 'Busca la magia perfecta',
-        icon: '✨',
-        action: () => handleQuickAction('/spells'),
-        color: 'bg-yellow-500',
-        requiredRole: null
-      }
-    ] : [])
+      requiredRole: 'PLAYER',
+      visible: canActAsPlayer()
+    },
+    // Acciones que requieren rol de DM
+    {
+      title: 'Crear NPC',
+      description: 'Diseña personajes no jugables',
+      icon: '👥',
+      action: () => handleQuickAction('/npcs/new', 'DUNGEON_MASTER'),
+      color: 'bg-purple-500',
+      requiredRole: 'DUNGEON_MASTER',
+      visible: canActAsDM()
+    },
+    {
+      title: 'Nueva Campaña',
+      description: 'Comienza una nueva aventura',
+      icon: '📖',
+      action: () => handleQuickAction('/campaigns/new', 'DUNGEON_MASTER'),
+      color: 'bg-green-500',
+      requiredRole: 'DUNGEON_MASTER',
+      visible: canActAsDM()
+    },
+    // Acciones generales (sin rol específico)
+    {
+      title: 'Iniciar Combate',
+      description: 'Gestiona encuentros épicos',
+      icon: '⚔️',
+      action: () => handleQuickAction('/combat'),
+      color: 'bg-red-500',
+      requiredRole: null,
+      visible: true
+    },
+    {
+      title: 'Explorar Hechizos',
+      description: 'Busca la magia perfecta',
+      icon: '✨',
+      action: () => handleQuickAction('/spells'),
+      color: 'bg-yellow-500',
+      requiredRole: null,
+      visible: true
+    }
   ];
 
-  // Función para mostrar el mensaje de contexto solo cuando realmente tenga múltiples roles
-  const shouldShowMultipleRolesMessage = () => {
-    return availableRoles.length > 1;
-  };
+  // Filtrar acciones visibles
+  const visibleActions = quickActions.filter(action => action.visible);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
@@ -107,28 +104,26 @@ export default function Dashboard() {
               </p>
             </div>
             
-            {/* Indicador de rol actual - solo mostrar si tiene roles */}
-            {availableRoles.length > 0 && (
-              <div className="text-right">
-                <p className="text-sm text-gray-500">Modo actual:</p>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  isInPlayerMode() 
-                    ? 'bg-blue-100 text-blue-800' 
-                    : isInDMMode()
-                    ? 'bg-purple-100 text-purple-800'
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {isInPlayerMode() && '🎮 Jugador'}
-                  {isInDMMode() && '🎲 Dungeon Master'}
-                  {!currentRole && '⚙️ Sin rol activo'}
-                </span>
-              </div>
-            )}
+            {/* Indicador de rol actual */}
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Modo actual:</p>
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                isInPlayerMode() 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : isInDMMode()
+                  ? 'bg-purple-100 text-purple-800'
+                  : 'bg-gray-100 text-gray-800'
+              }`}>
+                {isInPlayerMode() && '🎮 Jugador'}
+                {isInDMMode() && '🎲 Dungeon Master'}
+                {!currentRole && '⚙️ Configurando...'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Mensaje de contexto SOLO si tiene múltiples roles */}
-        {shouldShowMultipleRolesMessage() && (
+        {/* Mensaje de contexto si tiene múltiples roles */}
+        {availableRoles.length > 1 && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -151,165 +146,136 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Mensaje para usuarios sin roles */}
-        {availableRoles.length === 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-            <div className="text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-                <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
+        {/* Estadísticas Rápidas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-blue-100 rounded-full">
+                <span className="text-2xl">👤</span>
               </div>
-              <h3 className="text-lg font-medium text-blue-900 mb-2">¡Bienvenido a RoleGames!</h3>
-              <p className="text-blue-700 mb-4">
-                Para comenzar, necesitas activar al menos un rol. ¿Quieres crear personajes o dirigir campañas?
-              </p>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  Personajes {!canActAsPlayer() && '(Requiere rol Jugador)'}
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {canActAsPlayer() ? '-' : '🔒'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-green-100 rounded-full">
+                <span className="text-2xl">📖</span>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  Campañas {!canActAsDM() && '(Requiere rol DM)'}
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {canActAsDM() ? '-' : '🔒'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-purple-100 rounded-full">
+                <span className="text-2xl">📅</span>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Sesiones</p>
+                <p className="text-2xl font-semibold text-gray-900">-</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-red-100 rounded-full">
+                <span className="text-2xl">⚔️</span>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Encuentros</p>
+                <p className="text-2xl font-semibold text-gray-900">-</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Acciones Rápidas (solo las visibles según roles) */}
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Acciones Rápidas</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visibleActions.map((action, index) => (
               <button
-                onClick={() => navigate('/roles')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md font-medium"
+                key={index}
+                onClick={action.action}
+                className={`p-6 rounded-lg border-2 border-dashed transition-all group relative ${
+                  action.requiredRole && currentRole !== action.requiredRole
+                    ? 'border-gray-300 hover:border-yellow-400 bg-gray-50'
+                    : 'border-gray-300 hover:border-blue-500'
+                }`}
               >
-                Activar mis roles
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Estadísticas Rápidas - solo mostrar si tiene roles */}
-        {availableRoles.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <span className="text-2xl">👤</span>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    Personajes {!canActAsPlayer() && '(Requiere rol Jugador)'}
-                  </p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {canActAsPlayer() ? '-' : '🔒'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-green-100 rounded-full">
-                  <span className="text-2xl">📖</span>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    Campañas {!canActAsDM() && '(Requiere rol DM)'}
-                  </p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {canActAsDM() ? '-' : '🔒'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-purple-100 rounded-full">
-                  <span className="text-2xl">📅</span>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Sesiones</p>
-                  <p className="text-2xl font-semibold text-gray-900">-</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-red-100 rounded-full">
-                  <span className="text-2xl">⚔️</span>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Encuentros</p>
-                  <p className="text-2xl font-semibold text-gray-900">-</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Acciones Rápidas - solo mostrar si tiene roles y hay acciones disponibles */}
-        {availableRoles.length > 0 && quickActions.length > 0 && (
-          <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Acciones Rápidas</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {quickActions.map((action, index) => (
-                <button
-                  key={index}
-                  onClick={action.action}
-                  className={`p-6 rounded-lg border-2 border-dashed transition-all group relative ${
-                    action.requiredRole && currentRole !== action.requiredRole
-                      ? 'border-gray-300 hover:border-yellow-400 bg-gray-50'
-                      : 'border-gray-300 hover:border-blue-500'
-                  }`}
-                >
-                  <div className="text-center">
-                    <div className={`inline-flex items-center justify-center w-12 h-12 ${action.color} rounded-lg text-white text-2xl mb-3`}>
-                      {action.icon}
-                    </div>
-                    <h3 className={`text-lg font-medium mb-1 ${
-                      action.requiredRole && currentRole !== action.requiredRole
-                        ? 'text-gray-600'
-                        : 'text-gray-900 group-hover:text-blue-600'
-                    }`}>
-                      {action.title}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {action.description}
-                    </p>
-                    
-                    {/* Indicador de cambio de rol necesario */}
-                    {action.requiredRole && currentRole !== action.requiredRole && (
-                      <div className="mt-2">
-                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                          Cambiar a modo {action.requiredRole === 'PLAYER' ? 'Jugador' : 'DM'}
-                        </span>
-                      </div>
-                    )}
+                <div className="text-center">
+                  <div className={`inline-flex items-center justify-center w-12 h-12 ${action.color} rounded-lg text-white text-2xl mb-3`}>
+                    {action.icon}
                   </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Actividad Reciente - solo mostrar si tiene roles */}
-        {availableRoles.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Actividad Reciente</h2>
-              <div className="space-y-4">
-                <div className="text-center py-8">
-                  <div className="text-gray-400 text-lg mb-2">🎲</div>
-                  <p className="text-gray-500">No hay actividad reciente</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Comienza una nueva aventura para ver la actividad aquí
+                  <h3 className={`text-lg font-medium mb-1 ${
+                    action.requiredRole && currentRole !== action.requiredRole
+                      ? 'text-gray-600'
+                      : 'text-gray-900 group-hover:text-blue-600'
+                  }`}>
+                    {action.title}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {action.description}
                   </p>
+                  
+                  {/* Indicador de cambio de rol necesario */}
+                  {action.requiredRole && currentRole !== action.requiredRole && (
+                    <div className="mt-2">
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                        Cambiar a modo {action.requiredRole === 'PLAYER' ? 'Jugador' : 'DM'}
+                      </span>
+                    </div>
+                  )}
                 </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Actividad Reciente */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Actividad Reciente</h2>
+            <div className="space-y-4">
+              <div className="text-center py-8">
+                <div className="text-gray-400 text-lg mb-2">🎲</div>
+                <p className="text-gray-500">No hay actividad reciente</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Comienza una nueva aventura para ver la actividad aquí
+                </p>
               </div>
             </div>
+          </div>
 
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Próximas Sesiones</h2>
-              <div className="space-y-4">
-                <div className="text-center py-8">
-                  <div className="text-gray-400 text-lg mb-2">📅</div>
-                  <p className="text-gray-500">No hay sesiones programadas</p>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Programa tu siguiente sesión en el calendario
-                  </p>
-                </div>
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Próximas Sesiones</h2>
+            <div className="space-y-4">
+              <div className="text-center py-8">
+                <div className="text-gray-400 text-lg mb-2">📅</div>
+                <p className="text-gray-500">No hay sesiones programadas</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Programa tu siguiente sesión en el calendario
+                </p>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -16,7 +16,6 @@ const creation = create(
       },
       loading: false,
       error: null,
-      initialized: false, // Nuevo campo para saber si ya se inicializó
 
       // ========================================
       // ACCIONES QUE LLAMAN AL BACKEND
@@ -45,22 +44,16 @@ const creation = create(
           set({
             availableRoles: available,
             currentRole: newCurrentRole,
-            loading: false,
-            initialized: true
+            loading: false
           });
           
-          console.log("✅ Zustand: Roles actualizados desde backend", {
-            available,
-            currentRole: newCurrentRole,
-            primaryRole: data.primaryRole
-          });
+          console.log("✅ Zustand: Roles actualizados desde backend", available);
           
         } catch (error) {
           console.error("❌ Zustand: Error al obtener roles", error);
           set({ 
             error: 'Error al cargar roles del usuario',
-            loading: false,
-            initialized: true // Marcar como inicializado incluso con error
+            loading: false 
           });
         }
       },
@@ -79,9 +72,8 @@ const creation = create(
             // Actualizar estado local después de éxito en backend
             const currentAvailable = get().availableRoles;
             if (!currentAvailable.includes('PLAYER')) {
-              const newAvailableRoles = [...currentAvailable, 'PLAYER'];
               set({ 
-                availableRoles: newAvailableRoles,
+                availableRoles: [...currentAvailable, 'PLAYER'],
                 currentRole: 'PLAYER' // Cambiar automáticamente al nuevo rol
               });
             }
@@ -93,9 +85,10 @@ const creation = create(
                 player: {
                   playerId: response.data.playerId,
                   level: response.data.playerLevel,
-                  experience: response.data.experience
+                  experience: response.data.experience,
                 }
-              }
+              },
+              loading: false
             }));
             
             console.log("✅ Zustand: Rol Player activado");
@@ -126,9 +119,8 @@ const creation = create(
           if (response.data.success) {
             const currentAvailable = get().availableRoles;
             if (!currentAvailable.includes('DUNGEON_MASTER')) {
-              const newAvailableRoles = [...currentAvailable, 'DUNGEON_MASTER'];
               set({ 
-                availableRoles: newAvailableRoles,
+                availableRoles: [...currentAvailable, 'DUNGEON_MASTER'],
                 currentRole: 'DUNGEON_MASTER'
               });
             }
@@ -142,7 +134,8 @@ const creation = create(
                   campaignCount: response.data.campaignCount,
                   dmStyle: response.data.dmStyle
                 }
-              }
+              },
+              loading: false
             }));
             
             console.log("✅ Zustand: Rol DM activado");
@@ -161,7 +154,7 @@ const creation = create(
       },
 
       /**
-       * Cambia contexto de rol (llamada al backend)
+       * Cambia contexto de rol (sin llamar backend, solo local)
        */
       switchRoleContext: async (targetRole) => {
         console.log(`🔄 Zustand: Cambiando contexto a ${targetRole}`);
@@ -298,21 +291,8 @@ const creation = create(
         availableRoles: [],
         roleInstances: { player: null, dungeonMaster: null },
         loading: false,
-        error: null,
-        initialized: false
-      }),
-
-      // ========================================
-      // INICIALIZACIÓN
-      // ========================================
-      
-      initialize: async () => {
-        const state = get();
-        if (!state.initialized) {
-          console.log("🔄 Zustand: Inicializando roles...");
-          await get().fetchUserRoles();
-        }
-      }
+        error: null
+      })
     }),
     {
       name: 'role-context-storage',
@@ -320,19 +300,8 @@ const creation = create(
       partialize: (state) => ({
         currentRole: state.currentRole,
         availableRoles: state.availableRoles,
-        roleInstances: state.roleInstances,
-        initialized: state.initialized
-      }),
-      // Al rehidratar, asegurar que initialized se mantenga
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          console.log("🔄 Zustand: Rehidratando estado de roles...");
-          // Si no hay datos persistidos, marcar como no inicializado
-          if (!state.availableRoles || state.availableRoles.length === 0) {
-            state.initialized = false;
-          }
-        }
-      }
+        roleInstances: state.roleInstances
+      })
     }
   )
 );

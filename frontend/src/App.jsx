@@ -20,7 +20,6 @@ import CombatTracker from './components/combat/CombatTracker';
 import RoleManager from './components/auth/RoleManager';
 
 import { useUserStore } from './stores/useUserStore';
-import { useRoleStore } from './stores/useRoleStore';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
 // React Toastify
@@ -58,27 +57,15 @@ function ProtectedRouteWithAuth({ children, requiredRole = null }) {
 }
 
 function AppInitializer({ children }) {
-  const userInitialize = useUserStore(state => state.initialize);
-  const userLoading = useUserStore(state => state.loading);
-  const isAuthenticated = useUserStore(state => state.isAuthenticated);
-  
-  const roleInitialize = useRoleStore(state => state.initialize);
-  const roleLoading = useRoleStore(state => state.loading);
+  const initialize = useUserStore(state => state.initialize);
+  const loading = useUserStore(state => state.loading);
 
   useEffect(() => {
     console.log("🚀 App: Inicializando aplicación...");
-    userInitialize();
-  }, [userInitialize]);
+    initialize();
+  }, [initialize]);
 
-  // Inicializar roles solo cuando el usuario esté autenticado
-  useEffect(() => {
-    if (isAuthenticated) {
-      console.log("🚀 App: Usuario autenticado, inicializando roles...");
-      roleInitialize();
-    }
-  }, [isAuthenticated, roleInitialize]);
-
-  if (userLoading || (isAuthenticated && roleLoading)) {
+  if (loading) {
     return <LoadingSpinner message="Inicializando aplicación..." />;
   }
 
@@ -168,7 +155,7 @@ export default function App() {
         </Routes>
         
         {/* Toast Container - Configuración global */}
-        <ToastContainer
+        {/* <ToastContainer
           position="top-right"
           autoClose={4000}
           hideProgressBar={false}
@@ -179,7 +166,7 @@ export default function App() {
           draggable
           pauseOnHover
           theme="light"
-        />
+        /> */}
       </AppInitializer>
     </Router>
   );
