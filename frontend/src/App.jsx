@@ -41,12 +41,14 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 // React Toastify
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import NotificationBell from './components/common/NotificationBell';
 
 function AppLayout({ children }) {
   return (
     <div className="min-h-screen bg-gray-100">
       <Navigation />
       {children}
+      <NotificationBell/>
     </div>
   );
 }

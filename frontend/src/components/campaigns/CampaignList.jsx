@@ -4,10 +4,21 @@ import  useCampaigns  from '../../hooks/campaigns/useCampaigns';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { toast } from 'react-toastify';
 import { useRoleStore } from '../../stores/useRoleStore';
+import { useRoleAwareData } from '../../hooks/useRoleAwareData';
 
 export default function CampaignList() {
+  
   const navigate = useNavigate();
-  const { campaigns, loading, error, deleteCampaign } = useCampaigns();
+  const {
+    campaigns,
+    loading,
+    error,
+    fetchCampaigns,
+    deleteCampaign,
+    setError
+  } = useCampaigns();
+
+  useRoleAwareData(fetchCampaigns)
   
   // Verificar rol actual para permisos
   const isInDMMode = useRoleStore(state => state.isInDMMode);
