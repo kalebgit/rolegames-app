@@ -31,4 +31,6 @@ public interface CampaignMapper {
     @Mapping(target = "version", ignore = true)
     void updateCampaignFromDto(CampaignDTO source, @MappingTarget Campaign target);
 
+
+
 }

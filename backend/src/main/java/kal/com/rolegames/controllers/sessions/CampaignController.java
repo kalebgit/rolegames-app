@@ -20,8 +20,8 @@ public class CampaignController {
     private final CampaignService campaignService;
 
     @GetMapping
-    public ResponseEntity<List<CampaignDTO>> getAllCampaigns() {
-        return ResponseEntity.ok(campaignService.getAllCampaigns());
+    public ResponseEntity<List<CampaignDTO>> getAllCampaigns(@RequestBody Long id) {
+        return ResponseEntity.ok(campaignService.getAllCampaigns(id));
     }
 
     @GetMapping("/{id}")

@@ -7,13 +7,18 @@ import kal.com.rolegames.models.characters.NonPlayerCharacter;
 import kal.com.rolegames.models.sessions.Campaign;
 import kal.com.rolegames.models.users.DungeonMaster;
 import kal.com.rolegames.models.users.Player;
+import kal.com.rolegames.models.users.User;
+import kal.com.rolegames.models.util.UserType;
 import kal.com.rolegames.repositories.characters.NonPlayerCharacterRepository;
 import kal.com.rolegames.repositories.sessions.CampaignRepository;
 import kal.com.rolegames.repositories.users.DungeonMasterRepository;
 import kal.com.rolegames.repositories.users.PlayerRepository;
 import kal.com.rolegames.services.users.DungeonMasterService;
 import lombok.AllArgsConstructor;
+import org.hibernate.tool.schema.internal.StandardUniqueKeyExporter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.user.DestinationUserNameProvider;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,11 +35,28 @@ public class CampaignService {
     private final CampaignMapper campaignMapper;
 
     private final DungeonMasterService dmService;
+    private final DungeonMasterRepository dungeonMasterRepository;
 
-    public List<CampaignDTO> getAllCampaigns() {
-        return campaignRepository.findAll().stream()
-                .map(campaignMapper::toDTO)
-                .collect(Collectors.toList());
+    public List<CampaignDTO> getAllCampaigns(Long id, @AuthenticationPrincipal User user) {
+
+        //refactorizar para hacer usar el mapper (todavia no implementado)
+
+        if(user.getUserType() == UserType.PLAYER){
+            return campaignRepository.findByPlayersContains(
+                    playerRepository.findByUserId(id)
+                            .orElseThrow(()->new NoSuchElementException("No existe el jugador"))
+                    ).stream()
+                    .map(campaignMapper::toDTO)
+                    .collect(Collectors.toList());
+        }else if (user.getUserType() == UserType.DUNGEON_MASTER){
+            DungeonMaster dm =  dungeonMasterRepository.findById(id).
+                    orElseThrow(()->new NoSuchElementException("no se encontro el dm"));
+            return dm.getCampaigns().stream()
+                    .map(campaignMapper::toDTO)
+                    .collect(Collectors.toList());
+        }
+
+        throw new NoSuchElementException("No se encontraron campañas");
     }
 
     public CampaignDTO getCampaignById(Long id) {
