@@ -65,6 +65,7 @@ public class DungeonMaster {
     }
 
     public void createNpc(NonPlayerCharacter npc) {
+        
         createdNpcs.add(npc);
         npc.setCreator(this);
     }
