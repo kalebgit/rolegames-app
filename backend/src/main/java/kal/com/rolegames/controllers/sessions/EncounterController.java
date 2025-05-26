@@ -6,6 +6,7 @@ import kal.com.rolegames.dto.items.RewardDTO;
 import kal.com.rolegames.dto.sessions.EncounterDTO;
 import kal.com.rolegames.services.combat.CombatActionService;
 import kal.com.rolegames.services.sessions.EncounterService;
+import kal.com.rolegames.websockets.EncounterWebSocketHandler;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,8 @@ public class EncounterController {
 
     private final EncounterService encounterService;
     private final CombatActionService combatActionService;
+
+    private final EncounterWebSocketHandler webSocketHandler; // NUEVO
 
     private static final Logger logger = LoggerFactory.getLogger(EncounterController.class);
 
@@ -79,8 +82,24 @@ public class EncounterController {
 
     @PostMapping("/{id}/complete")
     public ResponseEntity<EncounterDTO> completeEncounter(@PathVariable Long id) {
-        return ResponseEntity.ok(encounterService.completeEncounter(id));
+        EncounterDTO result = encounterService.completeEncounter(id);
+
+        // Notificar encuentro completado via WebSocket
+        try {
+            Map<String, Object> encounterCompletedMessage = Map.of(
+                    "type", "ENCOUNTER_COMPLETED",
+                    "encounterId", id,
+                    "encounter", result,
+                    "timestamp", System.currentTimeMillis()
+            );
+            webSocketHandler.broadcastToEncounter(id, encounterCompletedMessage);
+        } catch (Exception e) {
+            logger.warn("Error notificando encuentro completado via WebSocket: {}", e.getMessage());
+        }
+
+        return ResponseEntity.ok(result);
     }
+
 
     // ========================================
     // GESTIÓN DE COMBATE
@@ -91,20 +110,70 @@ public class EncounterController {
             @PathVariable Long id,
             @RequestBody Map<Long, Integer> diceThrows) {
         logger.info("[ENCOUNTER CONTROLLER] Starting combat for encounter: {}", id);
-        return ResponseEntity.ok(encounterService.startCombat(id, diceThrows));
+
+        EncounterDTO result = encounterService.startCombat(id, diceThrows);
+
+        // Notificar via WebSocket que el combate ha iniciado
+        try {
+            Map<String, Object> combatStartedMessage = Map.of(
+                    "type", "COMBAT_STARTED",
+                    "encounterId", id,
+                    "encounter", result,
+                    "timestamp", System.currentTimeMillis()
+            );
+            webSocketHandler.broadcastToEncounter(id, combatStartedMessage);
+        } catch (Exception e) {
+            logger.warn("Error notificando inicio de combate via WebSocket: {}", e.getMessage());
+        }
+
+        return ResponseEntity.ok(result);
     }
+
 
     @PostMapping("/{id}/end-combat")
     public ResponseEntity<EncounterDTO> endCombat(@PathVariable Long id) {
         logger.info("[ENCOUNTER CONTROLLER] Ending combat for encounter: {}", id);
-        return ResponseEntity.ok(encounterService.completeEncounterAndEndCombat(id));
+
+        EncounterDTO result = encounterService.completeEncounterAndEndCombat(id);
+
+        // Notificar fin de combate via WebSocket
+        try {
+            Map<String, Object> combatEndedMessage = Map.of(
+                    "type", "COMBAT_ENDED",
+                    "encounterId", id,
+                    "encounter", result,
+                    "timestamp", System.currentTimeMillis()
+            );
+            webSocketHandler.broadcastToEncounter(id, combatEndedMessage);
+        } catch (Exception e) {
+            logger.warn("Error notificando fin de combate via WebSocket: {}", e.getMessage());
+        }
+
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/{id}/next-turn")
     public ResponseEntity<EncounterDTO> nextTurn(@PathVariable Long id) {
         logger.info("[ENCOUNTER CONTROLLER] Advancing to next turn for encounter: {}", id);
-        return ResponseEntity.ok(encounterService.nextTurn(id));
+
+        EncounterDTO result = encounterService.nextTurn(id);
+
+        // Notificar cambio de turno via WebSocket
+        try {
+            Map<String, Object> turnChangedMessage = Map.of(
+                    "type", "TURN_CHANGED",
+                    "encounterId", id,
+                    "encounter", result,
+                    "timestamp", System.currentTimeMillis()
+            );
+            webSocketHandler.broadcastToEncounter(id, turnChangedMessage);
+        } catch (Exception e) {
+            logger.warn("Error notificando cambio de turno via WebSocket: {}", e.getMessage());
+        }
+
+        return ResponseEntity.ok(result);
     }
+
 
     // ========================================
     // SISTEMA DE ACCIONES DE COMBATE
@@ -135,7 +204,24 @@ public class EncounterController {
             @PathVariable Long characterId,
             @RequestParam(required = false) Integer initiativeRoll) {
         logger.info("[ENCOUNTER CONTROLLER] Adding participant {} to encounter: {}", characterId, id);
-        return ResponseEntity.ok(encounterService.addParticipant(id, characterId));
+
+        EncounterDTO result = encounterService.addParticipant(id, characterId);
+
+        // Notificar nuevo participante via WebSocket
+        try {
+            Map<String, Object> participantAddedMessage = Map.of(
+                    "type", "PARTICIPANT_ADDED",
+                    "encounterId", id,
+                    "characterId", characterId,
+                    "encounter", result,
+                    "timestamp", System.currentTimeMillis()
+            );
+            webSocketHandler.broadcastToEncounter(id, participantAddedMessage);
+        } catch (Exception e) {
+            logger.warn("Error notificando nuevo participante via WebSocket: {}", e.getMessage());
+        }
+
+        return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/{id}/participants/{characterId}")
@@ -143,7 +229,24 @@ public class EncounterController {
             @PathVariable Long id,
             @PathVariable Long characterId) {
         logger.info("[ENCOUNTER CONTROLLER] Removing participant {} from encounter: {}", characterId, id);
-        return ResponseEntity.ok(encounterService.removeParticipant(id, characterId));
+
+        EncounterDTO result = encounterService.removeParticipant(id, characterId);
+
+        // Notificar participante removido via WebSocket
+        try {
+            Map<String, Object> participantRemovedMessage = Map.of(
+                    "type", "PARTICIPANT_REMOVED",
+                    "encounterId", id,
+                    "characterId", characterId,
+                    "encounter", result,
+                    "timestamp", System.currentTimeMillis()
+            );
+            webSocketHandler.broadcastToEncounter(id, participantRemovedMessage);
+        } catch (Exception e) {
+            logger.warn("Error notificando participante removido via WebSocket: {}", e.getMessage());
+        }
+
+        return ResponseEntity.ok(result);
     }
 
     // ========================================

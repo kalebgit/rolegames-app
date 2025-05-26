@@ -28,7 +28,6 @@ public class EncounterWebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(EncounterWebSocketHandler.class);
 
-    private final EncounterService encounterService;
     private final ObjectMapper objectMapper;
 
     // Mapa de encounterId -> Set de sesiones conectadas
@@ -54,7 +53,7 @@ public class EncounterWebSocketHandler extends TextWebSocketHandler {
                 encounterId, session.getId(), encounterSessions.get(encounterId).size());
 
         // Enviar estado inicial del encounter
-        sendInitialState(session, encounterId);
+        sendConnectionSuccessMessage(session, encounterId);
     }
 
     @Override
@@ -203,24 +202,22 @@ public class EncounterWebSocketHandler extends TextWebSocketHandler {
         broadcastToEncounter(encounterId, chatMessage);
     }
 
-    private void sendInitialState(WebSocketSession session, Long encounterId) {
+    private void sendConnectionSuccessMessage(WebSocketSession session, Long encounterId) {
         try {
-            EncounterDTO encounter = encounterService.getEncounterById(encounterId);
-
-            Map<String, Object> initialState = Map.of(
-                    "type", "INITIAL_STATE",
+            Map<String, Object> connectionMessage = Map.of(
+                    "type", "CONNECTION_ESTABLISHED",
                     "encounterId", encounterId,
-                    "encounter", encounter,
+                    "sessionId", session.getId(),
                     "timestamp", System.currentTimeMillis()
             );
 
-            sendToSession(session, initialState);
+            sendToSession(session, connectionMessage);
 
-            logger.debug("Estado inicial enviado a sesión {} para encounter {}",
+            logger.debug("Mensaje de conexión enviado a sesión {} para encounter {}",
                     session.getId(), encounterId);
 
         } catch (Exception e) {
-            logger.error("Error enviando estado inicial a sesión {}: {}", session.getId(), e.getMessage());
+            logger.error("Error enviando mensaje de conexión a sesión {}: {}", session.getId(), e.getMessage());
         }
     }
 
