@@ -16,6 +16,7 @@ import kal.com.rolegames.repositories.characters.GameCharacterRepository;
 import kal.com.rolegames.repositories.combat.CombatStateRepository;
 import kal.com.rolegames.repositories.items.ItemRepository;
 import kal.com.rolegames.repositories.spells.SpellRepository;
+import kal.com.rolegames.websockets.EncounterWebSocketService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,10 @@ public class CombatActionService {
 
     private final ItemRepository itemRepository;
     private final SpellRepository spellRepository;
+
     private final ActionResultService actionResultService;
+    private final EncounterWebSocketService webSocketService;
+
     private final CombatActionMapper combatActionMapper;
 
     private static final Logger logger = LoggerFactory.getLogger(CombatActionService.class);
@@ -107,7 +111,24 @@ public class CombatActionService {
         logger.info("[COMBAT ACTION SERVICE] Action {} completed successfully",
                 request.getActionType());
 
-        return combatActionMapper.toDTO(savedAction);
+        CombatActionDTO resultAction = combatActionMapper.toDTO(savedAction);
+
+        // Obtener encounterId del combate activo
+        Long encounterId = activeCombat.getEncounter().getEncounterId();
+
+        // Notificar acción realizada
+        webSocketService.notifyActionPerformed(encounterId, resultAction);
+
+        // Si hubo daño, notificar actualización de salud
+        if (resultAction.getResult().getDamageDealt() > 0 && request.getTargetId() != null) {
+            GameCharacter targetDamaged = characterRepository.findById(request.getTargetId()).orElse(null);
+            if (targetDamaged != null) {
+                webSocketService.notifyHealthUpdate(encounterId,
+                        targetDamaged.getCharacterId(), targetDamaged.getHitPoints());
+            }
+        }
+
+        return resultAction;
     }
 
     private void validateCanPerformAction(CombatState combat, GameCharacter character,

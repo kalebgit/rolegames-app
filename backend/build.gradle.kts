@@ -45,6 +45,9 @@ dependencies {
     // mapping para los endpoints
     implementation(  "org.springframework.boot:spring-boot-starter-actuator" )
 
+    //websockets
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")

@@ -2,6 +2,7 @@ package kal.com.rolegames.services.sessions;
 
 import jakarta.transaction.Transactional;
 import kal.com.rolegames.dto.combat.CombatStateDTO;
+import kal.com.rolegames.dto.combat.InitiativeDTO;
 import kal.com.rolegames.dto.items.RewardDTO;
 import kal.com.rolegames.dto.sessions.EncounterDTO;
 import kal.com.rolegames.mappers.items.RewardMapper;
@@ -22,6 +23,7 @@ import kal.com.rolegames.repositories.items.ItemRepository;
 import kal.com.rolegames.repositories.sessions.EncounterRepository;
 import kal.com.rolegames.repositories.sessions.SessionRepository;
 import kal.com.rolegames.services.combat.CombatService;
+import kal.com.rolegames.websockets.EncounterWebSocketService;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +46,8 @@ public class EncounterService {
     private final InitiativeRepository initiativeRepository;
 
     private final CombatService combatService;
+    private final EncounterWebSocketService webSocketService;
+
 
     private final EncounterMapper encounterMapper;
     private final RewardMapper rewardMapper;
@@ -228,7 +232,13 @@ public class EncounterService {
 
         Encounter updatedEncounter = encounterRepository.save(encounter);
         logger.info("[ENCOUNTER SERVICE] Combat se ha iniciado para encuentro {}", encounterId);
-        return mapToDetailedDTO(updatedEncounter);
+        EncounterDTO result = mapToDetailedDTO(updatedEncounter);
+
+        // Notificar por WebSocket
+        webSocketService.notifyCombatStarted(encounterId,
+                combatService.getCurrentCombat());
+
+        return result;
     }
 
     @Transactional
@@ -249,7 +259,38 @@ public class EncounterService {
         logger.info("[ENCOUNTER SERVICE] siguiente turno para el encuentro {}", encounterId);
 
         Encounter refreshedEncounter = encounterRepository.findById(encounterId).orElseThrow();
-        return mapToDetailedDTO(refreshedEncounter);
+
+
+        EncounterDTO result = mapToDetailedDTO(refreshedEncounter);
+
+        // Notificar cambio de turno
+        webSocketService.notifyTurnChanged(encounterId,
+                getCurrentTurnInfo(encounterId));
+
+        return result;
+    }
+
+    private InitiativeDTO getCurrentTurnInfo(Long encounterId) {
+        try {
+            // Obtener el combate activo del encounter
+            Encounter encounter = encounterRepository.findById(encounterId)
+                    .orElseThrow(() -> new NoSuchElementException("Encounter not found"));
+
+            if (encounter.getCombatState() != null && encounter.getCombatState().getIsActive()) {
+                CombatStateDTO combatState = combatService.getCurrentCombat();
+
+                // Buscar la iniciativa con currentTurn = true
+                return combatState.getInitiativeOrder().stream()
+                        .filter(InitiativeDTO::getCurrentTurn)
+                        .findFirst()
+                        .orElse(null);
+            }
+
+            return null;
+        } catch (Exception e) {
+            logger.warn("Error obteniendo información del turno actual: {}", e.getMessage());
+            return null;
+        }
     }
 
     @Transactional
@@ -278,7 +319,12 @@ public class EncounterService {
         }
 
         logger.info("[ENCOUNTER SERVICE] Character {} added to encounter {}", characterId, encounterId);
-        return mapToDetailedDTO(updatedEncounter);
+        EncounterDTO result = mapToDetailedDTO(updatedEncounter);
+
+        // Notificar nuevo participante
+        webSocketService.notifyParticipantAdded(encounterId, characterId);
+
+        return result;
     }
 
     @Transactional
