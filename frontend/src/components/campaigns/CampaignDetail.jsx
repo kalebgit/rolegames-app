@@ -1,9 +1,9 @@
-// frontend/src/components/campaigns/CampaignDetail.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRoleStore } from '../../stores/useRoleStore';
 import useCampaignStats from '../../hooks/campaigns/useCampaignStats';
 import LoadingSpinner from '../common/LoadingSpinner';
+import CampaignInvitationModal from './CampaignInvitationModal'; // 👈 Agregar esta línea
 import { toast } from 'react-toastify';
 import api from '../../api/axiosConfig';
 
@@ -12,20 +12,15 @@ export default function CampaignDetail() {
   const navigate = useNavigate();
   const campaignId = parseInt(id);
   
-  // Role management
   const isInDMMode = useRoleStore(state => state.isInDMMode);
   const currentRole = useRoleStore(state => state.currentRole);
-  
-  // Campaign stats
+
   const { stats, sessions, loading, error, refreshStats } = useCampaignStats(campaignId);
   
-  // Local state
   const [campaign, setCampaign] = useState(null);
-  const [inviteModalOpen, setInviteModalOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteModalOpen, setInviteModalOpen] = useState(false); // 👈 Agregar esta línea
   const [loadingCampaign, setLoadingCampaign] = useState(true);
 
-  // Fetch campaign details
   useEffect(() => {
     const fetchCampaign = async () => {
       try {
@@ -49,21 +44,19 @@ export default function CampaignDetail() {
     navigate(`/sessions/${sessionId}/room`);
   };
 
-  const handleInvitePlayer = async () => {
-    if (!inviteEmail.trim()) {
-      toast.error('Por favor ingresa un email válido');
+  // 👈 Agregar estas funciones
+  const handleInvitePlayer = () => {
+    if (!isInDMMode) {
+      toast.error('Solo el DM puede invitar jugadores');
       return;
     }
+    setInviteModalOpen(true);
+  };
 
-    try {
-      // TODO: Implementar endpoint de invitaciones
-      // await api.post(`/api/campaigns/${campaignId}/invite`, { email: inviteEmail });
-      toast.success(`Invitación enviada a ${inviteEmail} (funcionalidad pendiente)`);
-      setInviteEmail('');
-      setInviteModalOpen(false);
-    } catch (err) {
-      toast.error('Error al enviar la invitación');
-    }
+  const handleInvitationSent = (notification) => {
+    toast.success('¡Invitación enviada exitosamente!');
+    console.log('Invitación enviada:', notification);
+    // se pdorai llamar refreshStats() para actualizar la UI
   };
 
   const getSessionStatus = (session) => {
@@ -131,7 +124,7 @@ export default function CampaignDetail() {
             
             <div className="flex space-x-3">
               <button
-                onClick={() => setInviteModalOpen(true)}
+                onClick={handleInvitePlayer}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
               >
                 Invitar Jugadores
@@ -304,40 +297,12 @@ export default function CampaignDetail() {
           )}
         </div>
 
-        {/* Modal de invitación */}
-        {inviteModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Invitar Jugador</h3>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email del jugador
-                </label>
-                <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="jugador@example.com"
-                />
-              </div>
-              <div className="flex justify-end space-x-3">
-                <button
-                  onClick={() => setInviteModalOpen(false)}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleInvitePlayer}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
-                >
-                  Enviar Invitación
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <CampaignInvitationModal 
+          isOpen={inviteModalOpen}
+          onClose={() => setInviteModalOpen(false)}
+          campaign={campaign}
+          onInvitationSent={handleInvitationSent}
+        />
       </div>
     </div>
   );

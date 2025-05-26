@@ -1,4 +1,3 @@
-// frontend/src/components/campaigns/CampaignInvitationModal.jsx
 import React, { useState } from 'react';
 import { useNotifications } from '../../hooks/useNotifications';
 
@@ -11,6 +10,7 @@ export default function CampaignInvitationModal({
   const [recipientUsername, setRecipientUsername] = useState('');
   const [personalMessage, setPersonalMessage] = useState('');
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState(''); 
   
   const { sendCampaignInvitation } = useNotifications();
 
@@ -18,11 +18,12 @@ export default function CampaignInvitationModal({
     e.preventDefault();
     
     if (!recipientUsername.trim()) {
-      alert('Por favor ingresa un nombre de usuario válido');
+      setError('Por favor ingresa un nombre de usuario válido');
       return;
     }
 
     setSending(true);
+    setError(''); // Limpiar errores previos
     
     try {
       const result = await sendCampaignInvitation(
@@ -35,6 +36,7 @@ export default function CampaignInvitationModal({
         // Limpiar formulario
         setRecipientUsername('');
         setPersonalMessage('');
+        setError('');
         
         // Notificar al componente padre
         if (onInvitationSent) {
@@ -43,9 +45,13 @@ export default function CampaignInvitationModal({
         
         // Cerrar modal
         onClose();
+      } else {
+        // Mostrar error específico en el modal
+        setError(result.error || 'Error al enviar la invitación');
       }
     } catch (error) {
       console.error('Error sending invitation:', error);
+      setError('Error inesperado al enviar la invitación');
     } finally {
       setSending(false);
     }
@@ -55,6 +61,7 @@ export default function CampaignInvitationModal({
     if (!sending) {
       setRecipientUsername('');
       setPersonalMessage('');
+      setError(''); // Limpiar errores al cerrar
       onClose();
     }
   };
@@ -62,39 +69,49 @@ export default function CampaignInvitationModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
+        <div className="flex justify-between items-center mb-3 sm:mb-4">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
             Invitar Jugador a Campaña
           </h3>
           <button
             onClick={handleClose}
             disabled={sending}
-            className="text-gray-400 hover:text-gray-600 text-xl disabled:opacity-50"
+            className="text-gray-400 hover:text-gray-600 text-lg sm:text-xl disabled:opacity-50 p-1"
           >
             ×
           </button>
         </div>
 
         {/* Información de la campaña */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h4 className="font-semibold text-blue-900 mb-1">{campaign.name}</h4>
-          <p className="text-blue-700 text-sm">
-            {campaign.description || 'Sin descripción'}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+          <h4 className="font-semibold text-blue-900 mb-1 text-xs sm:text-sm truncate">{campaign?.name}</h4>
+          <p className="text-blue-700 text-xs line-clamp-2">
+            {campaign?.description || 'Sin descripción'}
           </p>
-          <div className="flex items-center mt-2 text-xs text-blue-600">
-            <span>DM: {campaign.dungeonMasterName}</span>
+          <div className="flex items-center mt-1 text-xs text-blue-600">
+            <span className="truncate">DM: {campaign?.dungeonMasterName}</span>
             <span className="mx-2">•</span>
-            <span>{campaign.players?.length || 0} jugadores</span>
+            <span className="flex-shrink-0">{campaign?.players?.length || 0} jugadores</span>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Mostrar errores */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded mb-3 text-sm">
+            <div className="flex items-center">
+              <span className="mr-2">⚠️</span>
+              {error}
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
           <div>
             <label 
               htmlFor="recipientUsername" 
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
             >
               Nombre de Usuario del Jugador *
             </label>
@@ -104,7 +121,7 @@ export default function CampaignInvitationModal({
               value={recipientUsername}
               onChange={(e) => setRecipientUsername(e.target.value)}
               placeholder="Ej: aventurero_123"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               disabled={sending}
               required
             />
@@ -116,7 +133,7 @@ export default function CampaignInvitationModal({
           <div>
             <label 
               htmlFor="personalMessage" 
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
             >
               Mensaje Personal (Opcional)
             </label>
@@ -125,45 +142,51 @@ export default function CampaignInvitationModal({
               value={personalMessage}
               onChange={(e) => setPersonalMessage(e.target.value)}
               placeholder="Ej: ¡Hola! Te invito a unirte a nuestra aventura épica..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows={2}
+              className="w-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"
               disabled={sending}
+              maxLength={200}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Máximo 200 caracteres
-            </p>
+            <div className="flex justify-between items-center mt-1">
+              <p className="text-xs text-gray-500">
+                Máximo 200 caracteres
+              </p>
+              <p className="text-xs text-gray-400">
+                {personalMessage.length}/200
+              </p>
+            </div>
           </div>
 
           {/* Vista previa de la invitación */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h5 className="font-semibold text-gray-900 mb-2">Vista previa:</h5>
-            <div className="text-sm text-gray-700">
-              <p className="font-medium">✉️ Invitación a Campaña</p>
-              <p>
-                Te han invitado a unirte a la campaña "{campaign.name}"
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 sm:p-3">
+            <h5 className="font-semibold text-gray-900 mb-1 text-xs sm:text-sm">Vista previa:</h5>
+            <div className="text-xs sm:text-sm text-gray-700">
+              <p className="font-medium text-xs">✉️ Invitación a Campaña</p>
+              <p className="text-xs break-words">
+                Te han invitado a unirte a la campaña "{campaign?.name}"
                 {personalMessage && (
                   <>
                     <br />
-                    <em>"{personalMessage}"</em>
+                    <em className="break-words">"{personalMessage}"</em>
                   </>
                 )}
               </p>
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-2 sm:pt-3">
             <button
               type="button"
               onClick={handleClose}
               disabled={sending}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md disabled:opacity-50"
+              className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-md disabled:opacity-50 text-sm order-2 sm:order-1"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={sending || !recipientUsername.trim()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50 flex items-center"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-md disabled:opacity-50 flex items-center justify-center text-sm order-1 sm:order-2"
             >
               {sending ? (
                 <>
@@ -174,20 +197,23 @@ export default function CampaignInvitationModal({
                   Enviando...
                 </>
               ) : (
-                '📤 Enviar Invitación'
+                <>
+                  <span className="hidden sm:inline">📤 </span>
+                  Enviar Invitación
+                </>
               )}
             </button>
           </div>
         </form>
 
         {/* Información adicional */}
-        <div className="mt-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div className="mt-3 sm:mt-4 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <span className="text-yellow-600">💡</span>
+              <span className="text-yellow-600 text-sm">💡</span>
             </div>
             <div className="ml-2">
-              <p className="text-xs text-yellow-700">
+              <p className="text-xs text-yellow-700 leading-relaxed">
                 El jugador recibirá una notificación en tiempo real y podrá aceptar o rechazar la invitación desde su panel de notificaciones.
               </p>
             </div>
