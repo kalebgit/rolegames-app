@@ -559,6 +559,68 @@ CREATE TABLE IF NOT EXISTS character_equipped_items (
     PRIMARY KEY (character_id, equip_slot)
 );
 
+
+--  Tabla de invitaciones a campañas (no está en el código pero sería útil)
+CREATE TABLE IF NOT EXISTS campaign_invitations (
+    invitation_id BIGINT NOT NULL AUTO_INCREMENT,
+    campaign_id BIGINT NOT NULL,
+    invited_user_id BIGINT NOT NULL,
+    invited_by_user_id BIGINT NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING', -- PENDING, ACCEPTED, DECLINED, EXPIRED
+    message TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    responded_at TIMESTAMP,
+    PRIMARY KEY (invitation_id),
+    INDEX idx_invitations_campaign (campaign_id),
+    INDEX idx_invitations_user (invited_user_id),
+    INDEX idx_invitations_status (status)
+);
+
+--  Tabla de logs de acciones (auditoría) - opcional pero recomendable
+CREATE TABLE IF NOT EXISTS audit_logs (
+    log_id BIGINT NOT NULL AUTO_INCREMENT,
+    user_id BIGINT,
+    action VARCHAR(100) NOT NULL, -- CREATE, UPDATE, DELETE, LOGIN, etc.
+    entity_type VARCHAR(50), -- USER, CHARACTER, CAMPAIGN, etc.
+    entity_id BIGINT,
+    details JSON, -- Detalles de la acción en formato JSON
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (log_id),
+    INDEX idx_audit_logs_user (user_id),
+    INDEX idx_audit_logs_action (action),
+    INDEX idx_audit_logs_entity (entity_type, entity_id),
+    INDEX idx_audit_logs_created (created_at)
+);
+
+-- Tabla de configuraciones de usuario
+CREATE TABLE IF NOT EXISTS user_preferences (
+    preference_id BIGINT NOT NULL AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    preference_key VARCHAR(100) NOT NULL,
+    preference_value TEXT,
+    PRIMARY KEY (preference_id),
+    UNIQUE KEY uk_user_preferences (user_id, preference_key),
+    INDEX idx_user_preferences_user (user_id)
+);
+
+
+-- Tabla para notas de sesión por jugador (notas privadas)
+CREATE TABLE IF NOT EXISTS player_session_notes (
+    note_id BIGINT NOT NULL AUTO_INCREMENT,
+    session_id BIGINT NOT NULL,
+    player_id BIGINT NOT NULL,
+    notes TEXT,
+    is_private BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    PRIMARY KEY (note_id),
+    UNIQUE KEY uk_player_session_notes (session_id, player_id),
+    INDEX idx_player_session_notes_player (player_id)
+);
+
 -- =====================================================
 -- DATOS INICIALES
 -- =====================================================
