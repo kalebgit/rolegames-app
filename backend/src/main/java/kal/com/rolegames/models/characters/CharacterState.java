@@ -62,7 +62,7 @@ public class CharacterState {
     }
 
     public boolean canTakeActions() {
-        return !isDisabled(); // Default return for compilation
+        return !isDisabled();
     }
 
     public boolean isNegativeState() {

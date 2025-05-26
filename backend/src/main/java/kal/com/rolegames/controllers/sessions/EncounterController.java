@@ -1,7 +1,10 @@
 package kal.com.rolegames.controllers.sessions;
 
+import kal.com.rolegames.dto.combat.CombatActionDTO;
+import kal.com.rolegames.dto.combat.PerformActionRequest;
 import kal.com.rolegames.dto.items.RewardDTO;
 import kal.com.rolegames.dto.sessions.EncounterDTO;
+import kal.com.rolegames.services.combat.CombatActionService;
 import kal.com.rolegames.services.sessions.EncounterService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,8 +25,13 @@ import java.util.Map;
 public class EncounterController {
 
     private final EncounterService encounterService;
+    private final CombatActionService combatActionService;
 
     private static final Logger logger = LoggerFactory.getLogger(EncounterController.class);
+
+    // ========================================
+    // CRUD BÁSICO DE ENCOUNTERS
+    // ========================================
 
     @GetMapping
     public ResponseEntity<List<EncounterDTO>> getAllEncounters() {
@@ -50,8 +58,6 @@ public class EncounterController {
         return ResponseEntity.ok(encounterService.getPendingEncounters());
     }
 
-
-    //creation
     @PostMapping
     public ResponseEntity<EncounterDTO> createEncounter(@RequestBody CreateEncounterRequest request) {
         logger.info("[ENCOUNTER CONTROLLER] Creating encounter for session: {}", request.getSessionId());
@@ -76,21 +82,23 @@ public class EncounterController {
         return ResponseEntity.ok(encounterService.completeEncounter(id));
     }
 
-
-    /*
-    RELACIONADO CON EL COMBATE
-     */
+    // ========================================
+    // GESTIÓN DE COMBATE
+    // ========================================
 
     @PostMapping("/{id}/start-combat")
-    public ResponseEntity<EncounterDTO> startCombat(@PathVariable Long id, @RequestBody Map<Long, Integer> diceThrows) {
+    public ResponseEntity<EncounterDTO> startCombat(
+            @PathVariable Long id,
+            @RequestBody Map<Long, Integer> diceThrows) {
+        logger.info("[ENCOUNTER CONTROLLER] Starting combat for encounter: {}", id);
         return ResponseEntity.ok(encounterService.startCombat(id, diceThrows));
     }
 
     @PostMapping("/{id}/end-combat")
-    public ResponseEntity<EncounterDTO> endCombat(@PathVariable Long id, @RequestBody Map<Long, Integer> diceThrows) {
+    public ResponseEntity<EncounterDTO> endCombat(@PathVariable Long id) {
+        logger.info("[ENCOUNTER CONTROLLER] Ending combat for encounter: {}", id);
         return ResponseEntity.ok(encounterService.completeEncounterAndEndCombat(id));
     }
-
 
     @PostMapping("/{id}/next-turn")
     public ResponseEntity<EncounterDTO> nextTurn(@PathVariable Long id) {
@@ -98,47 +106,55 @@ public class EncounterController {
         return ResponseEntity.ok(encounterService.nextTurn(id));
     }
 
+    // ========================================
+    // SISTEMA DE ACCIONES DE COMBATE
+    // ========================================
 
+    @PostMapping("/{id}/perform-action")
+    public ResponseEntity<CombatActionDTO> performAction(
+            @PathVariable Long id,
+            @RequestBody PerformActionRequest request) {
+        logger.info("[ENCOUNTER CONTROLLER] Performing action {} for encounter: {} by character: {}",
+                request.getActionType(), id, request.getCharacterId());
+
+        CombatActionDTO result = combatActionService.performAction(request);
+
+        logger.info("[ENCOUNTER CONTROLLER] Action completed: {} with result: {}",
+                request.getActionType(), result.getResult().getSuccess());
+
+        return ResponseEntity.ok(result);
+    }
+
+    // ========================================
+    // GESTIÓN DE PARTICIPANTES
+    // ========================================
 
     @PostMapping("/{id}/participants/{characterId}")
     public ResponseEntity<EncounterDTO> addParticipant(
             @PathVariable Long id,
             @PathVariable Long characterId,
             @RequestParam(required = false) Integer initiativeRoll) {
-        //faltaria implementar el initiative roll
+        logger.info("[ENCOUNTER CONTROLLER] Adding participant {} to encounter: {}", characterId, id);
         return ResponseEntity.ok(encounterService.addParticipant(id, characterId));
     }
-
 
     @DeleteMapping("/{id}/participants/{characterId}")
     public ResponseEntity<EncounterDTO> removeParticipant(
             @PathVariable Long id,
             @PathVariable Long characterId) {
+        logger.info("[ENCOUNTER CONTROLLER] Removing participant {} from encounter: {}", characterId, id);
         return ResponseEntity.ok(encounterService.removeParticipant(id, characterId));
     }
 
-
-
-    //PENDIENTE
-//    @Data
-//    @NoArgsConstructor
-//    @AllArgsConstructor
-//    public static class AddParticipantRequest {
-//        private Long characterId;
-//        private Integer initiativeRoll;
-//    }
-//
-//    @PostMapping("/{id}/participants")
-//    public ResponseEntity<EncounterDTO> addParticipantWithInitiative(
-//            @PathVariable Long id,
-//            @RequestBody AddParticipantRequest request) {
-//        return ResponseEntity.ok(encounterService.addParticipant(id, request.getCharacterId(), request.getInitiativeRoll()));
-//    }
+    // ========================================
+    // GESTIÓN DE RECOMPENSAS
+    // ========================================
 
     @PostMapping("/{id}/rewards")
     public ResponseEntity<EncounterDTO> addReward(
             @PathVariable Long id,
             @RequestBody RewardDTO rewardDTO) {
+        logger.info("[ENCOUNTER CONTROLLER] Adding reward to encounter: {}", id);
         return ResponseEntity.ok(encounterService.addReward(id, rewardDTO));
     }
 
@@ -146,8 +162,13 @@ public class EncounterController {
     public ResponseEntity<EncounterDTO> removeReward(
             @PathVariable Long id,
             @PathVariable Long rewardId) {
+        logger.info("[ENCOUNTER CONTROLLER] Removing reward {} from encounter: {}", rewardId, id);
         return ResponseEntity.ok(encounterService.removeReward(id, rewardId));
     }
+
+    // ========================================
+    // CLASES DE REQUEST
+    // ========================================
 
     @Data
     @NoArgsConstructor

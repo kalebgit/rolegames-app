@@ -3,6 +3,9 @@ package kal.com.rolegames.models.combat;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Entity
 @Table(name = "action_results")
 //lombok annotations
@@ -25,6 +28,17 @@ public class ActionResult {
 
     @Lob
     private String description;
+
+    private String damageRoll;
+
+    @ElementCollection
+    @CollectionTable(name = "action_result_dice",
+            joinColumns = @JoinColumn(name = "result_id"))
+    @MapKeyColumn(name = "dice_name")
+    @Column(name = "dice_value")
+    @Builder.Default
+    private Map<String, Integer> diceResults = new HashMap<>();
+
 
     @OneToOne(mappedBy = "result")
     private CombatAction action;
