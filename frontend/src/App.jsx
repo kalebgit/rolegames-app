@@ -157,12 +157,7 @@ export default function App() {
             </ProtectedRouteWithAuth>
           } />
           
-          {/* Campañas - DUNGEON_MASTER */}
-          <Route path="/campaigns" element={
-            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
-              <CampaignList />
-            </ProtectedRouteWithAuth>
-          } />
+          {/* Campañas - DUNGEON_MASTER  solo puede crearlas y editarlas*/}
           <Route path="/campaigns/new" element={
             <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
               <CampaignForm />
@@ -251,6 +246,12 @@ export default function App() {
           {/* ========================================= */}
           
           {/* Hechizos */}
+          <Route path="/campaigns" element={
+            <ProtectedRouteWithAuth >
+              <CampaignList />
+            </ProtectedRouteWithAuth>
+          } />
+
           <Route path="/spells" element={
             <ProtectedRouteWithAuth>
               <SpellList />

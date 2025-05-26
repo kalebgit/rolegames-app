@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserStore } from '../../stores/useUserStore';
 import { useRoleStore } from '../../stores/useRoleStore';
+import { toast } from 'react-toastify';
+
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,21 +26,37 @@ export default function Navigation() {
   }, [user, availableRoles.length, fetchUserRoles]);
 
   const handleLogout = () => {
+    toast.info('Sesión cerrada exitosamente', {
+      position: "top-right",
+      autoClose: 2000,
+    });
     logout(navigate);
   };
+  
 
   const handleRoleSwitch = async (targetRole) => {
     try {
       const result = await switchRoleContext(targetRole);
       if (result.success) {
-        console.log(`Cambiado a modo ${targetRole === 'PLAYER' ? 'Jugador' : 'Dungeon Master'}`);
+        const roleName = targetRole === 'PLAYER' ? 'Jugador' : 'Dungeon Master';
+        toast.success(`Cambiado a modo ${roleName}`, {
+          position: "top-right",
+          autoClose: 3000,
+        });
       } else {
-        console.error(result.message || 'Error al cambiar rol');
+        toast.error(result.message || 'Error al cambiar rol', {
+          position: "top-right",
+          autoClose: 5000,
+        });
       }
     } catch (err) {
-      console.error('Error inesperado al cambiar rol');
+      toast.error('Error inesperado al cambiar rol', {
+        position: "top-right",
+        autoClose: 5000,
+      });
     }
   };
+  
 
   const getCurrentView = () => {
     const path = location.pathname;
@@ -64,21 +82,28 @@ export default function Navigation() {
     { key: 'characters', label: 'Personajes', icon: '👤', path: '/characters' }
   ] : [];
 
-  // Items específicos para DMs
-  const dmItems = canActAsDM() ? [
+  // Items específicos para DMs SOLO para creación
+  const dmOnlyItems = canActAsDM() ? [
     { key: 'npcs', label: 'NPCs', icon: '👥', path: '/npcs' },
-    { key: 'campaigns', label: 'Campañas', icon: '📖', path: '/campaigns' },
     { key: 'sessions', label: 'Sesiones', icon: '📅', path: '/sessions' },
-    { key: 'encounters', label: 'Encuentros', icon: '🗡️', path: '/encounters' },
+    { key: 'encounters', label: 'Encuentros', icon: '🗡️', path: '/encounters' }
   ] : [];
 
   // Items compartidos (ambos roles pueden acceder)
-  const sharedItems = [
+  const sharedItems = [];
+  
+  // Agregar campañas si tiene cualquiera de los dos roles
+  if (canActAsPlayer() || canActAsDM()) {
+    sharedItems.push({ key: 'campaigns', label: 'Campañas', icon: '📖', path: '/campaigns' });
+  }
+
+  // Agregar otros items compartidos
+  sharedItems.push(
     { key: 'spells', label: 'Hechizos', icon: '✨', path: '/spells' },
     { key: 'items', label: 'Objetos', icon: '🎒', path: '/items' },
     { key: 'combat', label: 'Combate', icon: '⚔️', path: '/combat' },
-    { key: 'roles', label: 'Roles', icon: '⚙️', path: '/roles' }  
-  ];
+    { key: 'roles', label: 'Roles', icon: '⚙️', path: '/roles' }
+  );
 
   // Combinar items según el rol actual y disponible
   const getVisibleItems = () => {
@@ -90,7 +115,7 @@ export default function Navigation() {
     }
     
     if (canActAsDM()) {
-      items = [...items, ...dmItems];
+      items = [...items, ...dmOnlyItems];
     }
     
     // Agregar items compartidos
@@ -106,8 +131,7 @@ export default function Navigation() {
     const groups = [
       {
         title: "Panel Principal",
-        items: [{ key: 'dashboard', label: 'Dashboard', icon: '🏠', path: '/' }, 
-      ]
+        items: [{ key: 'dashboard', label: 'Dashboard', icon: '🏠', path: '/' }]
       }
     ];
 
@@ -122,10 +146,9 @@ export default function Navigation() {
 
     if (canActAsDM()) {
       groups.push({
-        title: "Gestión de Campañas",
+        title: "Gestión de Campañas (DM)",
         items: [
           { key: 'npcs', label: 'NPCs', icon: '👥', path: '/npcs' },
-          { key: 'campaigns', label: 'Campañas', icon: '📖', path: '/campaigns' },
           { key: 'sessions', label: 'Sesiones', icon: '📅', path: '/sessions' },
           { key: 'encounters', label: 'Encuentros', icon: '🗡️', path: '/encounters' }
         ]
@@ -134,8 +157,9 @@ export default function Navigation() {
 
     if (canActAsPlayer() || canActAsDM()) {
       groups.push({
-        title: "Recursos del Juego",
+        title: "Contenido Compartido",
         items: [
+          { key: 'campaigns', label: 'Campañas', icon: '📖', path: '/campaigns' },
           { key: 'spells', label: 'Hechizos', icon: '✨', path: '/spells' },
           { key: 'items', label: 'Objetos', icon: '🎒', path: '/items' }
         ]
@@ -145,7 +169,7 @@ export default function Navigation() {
         title: "Herramientas",
         items: [
           { key: 'combat', label: 'Combate', icon: '⚔️', path: '/combat' },
-        { key: 'roles', label: 'Gestión de Roles', icon: '⚙️', path: '/roles' }  
+          { key: 'roles', label: 'Gestión de Roles', icon: '⚙️', path: '/roles' }
         ]
       });
     }
@@ -158,6 +182,7 @@ export default function Navigation() {
   // Función para navegar con verificación de roles
   const handleNavigation = (path, requiredRole = null) => {
     if (requiredRole && currentRole !== requiredRole) {
+      // Si tiene el rol pero no está en el contexto correcto, cambiar automáticamente
       if (availableRoles.includes(requiredRole)) {
         handleRoleSwitch(requiredRole).then(() => {
           navigate(path);
@@ -201,10 +226,11 @@ export default function Navigation() {
             {/* Desktop menu */}
             <div className="hidden xl:ml-4 xl:flex xl:space-x-1">
               {visibleItems.slice(0, 5).map(item => {
-                // Determinar si requiere cambio de rol
+                // Determinar si requiere cambio de rol SOLO para items específicos de DM
                 let requiredRole = null;
                 if (['characters'].includes(item.key)) requiredRole = 'PLAYER';
-                if (['npcs', 'campaigns', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
+                if (['npcs', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
+                // campaigns NO requiere rol específico
                 
                 return (
                   <button
@@ -234,7 +260,7 @@ export default function Navigation() {
                       {visibleItems.slice(5).map(item => {
                         let requiredRole = null;
                         if (['characters'].includes(item.key)) requiredRole = 'PLAYER';
-                        if (['npcs', 'campaigns', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
+                        if (['npcs', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
                         
                         return (
                           <button
@@ -281,7 +307,7 @@ export default function Navigation() {
                       {group.items.map(item => {
                         let requiredRole = null;
                         if (['characters'].includes(item.key)) requiredRole = 'PLAYER';
-                        if (['npcs', 'campaigns', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
+                        if (['npcs', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
                         
                         return (
                           <button
@@ -406,7 +432,7 @@ export default function Navigation() {
                 {group.items.map(item => {
                   let requiredRole = null;
                   if (['characters'].includes(item.key)) requiredRole = 'PLAYER';
-                  if (['npcs', 'campaigns', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
+                  if (['npcs', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
                   
                   const needsRoleSwitch = requiredRole && currentRole !== requiredRole;
                   

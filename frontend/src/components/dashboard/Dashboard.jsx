@@ -65,6 +65,16 @@ export default function Dashboard() {
       requiredRole: 'DUNGEON_MASTER',
       visible: canActAsDM()
     },
+    // Acciones compartidas - disponibles para ambos roles
+    {
+      title: 'Explorar Campañas',
+      description: isInDMMode() ? 'Gestiona tus campañas' : 'Ve campañas disponibles',
+      icon: '📖',
+      action: () => handleQuickAction('/campaigns'),
+      color: 'bg-emerald-500',
+      requiredRole: null,
+      visible: canActAsPlayer() || canActAsDM()
+    },
     // Acciones generales (sin rol específico)
     {
       title: 'Iniciar Combate',
@@ -171,10 +181,10 @@ export default function Dashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">
-                  Campañas {!canActAsDM() && '(Requiere rol DM)'}
+                  Campañas {!canActAsPlayer() && !canActAsDM() && '(Requiere algún rol)'}
                 </p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {canActAsDM() ? '-' : '🔒'}
+                  {canActAsPlayer() || canActAsDM() ? '-' : '🔒'}
                 </p>
               </div>
             </div>

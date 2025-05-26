@@ -37,9 +37,10 @@ public class CampaignService {
     private final DungeonMasterService dmService;
     private final DungeonMasterRepository dungeonMasterRepository;
 
-    public List<CampaignDTO> getAllCampaigns(Long id, @AuthenticationPrincipal User user) {
+    public List<CampaignDTO> getAllCampaigns(User user) {
 
         //refactorizar para hacer usar el mapper (todavia no implementado)
+        Long id = user.getUserId();
 
         if(user.getUserType() == UserType.PLAYER){
             return campaignRepository.findByPlayersContains(

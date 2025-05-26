@@ -3,10 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import  useCampaigns  from '../../hooks/campaigns/useCampaigns';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { toast } from 'react-toastify';
+import { useRoleStore } from '../../stores/useRoleStore';
 
 export default function CampaignList() {
   const navigate = useNavigate();
   const { campaigns, loading, error, deleteCampaign } = useCampaigns();
+  
+  // Verificar rol actual para permisos
+  const isInDMMode = useRoleStore(state => state.isInDMMode);
+  const currentRole = useRoleStore(state => state.currentRole);
 
   // Mostrar errores como toast
   useEffect(() => {
@@ -19,6 +24,14 @@ export default function CampaignList() {
   }, [error]);
 
   const handleDelete = async (campaignId) => {
+    if (!isInDMMode()) {
+      toast.error('Solo los Dungeon Masters pueden eliminar campañas', {
+        position: "top-right",
+        autoClose: 4000,
+      });
+      return;
+    }
+
     if (window.confirm('¿Estás seguro de que quieres eliminar esta campaña?')) {
       try {
         await deleteCampaign(campaignId);
@@ -36,6 +49,14 @@ export default function CampaignList() {
   };
 
   const handleCampaignSelect = (campaignId, mode = 'view') => {
+    if (mode === 'edit' && !isInDMMode()) {
+      toast.error('Solo los Dungeon Masters pueden editar campañas', {
+        position: "top-right",
+        autoClose: 4000,
+      });
+      return;
+    }
+
     if (mode === 'edit') {
       navigate(`/campaigns/${campaignId}/edit`);
     } else {
@@ -44,6 +65,13 @@ export default function CampaignList() {
   };
 
   const handleCreateCampaign = () => {
+    if (!isInDMMode()) {
+      toast.error('Solo los Dungeon Masters pueden crear campañas', {
+        position: "top-right",
+        autoClose: 4000,
+      });
+      return;
+    }
     navigate('/campaigns/new');
   };
 
@@ -56,13 +84,48 @@ export default function CampaignList() {
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Mis Campañas</h1>
-            <button 
-              onClick={handleCreateCampaign}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
-            >
-              Nueva Campaña
-            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {isInDMMode() ? 'Mis Campañas' : 'Campañas Disponibles'}
+              </h1>
+              <p className="text-gray-600 mt-1">
+                {isInDMMode() 
+                  ? 'Gestiona tus campañas como Dungeon Master' 
+                  : 'Explora las campañas en las que puedes participar'
+                }
+              </p>
+            </div>
+            {isInDMMode() && (
+              <button 
+                onClick={handleCreateCampaign}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+              >
+                Nueva Campaña
+              </button>
+            )}
+          </div>
+
+          {/* Indicador de rol actual */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-2xl">
+                  {isInDMMode() ? '🎲' : '🎮'}
+                </span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-700">
+                  <span className="font-semibold">
+                    Viendo como: {isInDMMode() ? 'Dungeon Master' : 'Jugador'}
+                  </span>
+                  {!isInDMMode() && (
+                    <span className="block text-xs text-blue-600 mt-1">
+                      Como jugador, puedes ver las campañas pero no editarlas
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
           </div>
 
           {error && (
@@ -116,20 +179,31 @@ export default function CampaignList() {
                   >
                     Ver Campaña
                   </button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button 
-                      onClick={() => handleCampaignSelect(campaign.campaignId, 'edit')}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-md text-sm"
-                    >
-                      Editar
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(campaign.campaignId)}
-                      className="bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-md text-sm"
-                    >
-                      Eliminar
-                    </button>
-                  </div>
+                  
+                  {isInDMMode() && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={() => handleCampaignSelect(campaign.campaignId, 'edit')}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-md text-sm"
+                      >
+                        Editar
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(campaign.campaignId)}
+                        className="bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-md text-sm"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                  
+                  {!isInDMMode() && (
+                    <div className="text-center">
+                      <p className="text-xs text-gray-500 py-2">
+                        Solo el DM puede editar esta campaña
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -142,8 +216,15 @@ export default function CampaignList() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2h0l.5-.5" />
                 </svg>
               </div>
-              <p className="text-gray-500">No tienes campañas creadas</p>
-              <p className="text-gray-400 text-sm mt-2">Crea tu primera campaña para comenzar tu aventura</p>
+              <p className="text-gray-500">
+                {isInDMMode() ? 'No tienes campañas creadas' : 'No hay campañas disponibles'}
+              </p>
+              <p className="text-gray-400 text-sm mt-2">
+                {isInDMMode() 
+                  ? 'Crea tu primera campaña para comenzar tu aventura'
+                  : 'Habla con un Dungeon Master para unirte a una campaña'
+                }
+              </p>
             </div>
           )}
         </div>
