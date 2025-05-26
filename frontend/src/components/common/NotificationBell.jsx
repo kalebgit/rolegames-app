@@ -93,7 +93,7 @@ export default function NotificationBell() {
   };
 
   // No mostrar si el usuario no está autenticado
-  if (!user) return null;
+  if (!user?.userId) return null;
 
   return (
     <div ref={notificationRef} className="fixed bottom-6 right-6 z-50">

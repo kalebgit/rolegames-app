@@ -94,6 +94,8 @@ public class NotificationService {
     // CREACIÓN DE NOTIFICACIONES ESPECÍFICAS
     // ========================================
 
+
+
     @Transactional
     public NotificationDTO sendCampaignInvitation(User sender, User recipient, Campaign campaign) {
         try {
@@ -121,6 +123,9 @@ public class NotificationService {
 
             // Enviar por WebSocket
             webSocketService.sendNotificationToUser(recipient.getUserId(), dto);
+
+            long unreadCount = getUnreadCount(recipient.getUserId());
+            webSocketService.sendUnreadCountUpdate(recipient.getUserId(), unreadCount);
 
             logger.info("Campaign invitation sent from {} to {} for campaign {}",
                     sender.getUsername(), recipient.getUsername(), campaign.getName());

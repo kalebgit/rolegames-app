@@ -44,11 +44,14 @@ import 'react-toastify/dist/ReactToastify.css';
 import NotificationBell from './components/common/NotificationBell';
 
 function AppLayout({ children }) {
+  const isAuthenticated = useUserStore(state => state.isAuthenticated); // ⬅️ AGREGAR
+
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Navigation />
       {children}
-      <NotificationBell/>
+      {isAuthenticated && <NotificationBell/>} 
     </div>
   );
 }

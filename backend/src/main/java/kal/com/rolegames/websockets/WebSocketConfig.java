@@ -15,14 +15,23 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
 public class WebSocketConfig implements WebSocketConfigurer {
 
     private final EncounterWebSocketHandler encounterHandler;
+    private final NotificationWebSocketHandler notificationHandler;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        // Handler para encuentros
         registry.addHandler(encounterHandler, "/ws/encounters/{encounterId}")
-                .setAllowedOriginPatterns("*") // Permitir todos los orígenes en desarrollo
-                .withSockJS() // Fallback para navegadores sin WebSocket nativo
-                .setHeartbeatTime(25000) // Heartbeat cada 25 segundos
-                .setDisconnectDelay(5000); // Esperar 5 segundos antes de desconectar
+                .setAllowedOriginPatterns("*")
+                .withSockJS()
+                .setHeartbeatTime(25000)
+                .setDisconnectDelay(5000);
+
+        // Handler para notificaciones
+        registry.addHandler(notificationHandler, "/ws/notifications/{userId}")
+                .setAllowedOriginPatterns("*")
+                .withSockJS()
+                .setHeartbeatTime(25000)
+                .setDisconnectDelay(5000);
     }
 
     @Bean
