@@ -17,7 +17,7 @@ export default function useSessionRoom(sessionId) {
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   
-  // WebSocket simulation (polling for real-time updates)
+  // Polling for updates (simplificado sin WebSocket polling constante)
   const pollIntervalRef = useRef(null);
   const [isPolling, setIsPolling] = useState(false);
 
@@ -38,13 +38,19 @@ export default function useSessionRoom(sessionId) {
       // Fetch current encounter for this session (if any)
       try {
         const encountersResponse = await api.get(`/api/encounters/session/${sessionId}`);
-        const activeEncounter = encountersResponse.data.find(enc => !enc.isCompleted);
+        const encounters = encountersResponse.data || [];
+        const activeEncounter = encounters.find(enc => !enc.isCompleted);
+        
         if (activeEncounter) {
           setEncounter(activeEncounter);
           setParticipants(activeEncounter.participantIds || []);
+        } else {
+          setEncounter(null);
+          setParticipants([]);
         }
       } catch (encErr) {
         // No active encounters, that's okay
+        console.log('No active encounters found');
         setEncounter(null);
         setParticipants([]);
       }
@@ -58,13 +64,6 @@ export default function useSessionRoom(sessionId) {
         setCombatState(null);
       }
 
-      // Simulate connected players (in real implementation, this would come from WebSocket)
-      setConnectedPlayers([
-        { id: 1, name: 'Jugador 1', avatar: '🧙‍♂️', isReady: true, isOnline: true },
-        { id: 2, name: 'Jugador 2', avatar: '⚔️', isReady: false, isOnline: true },
-        { id: 3, name: 'Jugador 3', avatar: '🏹', isReady: true, isOnline: false },
-      ]);
-
     } catch (err) {
       console.error('Error fetching session data:', err);
       setError('Error al cargar la sala de sesión');
@@ -74,49 +73,11 @@ export default function useSessionRoom(sessionId) {
   }, [sessionId]);
 
   // ========================================
-  // REAL-TIME UPDATES (Polling simulation)
-  // ========================================
-  const startPolling = useCallback(() => {
-    if (isPolling) return;
-    
-    setIsPolling(true);
-    pollIntervalRef.current = setInterval(async () => {
-      try {
-        // Only poll for combat state and encounter updates
-        if (encounter) {
-          const encounterResponse = await api.get(`/api/encounters/${encounter.encounterId}`);
-          setEncounter(encounterResponse.data);
-        }
-
-        if (combatState) {
-          try {
-            const combatResponse = await api.get('/api/combat/current');
-            setCombatState(combatResponse.data);
-          } catch {
-            // Combat ended
-            setCombatState(null);
-          }
-        }
-      } catch (err) {
-        console.warn('Polling error:', err);
-      }
-    }, 3000); // Poll every 3 seconds
-  }, [encounter, combatState, isPolling]);
-
-  const stopPolling = useCallback(() => {
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current);
-      pollIntervalRef.current = null;
-      setIsPolling(false);
-    }
-  }, []);
-
-  // ========================================
   // SESSION ACTIONS
   // ========================================
   const joinSession = async () => {
     try {
-      // In a real implementation, this would register the user as connected
+      // En una implementación real, esto registraría al usuario como conectado
       toast.success('Te has unido a la sesión');
       return true;
     } catch (err) {
@@ -127,7 +88,6 @@ export default function useSessionRoom(sessionId) {
 
   const leaveSession = async () => {
     try {
-      stopPolling();
       toast.info('Has salido de la sesión');
       return true;
     } catch (err) {
@@ -149,6 +109,10 @@ export default function useSessionRoom(sessionId) {
       
       setEncounter(response.data);
       toast.success('Encuentro creado exitosamente');
+      
+      // Refetch session data to get updated state
+      await fetchSessionData();
+      
       return response.data;
     } catch (err) {
       const message = err.response?.data?.message || 'Error al crear encuentro';
@@ -172,7 +136,7 @@ export default function useSessionRoom(sessionId) {
       
       const response = await api.post(url + params);
       setEncounter(response.data);
-      setParticipants(response.data.participantIds || []);
+      setParticipants(Array.from(response.data.participantIds || []));
       
       toast.success('Participante agregado al encuentro');
       return response.data;
@@ -195,7 +159,7 @@ export default function useSessionRoom(sessionId) {
       setActionLoading(true);
       const response = await api.delete(`/api/encounters/${encounter.encounterId}/participants/${characterId}`);
       setEncounter(response.data);
-      setParticipants(response.data.participantIds || []);
+      setParticipants(Array.from(response.data.participantIds || []));
       
       toast.success('Participante removido del encuentro');
       return response.data;
@@ -223,16 +187,23 @@ export default function useSessionRoom(sessionId) {
 
     try {
       setActionLoading(true);
-      const response = await api.post(`/api/encounters/${encounter.encounterId}/start-combat`, initiativeRolls);
+      
+      // Generar tiradas de iniciativa automáticas si no se proporcionan
+      const rolls = Object.keys(initiativeRolls).length > 0 
+        ? initiativeRolls 
+        : generateAutomaticInitiativeRolls();
+      
+      const response = await api.post(`/api/encounters/${encounter.encounterId}/start-combat`, rolls);
       
       setEncounter(response.data);
       
       // Fetch the created combat state
-      const combatResponse = await api.get('/api/combat/current');
-      setCombatState(combatResponse.data);
-      
-      // Start real-time polling
-      startPolling();
+      try {
+        const combatResponse = await api.get('/api/combat/current');
+        setCombatState(combatResponse.data);
+      } catch (combatErr) {
+        console.warn('Could not fetch combat state after starting combat');
+      }
       
       toast.success('Combate iniciado');
       return response.data;
@@ -258,8 +229,12 @@ export default function useSessionRoom(sessionId) {
       setEncounter(response.data);
       
       // Update combat state
-      const combatResponse = await api.get('/api/combat/current');
-      setCombatState(combatResponse.data);
+      try {
+        const combatResponse = await api.get('/api/combat/current');
+        setCombatState(combatResponse.data);
+      } catch (combatErr) {
+        console.warn('Could not fetch updated combat state');
+      }
       
       toast.success('Turno avanzado');
       return response.data;
@@ -284,9 +259,6 @@ export default function useSessionRoom(sessionId) {
       
       setEncounter(response.data);
       setCombatState(null);
-      
-      // Stop polling since combat ended
-      stopPolling();
       
       toast.success('Combate finalizado');
       return response.data;
@@ -313,8 +285,12 @@ export default function useSessionRoom(sessionId) {
       const response = await api.post(`/api/encounters/${encounter.encounterId}/perform-action`, actionData);
       
       // Refresh combat state after action
-      const combatResponse = await api.get('/api/combat/current');
-      setCombatState(combatResponse.data);
+      try {
+        const combatResponse = await api.get('/api/combat/current');
+        setCombatState(combatResponse.data);
+      } catch (combatErr) {
+        console.warn('Could not fetch updated combat state after action');
+      }
       
       toast.success('Acción realizada exitosamente');
       return response.data;
@@ -334,7 +310,7 @@ export default function useSessionRoom(sessionId) {
       characterId: spellData.casterId,
       targetId: spellData.targetId,
       spellId: spellData.spellId,
-      diceResult: spellData.diceResult
+      diceResult: spellData.diceResult || true
     });
   };
 
@@ -344,7 +320,7 @@ export default function useSessionRoom(sessionId) {
       characterId: attackData.attackerId,
       targetId: attackData.targetId,
       itemId: attackData.weaponId,
-      diceResult: attackData.diceResult
+      diceResult: attackData.diceResult || true
     });
   };
 
@@ -354,16 +330,16 @@ export default function useSessionRoom(sessionId) {
       characterId: itemData.userId,
       targetId: itemData.targetId,
       itemId: itemData.itemId,
-      diceResult: itemData.diceResult
+      diceResult: itemData.diceResult || true
     });
   };
 
   // ========================================
   // UTILITY FUNCTIONS
   // ========================================
-  const refreshSession = () => {
+  const refreshSession = useCallback(() => {
     fetchSessionData();
-  };
+  }, [fetchSessionData]);
 
   const clearError = () => {
     setError('');
@@ -379,26 +355,44 @@ export default function useSessionRoom(sessionId) {
     return currentTurn?.character?.playerId === playerId;
   };
 
+  const generateAutomaticInitiativeRolls = () => {
+    const rolls = {};
+    participants.forEach(participantId => {
+      rolls[participantId] = Math.floor(Math.random() * 20) + 1;
+    });
+    return rolls;
+  };
+
+  const hasActiveEncounter = () => {
+    return encounter && !encounter.isCompleted;
+  };
+
+  const hasActiveCombat = () => {
+    return combatState && combatState.isActive;
+  };
+
+  const canPerformActions = () => {
+    return hasActiveEncounter() && hasActiveCombat();
+  };
+
   // ========================================
   // EFFECTS
   // ========================================
   useEffect(() => {
     fetchSessionData();
-    
-    // Cleanup on unmount
-    return () => {
-      stopPolling();
-    };
-  }, [fetchSessionData, stopPolling]);
+  }, [fetchSessionData]);
 
-  // Auto-start polling when combat begins
+  // Periodic refresh for real-time updates (más conservador que antes)
   useEffect(() => {
-    if (combatState?.isActive && !isPolling) {
-      startPolling();
-    } else if (!combatState?.isActive && isPolling) {
-      stopPolling();
+    if (encounter && combatState?.isActive) {
+      const interval = setInterval(() => {
+        // Solo actualizar combat state si hay combate activo
+        fetchSessionData();
+      }, 5000); // Cada 5 segundos
+
+      return () => clearInterval(interval);
     }
-  }, [combatState?.isActive, isPolling, startPolling, stopPolling]);
+  }, [encounter, combatState?.isActive, fetchSessionData]);
 
   // ========================================
   // RETURN HOOK API
@@ -441,10 +435,13 @@ export default function useSessionRoom(sessionId) {
     clearError,
     getCurrentTurnPlayer,
     isPlayerTurn,
+    hasActiveEncounter,
+    hasActiveCombat,
+    canPerformActions,
     
-    // Real-time
-    isPolling,
-    startPolling,
-    stopPolling
+    // State checks
+    isEncounterActive: hasActiveEncounter(),
+    isCombatActive: hasActiveCombat(),
+    canAct: canPerformActions()
   };
 }

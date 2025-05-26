@@ -1,41 +1,187 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 class WebSocketService {
   constructor() {
+    this.ws = null;
     this.listeners = new Map();
     this.isConnected = false;
     this.sessionId = null;
     this.userId = null;
-    this.simulatedPlayers = [];
+    this.encounterId = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 1000;
   }
 
   // ========================================
   // CONNECTION MANAGEMENT
   // ========================================
-  connect(sessionId, userId) {
-    this.sessionId = sessionId;
-    this.userId = userId;
-    this.isConnected = true;
-    
-    // Simulate connection
-    console.log(`🔌 WebSocket: Connected to session ${sessionId} as user ${userId}`);
-    
-    // Emit connection event
-    this.emit('connected', { sessionId, userId });
-    
-    // Simulate other players in the session
-    this.simulateInitialState();
-    
-    return Promise.resolve();
+  connect(sessionId, userId, encounterId) {
+    return new Promise((resolve, reject) => {
+      this.sessionId = sessionId;
+      this.userId = userId;
+      this.encounterId = encounterId;
+      
+      try {
+        // Construir URL del WebSocket
+        const wsUrl = `${process.env.NODE_ENV === 'production' ? 'wss:' : 'ws:'}//${window.location.host}/ws/encounters/${encounterId}`;
+        
+        console.log(`🔌 WebSocket: Conectando a ${wsUrl}`);
+        
+        this.ws = new WebSocket(wsUrl);
+        
+        this.ws.onopen = () => {
+          this.isConnected = true;
+          this.reconnectAttempts = 0;
+          console.log(`✅ WebSocket: Conectado al encounter ${encounterId}`);
+          
+          // Registrar usuario
+          this.send('USER_JOINED', {
+            userId: this.userId,
+            sessionId: this.sessionId,
+            timestamp: new Date().toISOString()
+          });
+          
+          this.emit('connected', { sessionId, userId, encounterId });
+          resolve();
+        };
+
+        this.ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            this.handleMessage(message);
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+          }
+        };
+
+        this.ws.onclose = (event) => {
+          this.isConnected = false;
+          console.log('🔌 WebSocket: Conexión cerrada', event.code, event.reason);
+          
+          if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.attemptReconnect();
+          }
+          
+          this.emit('disconnected', { code: event.code, reason: event.reason });
+        };
+
+        this.ws.onerror = (error) => {
+          console.error('❌ WebSocket Error:', error);
+          this.emit('error', error);
+          reject(error);
+        };
+
+      } catch (error) {
+        console.error('Error creating WebSocket connection:', error);
+        reject(error);
+      }
+    });
   }
 
   disconnect() {
+    if (this.ws) {
+      this.ws.close(1000, 'User disconnected');
+      this.ws = null;
+    }
+    
     this.isConnected = false;
     this.sessionId = null;
     this.userId = null;
+    this.encounterId = null;
     this.listeners.clear();
     
-    console.log('🔌 WebSocket: Disconnected');
+    console.log('🔌 WebSocket: Desconectado');
+  }
+
+  attemptReconnect() {
+    this.reconnectAttempts++;
+    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+    
+    console.log(`🔄 WebSocket: Intentando reconectar (${this.reconnectAttempts}/${this.maxReconnectAttempts}) en ${delay}ms`);
+    
+    setTimeout(() => {
+      if (this.sessionId && this.userId && this.encounterId) {
+        this.connect(this.sessionId, this.userId, this.encounterId)
+          .catch(() => {
+            if (this.reconnectAttempts < this.maxReconnectAttempts) {
+              this.attemptReconnect();
+            }
+          });
+      }
+    }, delay);
+  }
+
+  // ========================================
+  // MESSAGE HANDLING
+  // ========================================
+  send(type, data) {
+    if (!this.isConnected || !this.ws) {
+      console.warn('WebSocket: No conectado, no se puede enviar mensaje');
+      return false;
+    }
+
+    const message = {
+      type,
+      data,
+      userId: this.userId,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      this.ws.send(JSON.stringify(message));
+      console.log('📤 WebSocket: Mensaje enviado', message);
+      return true;
+    } catch (error) {
+      console.error('Error sending WebSocket message:', error);
+      return false;
+    }
+  }
+
+  handleMessage(message) {
+    console.log('📥 WebSocket: Mensaje recibido', message);
+    
+    switch (message.type) {
+      case 'INITIAL_STATE':
+        this.emit('initial_state', message.encounter);
+        break;
+        
+      case 'ACTION_PERFORMED':
+        this.emit('action_performed', message.data);
+        break;
+        
+      case 'TURN_CHANGED':
+        this.emit('turn_changed', message.data);
+        break;
+        
+      case 'COMBAT_STARTED':
+        this.emit('combat_started', message.data);
+        break;
+        
+      case 'COMBAT_ENDED':
+        this.emit('combat_ended', message.data);
+        break;
+        
+      case 'PARTICIPANT_ADDED':
+        this.emit('participant_added', message.data);
+        break;
+        
+      case 'HEALTH_UPDATE':
+        this.emit('health_update', message.data);
+        break;
+        
+      case 'USER_JOINED':
+        this.emit('user_joined', message.data);
+        break;
+        
+      case 'USER_LEFT':
+        this.emit('user_left', message.data);
+        break;
+        
+      default:
+        console.warn('Tipo de mensaje no reconocido:', message.type);
+        this.emit('unknown_message', message);
+    }
   }
 
   // ========================================
@@ -71,232 +217,49 @@ class WebSocketService {
   }
 
   // ========================================
-  // SESSION EVENTS
-  // ========================================
-  sendMessage(type, data) {
-    if (!this.isConnected) {
-      console.warn('WebSocket: Not connected, cannot send message');
-      return;
-    }
-
-    const message = {
-      type,
-      data,
-      sessionId: this.sessionId,
-      userId: this.userId,
-      timestamp: new Date().toISOString()
-    };
-
-    console.log('📤 WebSocket: Sending message', message);
-
-    // Simulate server processing and broadcast to other clients
-    setTimeout(() => {
-      this.simulateServerResponse(message);
-    }, 100);
-  }
-
-  // ========================================
   // SPECIFIC GAME ACTIONS
   // ========================================
+  performCombatAction(actionData) {
+    return this.send('PERFORM_ACTION', actionData);
+  }
+
+  rollDice(diceData) {
+    return this.send('DICE_ROLL', diceData);
+  }
+
   addNPCToEncounter(npcData) {
-    this.sendMessage('ADD_NPC_TO_ENCOUNTER', {
-      npc: npcData,
-      encounterId: this.getCurrentEncounterId()
-    });
+    return this.send('ADD_NPC', npcData);
   }
 
   updatePlayerPosition(playerId, position) {
-    this.sendMessage('PLAYER_POSITION_UPDATE', {
+    return this.send('PLAYER_POSITION_UPDATE', {
       playerId,
       position
     });
   }
 
-  performAction(actionData) {
-    this.sendMessage('COMBAT_ACTION', actionData);
-  }
-
-  rollDice(diceData) {
-    this.sendMessage('DICE_ROLL', diceData);
-  }
-
-  updateCharacterStatus(characterId, status) {
-    this.sendMessage('CHARACTER_STATUS_UPDATE', {
-      characterId,
-      status
+  sendMessage(messageText) {
+    return this.send('CHAT_MESSAGE', {
+      message: messageText,
+      timestamp: new Date().toISOString()
     });
-  }
-
-  // ========================================
-  // SIMULATION METHODS
-  // ========================================
-  simulateInitialState() {
-    // Simulate existing players in the session
-    this.simulatedPlayers = [
-      { 
-        id: 1, 
-        userId: 'user1', 
-        name: 'Jugador 1', 
-        avatar: '🧙‍♂️', 
-        isReady: true, 
-        position: { x: 20, y: 50 },
-        isOnline: true 
-      },
-      { 
-        id: 2, 
-        userId: 'user2', 
-        name: 'Jugador 2', 
-        avatar: '⚔️', 
-        isReady: false, 
-        position: { x: 80, y: 30 },
-        isOnline: true 
-      },
-      { 
-        id: 3, 
-        userId: 'user3', 
-        name: 'Jugador 3', 
-        avatar: '🏹', 
-        isReady: true, 
-        position: { x: 80, y: 70 },
-        isOnline: false 
-      }
-    ];
-
-    // Emit initial player list
-    setTimeout(() => {
-      this.emit('players_updated', this.simulatedPlayers);
-    }, 500);
-
-    // Simulate periodic updates
-    this.startSimulatedUpdates();
-  }
-
-  simulateServerResponse(message) {
-    switch (message.type) {
-      case 'ADD_NPC_TO_ENCOUNTER':
-        // Simulate NPC being added
-        this.emit('npc_added_to_encounter', {
-          npc: message.data.npc,
-          encounterId: message.data.encounterId,
-          addedBy: message.userId
-        });
-        
-        // Simulate encounter update
-        setTimeout(() => {
-          this.emit('encounter_updated', {
-            encounterId: message.data.encounterId,
-            participants: [...this.getCurrentParticipants(), message.data.npc.id]
-          });
-        }, 200);
-        break;
-
-      case 'PLAYER_POSITION_UPDATE':
-        // Update player position in simulated state
-        const playerIndex = this.simulatedPlayers.findIndex(p => p.id === message.data.playerId);
-        if (playerIndex > -1) {
-          this.simulatedPlayers[playerIndex].position = message.data.position;
-        }
-        
-        // Broadcast to other clients
-        this.emit('player_position_updated', {
-          playerId: message.data.playerId,
-          position: message.data.position,
-          updatedBy: message.userId
-        });
-        break;
-
-      case 'COMBAT_ACTION':
-        // Simulate combat action result
-        this.emit('combat_action_performed', {
-          action: message.data,
-          result: this.simulateCombatResult(message.data),
-          performedBy: message.userId
-        });
-        break;
-
-      case 'DICE_ROLL':
-        // Broadcast dice roll to all players
-        this.emit('dice_rolled', {
-          ...message.data,
-          rolledBy: message.userId
-        });
-        break;
-
-      case 'CHARACTER_STATUS_UPDATE':
-        // Broadcast character status change
-        this.emit('character_status_updated', {
-          characterId: message.data.characterId,
-          status: message.data.status,
-          updatedBy: message.userId
-        });
-        break;
-
-      default:
-        console.warn('Unknown message type:', message.type);
-    }
-  }
-
-  simulateCombatResult(actionData) {
-    // Simple combat result simulation
-    const success = Math.random() > 0.3; // 70% success rate
-    const damage = success ? Math.floor(Math.random() * 10) + 1 : 0;
-    
-    return {
-      success,
-      damage,
-      description: success 
-        ? `Acción exitosa causando ${damage} puntos de daño`
-        : 'La acción falló'
-    };
-  }
-
-  startSimulatedUpdates() {
-    // Simulate periodic player updates
-    setInterval(() => {
-      if (this.isConnected && Math.random() > 0.7) {
-        // Randomly update a player's ready status
-        const randomPlayer = this.simulatedPlayers[Math.floor(Math.random() * this.simulatedPlayers.length)];
-        if (randomPlayer) {
-          randomPlayer.isReady = !randomPlayer.isReady;
-          this.emit('player_ready_status_changed', {
-            playerId: randomPlayer.id,
-            isReady: randomPlayer.isReady
-          });
-        }
-      }
-    }, 5000);
-
-    // Simulate occasional new messages
-    setInterval(() => {
-      if (this.isConnected && Math.random() > 0.8) {
-        this.emit('system_message', {
-          message: 'El DM está preparando el siguiente encuentro...',
-          type: 'info',
-          timestamp: new Date().toISOString()
-        });
-      }
-    }, 15000);
   }
 
   // ========================================
   // UTILITY METHODS
   // ========================================
-  getCurrentEncounterId() {
-    // In a real implementation, this would be tracked properly
-    return 'encounter_123';
+  isConnectedToEncounter() {
+    return this.isConnected && this.encounterId !== null;
   }
 
-  getCurrentParticipants() {
-    // In a real implementation, this would return actual participant IDs
-    return [1, 2, 3];
-  }
-
-  getConnectedPlayers() {
-    return this.simulatedPlayers.filter(player => player.isOnline);
-  }
-
-  isConnectedToSession() {
-    return this.isConnected && this.sessionId !== null;
+  getConnectionStatus() {
+    return {
+      isConnected: this.isConnected,
+      sessionId: this.sessionId,
+      userId: this.userId,
+      encounterId: this.encounterId,
+      reconnectAttempts: this.reconnectAttempts
+    };
   }
 }
 
@@ -306,22 +269,25 @@ const webSocketService = new WebSocketService();
 export default webSocketService;
 
 // React Hook for WebSocket
-export function useWebSocket(sessionId, userId) {
+export function useWebSocket(sessionId, userId, encounterId) {
   const [isConnected, setIsConnected] = useState(false);
-  const [players, setPlayers] = useState([]);
+  const [encounter, setEncounter] = useState(null);
+  const [combatState, setCombatState] = useState(null);
+  const [participants, setParticipants] = useState([]);
+  const [connectedUsers, setConnectedUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!sessionId || !userId) return;
+    if (!sessionId || !userId || !encounterId) return;
 
     const connect = async () => {
       try {
-        await webSocketService.connect(sessionId, userId);
+        await webSocketService.connect(sessionId, userId, encounterId);
         setIsConnected(true);
         setError(null);
       } catch (err) {
-        setError('Error connecting to session');
+        setError('Error conectando a la sesión');
         console.error('WebSocket connection error:', err);
       }
     };
@@ -333,123 +299,162 @@ export function useWebSocket(sessionId, userId) {
       setIsConnected(true);
     };
 
-    const handlePlayersUpdated = (updatedPlayers) => {
-      setPlayers(updatedPlayers);
+    const handleDisconnected = () => {
+      setIsConnected(false);
     };
 
-    const handlePlayerPositionUpdated = (data) => {
-      setPlayers(prev => prev.map(player => 
-        player.id === data.playerId 
-          ? { ...player, position: data.position }
-          : player
-      ));
+    const handleError = (error) => {
+      setError('Error de conexión WebSocket');
     };
 
-    const handlePlayerReadyStatusChanged = (data) => {
-      setPlayers(prev => prev.map(player => 
-        player.id === data.playerId 
-          ? { ...player, isReady: data.isReady }
-          : player
-      ));
+    const handleInitialState = (encounterData) => {
+      setEncounter(encounterData);
+      if (encounterData.participantIds) {
+        setParticipants(Array.from(encounterData.participantIds));
+      }
+      if (encounterData.combatState) {
+        setCombatState(encounterData.combatState);
+      }
     };
 
-    const handleNPCAddedToEncounter = (data) => {
+    const handleActionPerformed = (action) => {
       setMessages(prev => [...prev, {
         id: Date.now(),
-        type: 'npc_added',
-        message: `${data.npc.name} ha sido agregado al encuentro`,
+        type: 'action',
+        message: action.result?.description || 'Acción realizada',
+        character: action.character?.name || 'Personaje',
         timestamp: new Date().toISOString()
       }]);
     };
 
-    const handleCombatActionPerformed = (data) => {
+    const handleTurnChanged = (turnData) => {
       setMessages(prev => [...prev, {
         id: Date.now(),
-        type: 'combat_action',
-        message: `Acción de combate: ${data.result.description}`,
+        type: 'turn_change',
+        message: `Es el turno de ${turnData.character?.name || 'Siguiente jugador'}`,
         timestamp: new Date().toISOString()
       }]);
     };
 
-    const handleDiceRolled = (data) => {
+    const handleCombatStarted = (combatData) => {
+      setCombatState(combatData);
       setMessages(prev => [...prev, {
         id: Date.now(),
-        type: 'dice_roll',
-        message: `🎲 Tirada de dados: ${data.total}`,
+        type: 'combat',
+        message: '¡Combate iniciado!',
         timestamp: new Date().toISOString()
       }]);
     };
 
-    const handleSystemMessage = (data) => {
+    const handleCombatEnded = () => {
+      setCombatState(null);
       setMessages(prev => [...prev, {
         id: Date.now(),
-        type: 'system',
-        message: data.message,
-        timestamp: data.timestamp
+        type: 'combat',
+        message: 'Combate finalizado',
+        timestamp: new Date().toISOString()
       }]);
+    };
+
+    const handleParticipantAdded = (data) => {
+      setParticipants(prev => [...prev, data.characterId]);
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        type: 'participant',
+        message: `Nuevo participante agregado al encuentro`,
+        timestamp: new Date().toISOString()
+      }]);
+    };
+
+    const handleHealthUpdate = (data) => {
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        type: 'health',
+        message: `Salud actualizada: ${data.health} HP`,
+        timestamp: new Date().toISOString()
+      }]);
+    };
+
+    const handleUserJoined = (data) => {
+      setConnectedUsers(prev => {
+        if (!prev.find(u => u.userId === data.userId)) {
+          return [...prev, data];
+        }
+        return prev;
+      });
+    };
+
+    const handleUserLeft = (data) => {
+      setConnectedUsers(prev => prev.filter(u => u.userId !== data.userId));
     };
 
     // Register event listeners
     webSocketService.on('connected', handleConnected);
-    webSocketService.on('players_updated', handlePlayersUpdated);
-    webSocketService.on('player_position_updated', handlePlayerPositionUpdated);
-    webSocketService.on('player_ready_status_changed', handlePlayerReadyStatusChanged);
-    webSocketService.on('npc_added_to_encounter', handleNPCAddedToEncounter);
-    webSocketService.on('combat_action_performed', handleCombatActionPerformed);
-    webSocketService.on('dice_rolled', handleDiceRolled);
-    webSocketService.on('system_message', handleSystemMessage);
+    webSocketService.on('disconnected', handleDisconnected);
+    webSocketService.on('error', handleError);
+    webSocketService.on('initial_state', handleInitialState);
+    webSocketService.on('action_performed', handleActionPerformed);
+    webSocketService.on('turn_changed', handleTurnChanged);
+    webSocketService.on('combat_started', handleCombatStarted);
+    webSocketService.on('combat_ended', handleCombatEnded);
+    webSocketService.on('participant_added', handleParticipantAdded);
+    webSocketService.on('health_update', handleHealthUpdate);
+    webSocketService.on('user_joined', handleUserJoined);
+    webSocketService.on('user_left', handleUserLeft);
 
     // Cleanup
     return () => {
       webSocketService.off('connected', handleConnected);
-      webSocketService.off('players_updated', handlePlayersUpdated);
-      webSocketService.off('player_position_updated', handlePlayerPositionUpdated);
-      webSocketService.off('player_ready_status_changed', handlePlayerReadyStatusChanged);
-      webSocketService.off('npc_added_to_encounter', handleNPCAddedToEncounter);
-      webSocketService.off('combat_action_performed', handleCombatActionPerformed);
-      webSocketService.off('dice_rolled', handleDiceRolled);
-      webSocketService.off('system_message', handleSystemMessage);
+      webSocketService.off('disconnected', handleDisconnected);
+      webSocketService.off('error', handleError);
+      webSocketService.off('initial_state', handleInitialState);
+      webSocketService.off('action_performed', handleActionPerformed);
+      webSocketService.off('turn_changed', handleTurnChanged);
+      webSocketService.off('combat_started', handleCombatStarted);
+      webSocketService.off('combat_ended', handleCombatEnded);
+      webSocketService.off('participant_added', handleParticipantAdded);
+      webSocketService.off('health_update', handleHealthUpdate);
+      webSocketService.off('user_joined', handleUserJoined);
+      webSocketService.off('user_left', handleUserLeft);
       
       webSocketService.disconnect();
       setIsConnected(false);
     };
-  }, [sessionId, userId]);
+  }, [sessionId, userId, encounterId]);
 
   // WebSocket actions
-  const sendMessage = (type, data) => {
-    webSocketService.sendMessage(type, data);
-  };
+  const performAction = useCallback((actionData) => {
+    return webSocketService.performCombatAction(actionData);
+  }, []);
 
-  const addNPCToEncounter = (npcData) => {
-    webSocketService.addNPCToEncounter(npcData);
-  };
+  const rollDice = useCallback((diceData) => {
+    return webSocketService.rollDice(diceData);
+  }, []);
 
-  const updatePlayerPosition = (playerId, position) => {
-    webSocketService.updatePlayerPosition(playerId, position);
-  };
+  const addNPCToEncounter = useCallback((npcData) => {
+    return webSocketService.addNPCToEncounter(npcData);
+  }, []);
 
-  const performAction = (actionData) => {
-    webSocketService.performAction(actionData);
-  };
+  const updatePlayerPosition = useCallback((playerId, position) => {
+    return webSocketService.updatePlayerPosition(playerId, position);
+  }, []);
 
-  const rollDice = (diceData) => {
-    webSocketService.rollDice(diceData);
-  };
-
-  const updateCharacterStatus = (characterId, status) => {
-    webSocketService.updateCharacterStatus(characterId, status);
-  };
+  const sendMessage = useCallback((message) => {
+    return webSocketService.sendMessage(message);
+  }, []);
 
   return {
     isConnected,
-    players,
+    encounter,
+    combatState,
+    participants,
+    connectedUsers,
     messages,
     error,
-    sendMessage,
-    addNPCToEncounter,
-    updatePlayerPosition,
     performAction,
     rollDice,
-    updateCharacterStatus
+    addNPCToEncounter,
+    updatePlayerPosition,
+    sendMessage
   };
 }
