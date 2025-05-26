@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RestController
@@ -192,13 +193,19 @@ public class UserRoleController {
 
         logger.info("Usuario para cambiar el contexto de roles: " + user);
         Map<String, Object> response = new HashMap<>();
-        logger.info("Usuario que esta en repositorio: " + userRepository.findById(user.getUserId()));
+        User userFromDB = userRepository.findById(user.getUserId())
+                .orElseThrow(()->new NoSuchElementException("no existe el usuario o no fue encontrado"));
+
+        logger.info("Usuario que esta en repositorio: " + userFromDB);
         if (!user.hasRole(request.getTargetRole())) {
             response.put("success", false);
             response.put("message", "User does not have access to " + request.getTargetRole() + " role");
             return ResponseEntity.badRequest().body(response);
         }
 
+        //guardando el contexto actual
+        user.setUserType(request.targetRole);
+        userRepository.save(user);
 
         response.put("success", true);
         response.put("currentRole", request.getTargetRole());

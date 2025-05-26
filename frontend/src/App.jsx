@@ -208,7 +208,7 @@ export default function App() {
           */}
           {/* Detalle de campaña con estadísticas */}
 <Route path="/campaigns/:id" element={
-  <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
+  <ProtectedRouteWithAuth >
     <CampaignDetail />
   </ProtectedRouteWithAuth>
 } />

@@ -50,20 +50,16 @@ export default function CampaignList() {
 
   const handleCampaignSelect = (campaignId, mode = 'view') => {
     if (mode === 'edit' && !isInDMMode()) {
-      toast.error('Solo los Dungeon Masters pueden editar campañas', {
-        position: "top-right",
-        autoClose: 4000,
-      });
+      toast.error('Solo los Dungeon Masters pueden editar campañas');
       return;
     }
-
+  
     if (mode === 'edit') {
       navigate(`/campaigns/${campaignId}/edit`);
     } else {
-      navigate(`/campaigns/${campaignId}`);
+      navigate(`/campaigns/${campaignId}`); // Esta línea ya debería estar así
     }
   };
-
   const handleCreateCampaign = () => {
     if (!isInDMMode()) {
       toast.error('Solo los Dungeon Masters pueden crear campañas', {
