@@ -14,14 +14,19 @@ import kal.com.rolegames.models.items.Item;
 import kal.com.rolegames.models.items.Reward;
 import kal.com.rolegames.models.sessions.Encounter;
 import kal.com.rolegames.models.sessions.Session;
+import kal.com.rolegames.models.users.DungeonMaster;
+import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.models.util.EncounterType;
 import kal.com.rolegames.models.util.RewardType;
+import kal.com.rolegames.models.util.UserType;
 import kal.com.rolegames.repositories.characters.GameCharacterRepository;
 import kal.com.rolegames.repositories.combat.CombatStateRepository;
 import kal.com.rolegames.repositories.combat.InitiativeRepository;
 import kal.com.rolegames.repositories.items.ItemRepository;
 import kal.com.rolegames.repositories.sessions.EncounterRepository;
 import kal.com.rolegames.repositories.sessions.SessionRepository;
+import kal.com.rolegames.repositories.users.DungeonMasterRepository;
+import kal.com.rolegames.repositories.users.PlayerRepository;
 import kal.com.rolegames.services.combat.CombatService;
 import kal.com.rolegames.websockets.EncounterWebSocketService;
 import lombok.AllArgsConstructor;
@@ -42,7 +47,8 @@ public class EncounterService {
     private final GameCharacterRepository characterRepository;
     private final ItemRepository itemRepository ;
     private final CombatStateRepository combatStateRepository;
-
+    private final DungeonMasterRepository dungeonMasterRepository;
+    private final PlayerRepository playerRepository;
     private final InitiativeRepository initiativeRepository;
 
     private final CombatService combatService;
@@ -54,8 +60,28 @@ public class EncounterService {
 
     private static final Logger logger = LoggerFactory.getLogger(EncounterService.class);
 
-    public List<EncounterDTO> getAllEncounters() {
-        return encounterMapper.toEncounterListDto(new ArrayList<>(encounterRepository.findAll()));
+    public List<EncounterDTO> getAllEncounters(User user) {
+
+        //refactorizar para hacer usar el mapper (todavia no implementado)
+        Long id = user.getUserId();
+
+        if(user.getUserType() == UserType.PLAYER){
+            return encounterRepository.findByPlayerParticipation(
+                            playerRepository.findByUserId(id)
+                                    .orElseThrow(()->new NoSuchElementException("No existe el jugador"))
+                    ).stream()
+                    .map(encounterMapper::toDTO)
+                    .collect(Collectors.toList());
+        }else if (user.getUserType() == UserType.DUNGEON_MASTER){
+            return encounterRepository.findByDungeonMaster(
+                    dungeonMasterRepository.findByUserId(id)
+                            .orElseThrow(()->new NoSuchElementException("No existe el jugador"))
+                    ).stream()
+                    .map(encounterMapper::toDTO)
+                    .collect(Collectors.toList());
+        }
+
+        throw new NoSuchElementException("No se encontraron campañas");
     }
 
     public List<EncounterDTO> getEncountersBySession(Long sessionId) {

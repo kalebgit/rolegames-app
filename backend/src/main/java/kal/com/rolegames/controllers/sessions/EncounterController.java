@@ -4,6 +4,7 @@ import kal.com.rolegames.dto.combat.CombatActionDTO;
 import kal.com.rolegames.dto.combat.PerformActionRequest;
 import kal.com.rolegames.dto.items.RewardDTO;
 import kal.com.rolegames.dto.sessions.EncounterDTO;
+import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.services.combat.CombatActionService;
 import kal.com.rolegames.services.sessions.EncounterService;
 import kal.com.rolegames.websockets.EncounterWebSocketHandler;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,8 +39,8 @@ public class EncounterController {
     // ========================================
 
     @GetMapping
-    public ResponseEntity<List<EncounterDTO>> getAllEncounters() {
-        return ResponseEntity.ok(encounterService.getAllEncounters());
+    public ResponseEntity<List<EncounterDTO>> getAllEncounters(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(encounterService.getAllEncounters(user));
     }
 
     @GetMapping("/{id}")
