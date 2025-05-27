@@ -6,10 +6,14 @@ import kal.com.rolegames.mappers.sessions.SessionMapper;
 import kal.com.rolegames.models.characters.PlayerCharacter;
 import kal.com.rolegames.models.sessions.Campaign;
 import kal.com.rolegames.models.sessions.Session;
+import kal.com.rolegames.models.users.DungeonMaster;
 import kal.com.rolegames.models.users.Player;
+import kal.com.rolegames.models.users.User;
+import kal.com.rolegames.models.util.UserType;
 import kal.com.rolegames.repositories.characters.PlayerCharacterRepository;
 import kal.com.rolegames.repositories.sessions.CampaignRepository;
 import kal.com.rolegames.repositories.sessions.SessionRepository;
+import kal.com.rolegames.repositories.users.DungeonMasterRepository;
 import kal.com.rolegames.repositories.users.PlayerRepository;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -29,13 +33,34 @@ public class SessionService {
     private final SessionRepository sessionRepository;
     private final CampaignRepository campaignRepository;
     private final PlayerRepository playerRepository;
+    private final DungeonMasterRepository dungeonMasterRepository;
     private final PlayerCharacterRepository characterRepository;
     private final SessionMapper sessionMapper;
 
     private static final Logger logger = LoggerFactory.getLogger(SessionService.class);
 
-    public List<SessionDTO> getAllSessions() {
-        return sessionMapper.toSessionListDto(new ArrayList<>(sessionRepository.findAll()));
+    public List<SessionDTO> getAllSessions(User user) {
+        //refactorizar para hacer usar el mapper (todavia no implementado)
+        Long id = user.getUserId();
+
+        if(user.getUserType() == UserType.PLAYER){
+            Player player = playerRepository.findByUserId(id)
+                    .orElseThrow(()->new NoSuchElementException("No existe el jugador"));
+            return sessionRepository.findByAttendingPlayer(player.getPlayerId())
+                    .stream()
+                    .map(sessionMapper::toDTO)
+                    .collect(Collectors.toList());
+        }else if (user.getUserType() == UserType.DUNGEON_MASTER){
+
+            DungeonMaster dm = dungeonMasterRepository.findByUserId(id)
+                    .orElseThrow(()->new NoSuchElementException("No existe el jugador"));
+            return sessionRepository.findByDungeonMaster(dm.getDungeonMasterId()
+                    ).stream()
+                    .map(sessionMapper::toDTO)
+                    .collect(Collectors.toList());
+        }
+
+        throw new NoSuchElementException("No se encontraron campañas");
     }
 
     public List<SessionDTO> getSessionsByCampaign(Long campaignId) {

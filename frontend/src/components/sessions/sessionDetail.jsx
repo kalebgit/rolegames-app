@@ -12,7 +12,15 @@ export default function SessionDetail() {
   
   // Role management
   const isInDMMode = useRoleStore(state => state.isInDMMode);
+  const currentRole = useRoleStore(state => state.currentRole);
+  const fetchUserRoles = useRoleStore(state => state.fetchUserRoles);
+
+  // useRoleAwareData(fetchUserRoles) 
+
+  console.log("❗️❗️DENTRO DE SESSION DETAIL CON ROL: " + currentRole)
+  // alert("❗️❗️DENTRO DE SESSION DETAIL CON ROL: " + currentRole)
   
+
   // Local state
   const [session, setSession] = useState(null);
   const [sessionStats, setSessionStats] = useState(null);
@@ -21,8 +29,16 @@ export default function SessionDetail() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+
+  console.log("❗️❗️DENTRO DE SESSION DETAIL CON ROL: " + currentRole)
     fetchSessionData();
   }, [sessionId]);
+
+  useEffect(() => {
+
+  console.log("❗️❗️DENTRO DE SESSION DETAIL CON ROL: " + currentRole)
+    fetchSessionData();
+  }, [currentRole]);
 
   const fetchSessionData = async () => {
     try {
@@ -149,7 +165,7 @@ export default function SessionDetail() {
               >
                 Unirse a Sesión
               </button>
-              {isInDMMode && (
+              {isInDMMode()&& (
                 <button
                   onClick={handleEditSession}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
@@ -236,7 +252,7 @@ export default function SessionDetail() {
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold text-gray-900">Encuentros</h2>
-            {isInDMMode && (
+            {isInDMMode() && (
               <button
                 onClick={handleCreateEncounter}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
@@ -254,7 +270,7 @@ export default function SessionDetail() {
                 </svg>
               </div>
               <p className="text-gray-500">No hay encuentros registrados</p>
-              {isInDMMode && (
+              {currentRole == "DUNGEON_MASTER"&& (
                 <button
                   onClick={handleCreateEncounter}
                   className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"

@@ -24,10 +24,10 @@ import SpellForm from './components/spells/SpellForm';
 import ItemList from './components/items/ItemList';
 import ItemForm from './components/items/ItemForm';
 import CombatTracker from './components/combat/CombatTracker';
+import SessionDetail from './components/sessions/SessionDetail'
 
 import CampaignDetail from './components/campaigns/CampaignDetail';
 import SessionRoom from './components/sessions/SessionRoom';
-import SessionDetail from './components/sessions/sessionDetail';
 
 
 // Gestión de roles

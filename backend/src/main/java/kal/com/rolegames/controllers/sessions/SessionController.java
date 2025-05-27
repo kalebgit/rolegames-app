@@ -1,6 +1,7 @@
 package kal.com.rolegames.controllers.sessions;
 
 import kal.com.rolegames.dto.sessions.SessionDTO;
+import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.services.sessions.SessionService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,8 +26,8 @@ public class SessionController {
     private static final Logger logger = LoggerFactory.getLogger(SessionController.class);
 
     @GetMapping
-    public ResponseEntity<List<SessionDTO>> getAllSessions() {
-        return ResponseEntity.ok(sessionService.getAllSessions());
+    public ResponseEntity<List<SessionDTO>> getAllSessions(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(sessionService.getAllSessions(user));
     }
 
     @GetMapping("/{id}")
