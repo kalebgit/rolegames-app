@@ -6,6 +6,8 @@ import useSessionRoom from '../../hooks/sessions/useSessionRoom';
 import { useWebSocket } from '../../services/WebSocketService';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { toast } from 'react-toastify';
+import CharacterSelectionModal from './CharacterSelectionModal';
+
 import api from '../../api/axiosConfig';
 
 // Componentes auxiliares (mantienen la misma estructura)
@@ -185,6 +187,10 @@ export default function SessionRoom() {
     npcs: false
   });
 
+  const [isIn, setIsIn] = useState(false);
+const [showCharacterModal, setShowCharacterModal] = useState(false);
+
+
   const boardRef = useRef(null);
 
   // ========================================
@@ -217,6 +223,15 @@ export default function SessionRoom() {
           const npcsResponse = await api.get('/api/npcs');
           setNPCs(npcsResponse.data || []);
         }
+        // Verificar si el jugador está en esta sesión
+if (currentRole === 'PLAYER' && user?.userId) {
+  const sessionsResponse = await api.get('/api/sessions');
+  const sessionList = sessionsResponse.data || [];
+
+  const joined = sessionList.some(s => s.sessionId === sessionId);
+  setIsIn(joined);
+}
+
 
         // Obtener items (simulados por ahora)
         setItems({
@@ -538,6 +553,17 @@ export default function SessionRoom() {
             </div>
           </div>
         </div>
+        {isInPlayerMode && !isIn && (
+  <div className="mb-4">
+    <button
+      onClick={() => setShowCharacterModal(true)}
+      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium"
+    >
+      Unirse al Encuentro
+    </button>
+  </div>
+)}
+
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Game Board */}
@@ -973,6 +999,26 @@ export default function SessionRoom() {
             </div>
           </div>
         )}
+
+{showCharacterModal && (
+  <CharacterSelectionModal
+    isOpen={showCharacterModal}
+    onClose={() => setShowCharacterModal(false)}
+    characters={playerCharacters}
+    loading={false}
+    onCharacterSelect={async (characterId) => {
+      try {
+        await addParticipantToEncounter(characterId);
+        toast.success("¡Te has unido al encuentro!");
+        setIsIn(true);
+        refreshSession();
+      } catch (err) {
+        toast.error("Error al unirse al encuentro");
+      }
+    }}
+  />
+)}
+
       </div>
     </div>
   );
