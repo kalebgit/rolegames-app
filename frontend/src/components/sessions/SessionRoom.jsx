@@ -135,6 +135,7 @@ export default function SessionRoom() {
   
   // Stores
   const isInDMMode = useRoleStore(state => state.isInDMMode);
+  const isInPlayerMode = useRoleStore(state => state.isInPlayerMode);
   const currentRole = useRoleStore(state => state.currentRole);
   const user = useUserStore(state => state.user);
   
