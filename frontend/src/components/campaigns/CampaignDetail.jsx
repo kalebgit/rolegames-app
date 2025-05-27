@@ -15,6 +15,7 @@ export default function CampaignDetail() {
   const campaignId = parseInt(id);
   
   const isInDMMode = useRoleStore(state => state.isInDMMode);
+  const isInPlayerMode = useRoleStore(state => state.isInPlayerMode);
   const currentRole = useRoleStore(state => state.currentRole);
 
   const user = useUserStore(state=>state.user)
@@ -22,12 +23,13 @@ export default function CampaignDetail() {
 
   const { stats, sessions, loading, error, refreshStats } = useCampaignStats(campaignId);
 
-  useRoleAwareData(refreshStats)
   
   const [campaign, setCampaign] = useState(null);
   const [inviteModalOpen, setInviteModalOpen] = useState(false); 
   const [loadingCampaign, setLoadingCampaign] = useState(true);
   const [isIn, setIsIn] = useState(false)
+
+  useRoleAwareData(refreshStats)
 
   useEffect(() => {
     const fetchCampaign = async () => {
@@ -38,17 +40,21 @@ export default function CampaignDetail() {
         const campaigns = responseCampaigns.data
         if (campaigns.some(c => c.campaignId === actualCampaign.campaignId)) {
           setIsIn(true);
+        } else {
+          setIsIn(false);
         }
         setCampaign(actualCampaign);
       } catch (err) {
-        toast.error('Error al cargar la campaña');
-      } finally {
-        setLoadingCampaign(false);
+        console.error('Error refrescando campaña:', err);
+      }finally{
+        setLoadingCampaign(false)
       }
     };
-
-    fetchCampaign();
-  }, [campaignId]);
+  
+    if (currentRole && campaignId) {
+      fetchCampaign();
+    }
+  }, [currentRole, campaignId]);
 
   const handleJoinCampaign = async () => {
     try {
@@ -68,14 +74,14 @@ export default function CampaignDetail() {
   
 
   const handleCreateSession = () => {
-    navigate(`/campaigns/${campaignId}/sessions/new`);
+    navigate(`/sessions/new?campaignId=${campaignId}`);
+
   };
 
   const handleJoinSession = (sessionId) => {
     navigate(`/sessions/${sessionId}/room`);
   };
 
-  // 👈 Agregar estas funciones
   const handleInvitePlayer = () => {
     if (!isInDMMode()) {
       toast.error('Solo el DM puede invitar jugadores');
@@ -160,7 +166,7 @@ export default function CampaignDetail() {
               >
                 Invitar Jugadores
               </button>
-              {!isIn && (
+              {(!isIn && currentRole == "PLAYER") && (
                 <button
                   onClick={handleJoinCampaign}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium"

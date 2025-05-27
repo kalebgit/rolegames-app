@@ -18,6 +18,7 @@ export default function SessionForm({
   
   const finalSessionId = sessionId || id;
   const finalCampaignId = propCampaignId || urlCampaignId;
+
   
   // Estados para el formulario y UI
   const [activeTab, setActiveTab] = useState('form'); // 'form' | 'templates'
@@ -47,6 +48,9 @@ export default function SessionForm({
   // Cargar campañas disponibles
   useEffect(() => {
     fetchCampaigns();
+  if(finalCampaignId){
+    setSelectedCampaignId(finalCampaignId)
+  }
   }, []);
 
   // Mostrar mensajes de toast
@@ -375,6 +379,37 @@ export default function SessionForm({
             ) : (
               /* TAB: TEMPLATES */
               <div className="space-y-6">
+                {/* Selección de Campaña TAMBIÉN en templates */}
+  <div className="border-b border-gray-200 pb-6">
+    <MultiSelectDropdown
+      label="Campaña (requerida para usar templates)"
+      options={campaignOptions}
+      selectedValue={selectedCampaignId}
+      onChange={handleCampaignChange}
+      placeholder="Selecciona una campaña antes de usar templates..."
+      required={true}
+      loading={loadingCampaigns}
+      searchable={true}
+      showDescription={true}
+      descriptionKey="description"
+      icon="📖"
+      noOptionsMessage="No hay campañas disponibles"
+    />
+
+{!selectedCampaignId && (
+      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div className="flex items-center">
+          <span className="text-yellow-600 mr-2">⚠️</span>
+          <p className="text-yellow-700 text-sm">
+            Debes seleccionar una campaña antes de poder usar los templates
+          </p>
+        </div>
+      </div>
+    )}
+  </div>
+
+  {selectedCampaignId && (
+  <>
                 {/* Header de templates */}
                 <div className="text-center">
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -468,7 +503,7 @@ export default function SessionForm({
                     </div>
                   ))}
                 </div>
-
+</>)}
                 {/* Botón para volver al formulario */}
                 <div className="text-center pt-6 border-t border-gray-200">
                   <button

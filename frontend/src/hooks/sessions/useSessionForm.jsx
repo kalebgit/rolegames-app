@@ -65,7 +65,7 @@ export default function useSessionForm(sessionId, campaignId, onSuccess) {
       
       if (sessionId) {
         // Actualizar sesión existente usando el endpoint estándar
-        response = await api.put(`/api/sessions/${sessionId}`, session);
+        response = await api.post(`/api/sessions/${sessionId}`);
         setSuccess('Sesión actualizada exitosamente');
       } else if (campaignId) {
         // Crear nueva sesión para campaña específica
@@ -73,12 +73,23 @@ export default function useSessionForm(sessionId, campaignId, onSuccess) {
         setSuccess('Sesión creada exitosamente');
       } else {
         // Crear sesión sin campaña específica (fallback)
-        response = await api.post('/api/sessions', session);
-        setSuccess('Sesión creada exitosamente');
+        console.error("No se identifico id para esa campania")
+        setError('No se especifico una campania')
       }
       
       if (onSuccess) {
         setTimeout(() => onSuccess(response.data), 1500);
+      } else if (campaignId) {
+        // Redirigir automáticamente a la campaña después de crear
+        setTimeout(() => {
+          // Usar navigate del hook useNavigate()
+          navigate(`/campaigns/${campaignId}`);
+        }, 1500);
+      } else if (response.data?.campaignId) {
+        // Si la respuesta incluye campaignId, usarlo
+        setTimeout(() => {
+          navigate(`/campaigns/${response.data.campaignId}`);
+        }, 1500);
       }
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Error al guardar la sesión';
