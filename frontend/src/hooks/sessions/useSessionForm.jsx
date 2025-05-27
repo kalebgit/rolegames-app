@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import api from "../../api/axiosConfig"
+import api from "../../api/axiosConfig";
 
-export default function useSessionForm  (sessionId, onSuccess)  {
+export default function useSessionForm(sessionId, campaignId, onSuccess) {
   const [session, setSession] = useState({
     sessionNumber: 1,
     date: '',
@@ -17,8 +17,11 @@ export default function useSessionForm  (sessionId, onSuccess)  {
   useEffect(() => {
     if (sessionId) {
       fetchSession();
+    } else if (campaignId) {
+      // Obtener el siguiente número de sesión automáticamente
+      fetchNextSessionNumber();
     }
-  }, [sessionId]);
+  }, [sessionId, campaignId]);
 
   const fetchSession = async () => {
     try {
@@ -27,8 +30,27 @@ export default function useSessionForm  (sessionId, onSuccess)  {
       setSession(response.data);
     } catch (err) {
       setError('Error al cargar la sesión');
+      console.error('Error fetching session:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchNextSessionNumber = async () => {
+    try {
+      const response = await api.get(`/api/sessions/campaign/${campaignId}`);
+      const sessions = response.data;
+      const nextNumber = sessions.length > 0 
+        ? Math.max(...sessions.map(s => s.sessionNumber)) + 1 
+        : 1;
+      
+      setSession(prev => ({
+        ...prev,
+        sessionNumber: nextNumber
+      }));
+    } catch (err) {
+      console.error('Error fetching sessions for campaign:', err);
+      // No es crítico, mantener número por defecto
     }
   };
 
@@ -39,19 +61,29 @@ export default function useSessionForm  (sessionId, onSuccess)  {
     setSuccess('');
 
     try {
+      let response;
+      
       if (sessionId) {
-        await api.put(`/api/sessions/${sessionId}`, session);
+        // Actualizar sesión existente usando el endpoint estándar
+        response = await api.put(`/api/sessions/${sessionId}`, session);
         setSuccess('Sesión actualizada exitosamente');
+      } else if (campaignId) {
+        // Crear nueva sesión para campaña específica
+        response = await api.post(`/api/sessions/campaign/${campaignId}`, session);
+        setSuccess('Sesión creada exitosamente');
       } else {
-        await api.post('/api/sessions', session);
+        // Crear sesión sin campaña específica (fallback)
+        response = await api.post('/api/sessions', session);
         setSuccess('Sesión creada exitosamente');
       }
       
       if (onSuccess) {
-        setTimeout(() => onSuccess(), 1500);
+        setTimeout(() => onSuccess(response.data), 1500);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al guardar la sesión');
+      const errorMessage = err.response?.data?.message || 'Error al guardar la sesión';
+      setError(errorMessage);
+      console.error('Error saving session:', err);
     } finally {
       setLoading(false);
     }
@@ -65,6 +97,73 @@ export default function useSessionForm  (sessionId, onSuccess)  {
     }));
   };
 
+  // Función para aplicar un template
+  const applyTemplate = (templateData) => {
+    setSession(prev => ({
+      ...prev,
+      ...templateData,
+      // Mantener sessionNumber y campaignId si ya están establecidos
+      sessionNumber: prev.sessionNumber,
+    }));
+  };
+
+  // Función para limpiar el formulario
+  const resetForm = () => {
+    setSession({
+      sessionNumber: 1,
+      date: '',
+      duration: '',
+      summary: '',
+      dmNotes: '',
+      nextSessionObjectives: ''
+    });
+    setError('');
+    setSuccess('');
+    
+    // Volver a obtener el siguiente número de sesión si hay campaignId
+    if (campaignId) {
+      fetchNextSessionNumber();
+    }
+  };
+
+  // Función para validar el formulario
+  const validateForm = () => {
+    const errors = [];
+    
+    if (!session.sessionNumber || session.sessionNumber < 1) {
+      errors.push('El número de sesión es requerido y debe ser mayor a 0');
+    }
+    
+    if (!session.date) {
+      errors.push('La fecha de la sesión es requerida');
+    }
+    
+    if (session.duration && (session.duration < 0 || session.duration > 720)) {
+      errors.push('La duración debe estar entre 0 y 720 minutos (12 horas)');
+    }
+    
+    return errors;
+  };
+
+  // Función para verificar si el formulario tiene cambios
+  const hasChanges = () => {
+    if (sessionId) {
+      // Comparar con los datos originales cargados
+      return JSON.stringify(session) !== JSON.stringify(originalSession);
+    }
+    // Para nuevas sesiones, verificar si hay algún campo llenado
+    return session.date || session.duration || session.summary || session.dmNotes || session.nextSessionObjectives;
+  };
+
+  // Guardar datos originales para comparación
+  const [originalSession, setOriginalSession] = useState({});
+  
+  useEffect(() => {
+    if (sessionId && session.sessionId) {
+      setOriginalSession({ ...session });
+    }
+  }, [sessionId, session.sessionId]);
+
   return {
     session,
     loading,
@@ -72,7 +171,16 @@ export default function useSessionForm  (sessionId, onSuccess)  {
     success,
     handleSubmit,
     handleChange,
+    applyTemplate,
+    resetForm,
+    validateForm,
+    hasChanges,
     setError,
-    setSuccess
+    setSuccess,
+    setSession,
+    // Información adicional
+    isEditing: !!sessionId,
+    isCreating: !sessionId,
+    hasCampaign: !!campaignId
   };
-};
+}

@@ -26,7 +26,6 @@ import ItemForm from './components/items/ItemForm';
 import CombatTracker from './components/combat/CombatTracker';
 
 import CampaignDetail from './components/campaigns/CampaignDetail';
-import CampaignSessionForm from './components/sessions/campaignSessionForm';
 import SessionRoom from './components/sessions/SessionRoom';
 import SessionDetail from './components/sessions/sessionDetail';
 
@@ -214,11 +213,6 @@ export default function App() {
 } />
 
 {/* Crear sesión para una campaña específica */}
-<Route path="/campaigns/:campaignId/sessions/new" element={
-  <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
-    <CampaignSessionForm />
-  </ProtectedRouteWithAuth>
-} />
 
 {/* Sala de sesión en vivo */}
 <Route path="/sessions/:id/room" element={
@@ -227,12 +221,6 @@ export default function App() {
   </ProtectedRouteWithAuth>
 } />
 
-{/* Editar sesión específica */}
-<Route path="/sessions/:sessionId/edit" element={
-  <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
-    <CampaignSessionForm />
-  </ProtectedRouteWithAuth>
-} />
 
 {/* Ver detalles de sesión */}
 <Route path="/sessions/:id" element={
