@@ -76,6 +76,7 @@ public class JwtTokenProvider {
     }
 
     public String getTokenFromRequest(HttpServletRequest request){
+
         String bearerToken = request.getHeader("Authorization");
         //checa que no solo sean espacios en blanco o ""
         if(StringUtils.hasText(bearerToken)){

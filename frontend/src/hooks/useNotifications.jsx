@@ -20,7 +20,9 @@ class NotificationWebSocketService {
       this.userId = userId;
       
       try {
-        const wsUrl = `${process.env.NODE_ENV === 'production' ? 'wss:' : 'ws:'}//${window.location.host}/ws/notifications/${userId}`;
+        const token = localStorage.getItem('token'); 
+        const wsUrl = `ws://localhost:8080/ws/notifications/${userId}?token=${token}`;
+
         
         console.log(`🔔 NotificationWS: Conectando a ${wsUrl}`);
         

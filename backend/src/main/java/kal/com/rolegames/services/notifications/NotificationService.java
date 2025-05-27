@@ -116,6 +116,8 @@ public class NotificationService {
                     .actionUrl("/campaigns/" + campaign.getCampaignId())
                     .actionData(objectMapper.writeValueAsString(actionData))
                     .expiresAt(LocalDateTime.now().plusDays(7)) // Expira en 7 días
+                    //arreglar esta leido
+                    .isRead(false)
                     .build();
 
             Notification saved = notificationRepository.save(notification);

@@ -38,7 +38,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         logger.info("🔐 JWT Filter - Procesando: {} {}", request.getMethod(), requestURI);
 
         try {
-            String jwt = tokenProvider.getTokenFromRequest(request);
+            String jwt = null;
+            if (request.getParameter("token") != null) {
+                jwt = request.getParameter("token");
+            }else{
+                jwt = tokenProvider.getTokenFromRequest(request);
+            }
             logger.info("🔍 Token extraído: {}", jwt != null ? "PRESENTE (***)" : "AUSENTE");
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {

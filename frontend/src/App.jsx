@@ -42,10 +42,15 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NotificationBell from './components/common/NotificationBell';
+import { useRoleAwareData } from './hooks/useRoleAwareData';
+import { useRoleStore } from './stores/useRoleStore';
 
 function AppLayout({ children }) {
-  const isAuthenticated = useUserStore(state => state.isAuthenticated); // ⬅️ AGREGAR
+  const fetchUserRoles = useRoleStore(state=>state.fetchUserRoles)
+  const isAuthenticated = useUserStore(state => state.isAuthenticated); 
 
+  // hace un refresh cada que cambia de rol
+  useRoleAwareData(fetchUserRoles)
 
   return (
     <div className="min-h-screen bg-gray-100">

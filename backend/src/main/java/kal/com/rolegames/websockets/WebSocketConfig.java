@@ -21,17 +21,17 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // Handler para encuentros
         registry.addHandler(encounterHandler, "/ws/encounters/{encounterId}")
-                .setAllowedOriginPatterns("*")
-                .withSockJS()
-                .setHeartbeatTime(25000)
-                .setDisconnectDelay(5000);
+                .setAllowedOriginPatterns("*");
+//                .withSockJS()
+//                .setHeartbeatTime(25000)
+//                .setDisconnectDelay(5000);
 
         // Handler para notificaciones
         registry.addHandler(notificationHandler, "/ws/notifications/{userId}")
-                .setAllowedOriginPatterns("*")
-                .withSockJS()
-                .setHeartbeatTime(25000)
-                .setDisconnectDelay(5000);
+                .setAllowedOriginPatterns("*");
+//                .withSockJS()
+//                .setHeartbeatTime(25000)
+//                .setDisconnectDelay(5000);
     }
 
     @Bean
