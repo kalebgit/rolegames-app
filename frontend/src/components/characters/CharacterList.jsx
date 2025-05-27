@@ -7,8 +7,10 @@ import { toast } from 'react-toastify';
 
 export default function CharacterList() {
   const navigate = useNavigate();
-  const { characters, loading, error, deleteCharacter } = useCharacters();
+  const { characters, loading, error, deleteCharacter} = useCharacters();
   const [filter, setFilter] = useState('');
+
+
 
   // Mostrar errores como toast
   useEffect(() => {

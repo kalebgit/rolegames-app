@@ -1,9 +1,14 @@
 package kal.com.rolegames.controllers.sessions;
 
 import kal.com.rolegames.dto.sessions.CampaignDTO;
+import kal.com.rolegames.dto.users.PlayerDTO;
+import kal.com.rolegames.models.users.Player;
 import kal.com.rolegames.models.users.User;
 import kal.com.rolegames.services.sessions.CampaignService;
+import kal.com.rolegames.services.users.PlayerService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +23,8 @@ import java.util.List;
 public class CampaignController {
 
     private final CampaignService campaignService;
+    private final PlayerService playerService;
+    private final Logger logger = LoggerFactory.getLogger(CampaignController.class);
 
     @GetMapping
     public ResponseEntity<List<CampaignDTO>> getAllCampaigns(@AuthenticationPrincipal User user) {
@@ -49,11 +56,15 @@ public class CampaignController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{id}/players/{playerId}")
+    @PostMapping("/{id}/players/{userId}")
     public ResponseEntity<CampaignDTO> addPlayerToCampaign(
             @PathVariable Long id,
-            @PathVariable Long playerId) {
-        return ResponseEntity.ok(campaignService.addPlayerToCampaign(id, playerId));
+            @PathVariable Long userId) {
+        //mientras asi porque no hicimos un service de player
+        PlayerDTO player= playerService.getPlayerByUserId(userId);
+            logger.warn("❗️se esta agregando al jugador: "+ player);
+
+        return ResponseEntity.ok(campaignService.addPlayerToCampaign(id, player.getPlayerId()));
     }
 
     @DeleteMapping("/{id}/players/{playerId}")

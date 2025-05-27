@@ -2,11 +2,17 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import { toast } from 'react-toastify';
 import React, { useState, useEffect } from 'react'; 
 import useSessions from '../../hooks/sessions/useSessions';
-
+import { useRoleStore } from '../../stores/useRoleStore'; // 👉 importar store
+import { useRoleAwareData } from '../../hooks/useRoleAwareData';
 
 export default function SessionList({ onSessionSelect, onCreateSession }) {
-  const { sessions, loading, error, deleteSession } = useSessions();
+  const { sessions, loading, error, deleteSession, fetchSessions } = useSessions();
   const [filter, setFilter] = useState('');
+
+  useRoleAwareData(fetchSessions)
+
+  const isInDMMode = useRoleStore(state => state.isInDMMode);
+
   useEffect(() => {
     if (error) {
       toast.error(error, {
@@ -15,9 +21,13 @@ export default function SessionList({ onSessionSelect, onCreateSession }) {
       });
     }
   }, [error]);
-  
-  // En handleDelete, envolver con try-catch:
+
   const handleDelete = async (sessionId) => {
+    if (!isInDMMode()) {
+      toast.error('Solo los Dungeon Masters pueden eliminar sesiones');
+      return;
+    }
+
     if (window.confirm('¿Estás seguro de que quieres eliminar esta sesión?')) {
       try {
         await deleteSession(sessionId);
@@ -38,7 +48,6 @@ export default function SessionList({ onSessionSelect, onCreateSession }) {
     session.campaign?.name.toLowerCase().includes(filter.toLowerCase())
   );
 
-
   if (loading) {
     return <LoadingSpinner message="Cargando sesiones..." />;
   }
@@ -49,12 +58,14 @@ export default function SessionList({ onSessionSelect, onCreateSession }) {
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Historial de Sesiones</h1>
-            <button 
-              onClick={onCreateSession}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
-            >
-              Nueva Sesión
-            </button>
+            {isInDMMode() && (
+              <button 
+                onClick={onCreateSession}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+              >
+                Nueva Sesión
+              </button>
+            )}
           </div>
 
           {error && (
@@ -140,18 +151,23 @@ export default function SessionList({ onSessionSelect, onCreateSession }) {
                     >
                       Ver Detalles
                     </button>
-                    <button 
-                      onClick={() => onSessionSelect(session.sessionId, 'edit')}
-                      className="block bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm"
-                    >
-                      Editar
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(session.sessionId)}
-                      className="block bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-md text-sm"
-                    >
-                      Eliminar
-                    </button>
+
+                    {isInDMMode() && (
+                      <>
+                        <button 
+                          onClick={() => onSessionSelect(session.sessionId, 'edit')}
+                          className="block bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm"
+                        >
+                          Editar
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(session.sessionId)}
+                          className="block bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-md text-sm"
+                        >
+                          Eliminar
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -166,7 +182,7 @@ export default function SessionList({ onSessionSelect, onCreateSession }) {
                 </svg>
               </div>
               <p className="text-gray-500">No se encontraron sesiones</p>
-              <p className="text-gray-400 text-sm mt-2">Crear tu primera sesión para comenzar a registrar tus aventuras</p>
+              <p className="text-gray-400 text-sm mt-2">Crea tu primera sesión para comenzar a registrar tus aventuras</p>
             </div>
           )}
         </div>

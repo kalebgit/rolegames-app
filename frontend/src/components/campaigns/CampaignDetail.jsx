@@ -6,6 +6,8 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import CampaignInvitationModal from './CampaignInvitationModal'; // 👈 Agregar esta línea
 import { toast } from 'react-toastify';
 import api from '../../api/axiosConfig';
+import { useUserStore } from '../../stores/useUserStore';
+import { useRoleAwareData } from '../../hooks/useRoleAwareData';
 
 export default function CampaignDetail() {
   const { id } = useParams();
@@ -15,17 +17,29 @@ export default function CampaignDetail() {
   const isInDMMode = useRoleStore(state => state.isInDMMode);
   const currentRole = useRoleStore(state => state.currentRole);
 
+  const user = useUserStore(state=>state.user)
+
+
   const { stats, sessions, loading, error, refreshStats } = useCampaignStats(campaignId);
+
+  useRoleAwareData(refreshStats)
   
   const [campaign, setCampaign] = useState(null);
-  const [inviteModalOpen, setInviteModalOpen] = useState(false); // 👈 Agregar esta línea
+  const [inviteModalOpen, setInviteModalOpen] = useState(false); 
   const [loadingCampaign, setLoadingCampaign] = useState(true);
+  const [isIn, setIsIn] = useState(false)
 
   useEffect(() => {
     const fetchCampaign = async () => {
       try {
         const response = await api.get(`/api/campaigns/${campaignId}`);
-        setCampaign(response.data);
+        const actualCampaign = response.data
+        const responseCampaigns = await api.get("/api/campaigns")
+        const campaigns = responseCampaigns.data
+        if (campaigns.some(c => c.campaignId === actualCampaign.campaignId)) {
+          setIsIn(true);
+        }
+        setCampaign(actualCampaign);
       } catch (err) {
         toast.error('Error al cargar la campaña');
       } finally {
@@ -35,6 +49,23 @@ export default function CampaignDetail() {
 
     fetchCampaign();
   }, [campaignId]);
+
+  const handleJoinCampaign = async () => {
+    try {
+      console.log(user)
+      const response = await api.post(`/api/campaigns/${campaignId}/players/${user.userId}`);
+      if (response.status === 200) {
+        setIsIn(true);
+        toast.success('Te has unido a la campaña correctamente');
+        refreshStats(); 
+      }
+    } catch (err) {
+      console.error(err);
+      const msg = err?.response?.data?.message || 'Error al unirte a la campaña';
+      toast.error(msg);
+    }
+  };
+  
 
   const handleCreateSession = () => {
     navigate(`/campaigns/${campaignId}/sessions/new`);
@@ -46,7 +77,7 @@ export default function CampaignDetail() {
 
   // 👈 Agregar estas funciones
   const handleInvitePlayer = () => {
-    if (!isInDMMode) {
+    if (!isInDMMode()) {
       toast.error('Solo el DM puede invitar jugadores');
       return;
     }
@@ -129,7 +160,15 @@ export default function CampaignDetail() {
               >
                 Invitar Jugadores
               </button>
-              {isInDMMode && (
+              {!isIn && (
+                <button
+                  onClick={handleJoinCampaign}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md font-medium"
+                >
+                  Unirse a Campaña
+                </button>
+              )}
+              {isInDMMode() && (
                 <button
                   onClick={handleCreateSession}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
@@ -144,6 +183,7 @@ export default function CampaignDetail() {
                 ← Volver
               </button>
             </div>
+
           </div>
         </div>
 
@@ -222,7 +262,7 @@ export default function CampaignDetail() {
                 </svg>
               </div>
               <p className="text-gray-500">No hay sesiones registradas</p>
-              {isInDMMode && (
+              {isInDMMode() && (
                 <button
                   onClick={handleCreateSession}
                   className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
@@ -281,7 +321,7 @@ export default function CampaignDetail() {
                       >
                         Ver Detalles
                       </button>
-                      {isInDMMode && (
+                      {isInDMMode() && (
                         <button
                           onClick={() => navigate(`/sessions/${session.sessionId}/edit`)}
                           className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm"

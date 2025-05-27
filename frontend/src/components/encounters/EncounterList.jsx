@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import  useEncounters  from '../../hooks/encounters/useEncounters';
+import useEncounters from '../../hooks/encounters/useEncounters';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { toast } from 'react-toastify';
-
+import { useRoleStore } from '../../stores/useRoleStore'; // 👈 nuevo import
+import { useRoleAwareData } from '../../hooks/useRoleAwareData';
 
 export default function EncounterList({ onEncounterSelect, onCreateEncounter, onStartCombat }) {
-
-
-  const { encounters, loading, error, deleteEncounter, completeEncounter } = useEncounters();
+  const { encounters, loading, error, deleteEncounter, completeEncounter, fetchEncounters } = useEncounters();
   const [typeFilter, setTypeFilter] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('');
+
+  useRoleAwareData(fetchEncounters)
+
+  const isInDMMode = useRoleStore(state => state.isInDMMode); 
 
   useEffect(() => {
     if (error) {
@@ -42,8 +45,12 @@ export default function EncounterList({ onEncounterSelect, onCreateEncounter, on
     return matchesType && matchesDifficulty;
   });
 
-
   const handleDelete = async (encounterId) => {
+    if (!isInDMMode()) {
+      toast.error('Solo los Dungeon Masters pueden eliminar encuentros');
+      return;
+    }
+
     if (window.confirm('¿Estás seguro de que quieres eliminar este encuentro?')) {
       try {
         await deleteEncounter(encounterId);
@@ -59,9 +66,13 @@ export default function EncounterList({ onEncounterSelect, onCreateEncounter, on
       }
     }
   };
-  
 
   const handleComplete = async (encounterId) => {
+    if (!isInDMMode()) {
+      toast.error('Solo los Dungeon Masters pueden completar encuentros');
+      return;
+    }
+
     if (window.confirm('¿Marcar este encuentro como completado?')) {
       try {
         await completeEncounter(encounterId);
@@ -79,6 +90,11 @@ export default function EncounterList({ onEncounterSelect, onCreateEncounter, on
   };
 
   const handleStartCombat = (encounter) => {
+    if (!isInDMMode()) {
+      toast.error('Solo los Dungeon Masters pueden iniciar combates');
+      return;
+    }
+
     if (encounter.encounterType === 'COMBAT' && onStartCombat) {
       onStartCombat(encounter);
     }
@@ -94,12 +110,14 @@ export default function EncounterList({ onEncounterSelect, onCreateEncounter, on
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Gestión de Encuentros</h1>
-            <button 
-              onClick={onCreateEncounter}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
-            >
-              Crear Encuentro
-            </button>
+            {isInDMMode() && (
+              <button 
+                onClick={onCreateEncounter}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium"
+              >
+                Crear Encuentro
+              </button>
+            )}
           </div>
 
           {error && (
@@ -186,36 +204,43 @@ export default function EncounterList({ onEncounterSelect, onCreateEncounter, on
                   >
                     Ver Detalles
                   </button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button 
-                      onClick={() => onEncounterSelect(encounter.encounterId, 'edit')}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-md text-sm"
-                    >
-                      Editar
-                    </button>
-                    {encounter.encounterType === 'COMBAT' && !encounter.isCompleted && (
+
+                  {isInDMMode() && (
+                    <>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button 
+                          onClick={() => onEncounterSelect(encounter.encounterId, 'edit')}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-md text-sm"
+                        >
+                          Editar
+                        </button>
+                        {encounter.encounterType === 'COMBAT' && !encounter.isCompleted && (
+                          <button 
+                            onClick={() => handleStartCombat(encounter)}
+                            className="bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-md text-sm"
+                          >
+                            Iniciar Combate
+                          </button>
+                        )}
+                      </div>
+
+                      {!encounter.isCompleted && (
+                        <button 
+                          onClick={() => handleComplete(encounter.encounterId)}
+                          className="w-full bg-green-100 hover:bg-green-200 text-green-700 py-2 rounded-md text-sm"
+                        >
+                          Marcar Completado
+                        </button>
+                      )}
+
                       <button 
-                        onClick={() => handleStartCombat(encounter)}
-                        className="bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-md text-sm"
+                        onClick={() => handleDelete(encounter.encounterId)}
+                        className="w-full bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-md text-sm"
                       >
-                        Iniciar Combate
+                        Eliminar
                       </button>
-                    )}
-                  </div>
-                  {!encounter.isCompleted && (
-                    <button 
-                      onClick={() => handleComplete(encounter.encounterId)}
-                      className="w-full bg-green-100 hover:bg-green-200 text-green-700 py-2 rounded-md text-sm"
-                    >
-                      Marcar Completado
-                    </button>
+                    </>
                   )}
-                  <button 
-                    onClick={() => handleDelete(encounter.encounterId)}
-                    className="w-full bg-red-100 hover:bg-red-200 text-red-700 py-2 rounded-md text-sm"
-                  >
-                    Eliminar
-                  </button>
                 </div>
               </div>
             ))}

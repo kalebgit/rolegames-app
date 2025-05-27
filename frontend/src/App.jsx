@@ -180,11 +180,6 @@ export default function App() {
           } />
           
           {/* Sesiones - DUNGEON_MASTER */}
-          <Route path="/sessions" element={
-            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
-              <SessionListPage />
-            </ProtectedRouteWithAuth>
-          } />
           <Route path="/sessions/new" element={
             <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
               <SessionForm />
@@ -197,11 +192,6 @@ export default function App() {
           } />
           
           {/* Encuentros - DUNGEON_MASTER */}
-          <Route path="/encounters" element={
-            <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
-              <EncounterListPage />
-            </ProtectedRouteWithAuth>
-          } />
           <Route path="/encounters/new" element={
             <ProtectedRouteWithAuth requiredRole="DUNGEON_MASTER">
               <EncounterForm />
@@ -259,6 +249,19 @@ export default function App() {
           <Route path="/campaigns" element={
             <ProtectedRouteWithAuth >
               <CampaignList />
+            </ProtectedRouteWithAuth>
+          } />
+
+          <Route path="/sessions" element={
+            <ProtectedRouteWithAuth >
+              <SessionListPage />
+            </ProtectedRouteWithAuth>
+          } />
+
+
+          <Route path="/encounters" element={
+            <ProtectedRouteWithAuth >
+              <EncounterListPage />
             </ProtectedRouteWithAuth>
           } />
 
