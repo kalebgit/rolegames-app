@@ -84,9 +84,7 @@ export default function Navigation() {
 
   // Items específicos para DMs SOLO para creación
   const dmOnlyItems = canActAsDM() ? [
-    { key: 'npcs', label: 'NPCs', icon: '👥', path: '/npcs' },
-    { key: 'sessions', label: 'Sesiones', icon: '📅', path: '/sessions' },
-    { key: 'encounters', label: 'Encuentros', icon: '🗡️', path: '/encounters' }
+    { key: 'npcs', label: 'NPCs', icon: '👥', path: '/npcs' }
   ] : [];
 
   // Items compartidos (ambos roles pueden acceder)
@@ -95,6 +93,9 @@ export default function Navigation() {
   // Agregar campañas si tiene cualquiera de los dos roles
   if (canActAsPlayer() || canActAsDM()) {
     sharedItems.push({ key: 'campaigns', label: 'Campañas', icon: '📖', path: '/campaigns' });
+    // ✅ CAMBIO: Sesiones y Encuentros ahora están en sharedItems
+    sharedItems.push({ key: 'sessions', label: 'Sesiones', icon: '📅', path: '/sessions' });
+    sharedItems.push({ key: 'encounters', label: 'Encuentros', icon: '🗡️', path: '/encounters' });
   }
 
   // Agregar otros items compartidos
@@ -146,20 +147,27 @@ export default function Navigation() {
 
     if (canActAsDM()) {
       groups.push({
-        title: "Gestión de Campañas (DM)",
+        title: "Gestión de NPCs (DM)",
         items: [
-          { key: 'npcs', label: 'NPCs', icon: '👥', path: '/npcs' },
-          { key: 'sessions', label: 'Sesiones', icon: '📅', path: '/sessions' },
-          { key: 'encounters', label: 'Encuentros', icon: '🗡️', path: '/encounters' }
+          { key: 'npcs', label: 'NPCs', icon: '👥', path: '/npcs' }
         ]
       });
     }
 
     if (canActAsPlayer() || canActAsDM()) {
       groups.push({
-        title: "Contenido Compartido",
+        title: "Gestión de Campañas", // ✅ CAMBIO: Título actualizado
         items: [
           { key: 'campaigns', label: 'Campañas', icon: '📖', path: '/campaigns' },
+          // ✅ CAMBIO: Sesiones y Encuentros movidos aquí
+          { key: 'sessions', label: 'Sesiones', icon: '📅', path: '/sessions' },
+          { key: 'encounters', label: 'Encuentros', icon: '🗡️', path: '/encounters' }
+        ]
+      });
+
+      groups.push({
+        title: "Contenido Compartido",
+        items: [
           { key: 'spells', label: 'Hechizos', icon: '✨', path: '/spells' },
           { key: 'items', label: 'Objetos', icon: '🎒', path: '/items' }
         ]
@@ -226,11 +234,11 @@ export default function Navigation() {
             {/* Desktop menu */}
             <div className="hidden xl:ml-4 xl:flex xl:space-x-1">
               {visibleItems.slice(0, 5).map(item => {
-                // Determinar si requiere cambio de rol SOLO para items específicos de DM
+                // ✅ CAMBIO: Solo personajes requiere cambio de rol específico
                 let requiredRole = null;
                 if (['characters'].includes(item.key)) requiredRole = 'PLAYER';
-                if (['npcs', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
-                // campaigns NO requiere rol específico
+                if (['npcs'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
+                // sessions, encounters, campaigns NO requieren rol específico
                 
                 return (
                   <button
@@ -260,7 +268,7 @@ export default function Navigation() {
                       {visibleItems.slice(5).map(item => {
                         let requiredRole = null;
                         if (['characters'].includes(item.key)) requiredRole = 'PLAYER';
-                        if (['npcs', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
+                        if (['npcs'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
                         
                         return (
                           <button
@@ -307,7 +315,7 @@ export default function Navigation() {
                       {group.items.map(item => {
                         let requiredRole = null;
                         if (['characters'].includes(item.key)) requiredRole = 'PLAYER';
-                        if (['npcs', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
+                        if (['npcs'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
                         
                         return (
                           <button
@@ -432,7 +440,7 @@ export default function Navigation() {
                 {group.items.map(item => {
                   let requiredRole = null;
                   if (['characters'].includes(item.key)) requiredRole = 'PLAYER';
-                  if (['npcs', 'sessions', 'encounters'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
+                  if (['npcs'].includes(item.key)) requiredRole = 'DUNGEON_MASTER';
                   
                   const needsRoleSwitch = requiredRole && currentRole !== requiredRole;
                   

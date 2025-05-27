@@ -93,6 +93,25 @@ export default function Dashboard() {
       color: 'bg-yellow-500',
       requiredRole: null,
       visible: true
+    },
+
+    {
+      title: 'Explorar Sesiones',
+      description: isInDMMode() ? 'Gestiona tus sesiones' : 'Ve sesiones en las que participas',
+      icon: '📅',
+      action: () => handleQuickAction('/sessions'),
+      color: 'bg-indigo-500',
+      requiredRole: null, // 👈 CLAVE: null significa no cambiar rol
+      visible: canActAsPlayer() || canActAsDM()
+    },
+    {
+      title: 'Explorar Encuentros',
+      description: isInDMMode() ? 'Gestiona encuentros' : 'Ve encuentros en los que participas',
+      icon: '⚔️',
+      action: () => handleQuickAction('/encounters'),
+      color: 'bg-red-500',
+      requiredRole: null, // 👈 CLAVE: null significa no cambiar rol
+      visible: canActAsPlayer() || canActAsDM()
     }
   ];
 

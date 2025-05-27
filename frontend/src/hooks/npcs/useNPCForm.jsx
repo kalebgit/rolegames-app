@@ -98,6 +98,7 @@ export default function useNPCForm  (npcId, onSuccess) {
     handleSubmit,
     handleChange,
     handleAbilityChange,
+    setNpc,
     setError,
     setSuccess
   };

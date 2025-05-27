@@ -93,6 +93,7 @@ export default function useCharacterForm(characterId, onSuccess){
 
     return {
         character,
+        setCharacter,
         loading,
         error,
         success,
